@@ -23,7 +23,7 @@ import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.instrument.InstrumentationSavingAgent;
+// import org.springframework.instrument.InstrumentationSavingAgent;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -36,7 +36,7 @@ import org.springframework.util.ClassUtils;
  * <p><code class="code">-javaagent:path/to/org.springframework.instrument.jar</code>
  *
  * <p>where {@code org.springframework.instrument.jar} is a JAR file containing
- * the {@link InstrumentationSavingAgent} class, as shipped with Spring.
+ * the {@link //InstrumentationSavingAgent} class, as shipped with Spring.
  *
  * <p>In Eclipse, for example, set the "Run configuration"'s JVM args to be of the form:
  *
@@ -45,7 +45,7 @@ import org.springframework.util.ClassUtils;
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 2.0
- * @see InstrumentationSavingAgent
+ * @see //InstrumentationSavingAgent
  */
 public class InstrumentationLoadTimeWeaver implements LoadTimeWeaver {
 
@@ -143,7 +143,8 @@ public class InstrumentationLoadTimeWeaver implements LoadTimeWeaver {
 	@Nullable
 	private static Instrumentation getInstrumentation() {
 		if (AGENT_CLASS_PRESENT) {
-			return InstrumentationAccessor.getInstrumentation();
+			//return InstrumentationAccessor.getInstrumentation();
+			return null;
 		}
 		else {
 			return null;
@@ -156,9 +157,9 @@ public class InstrumentationLoadTimeWeaver implements LoadTimeWeaver {
 	 */
 	private static class InstrumentationAccessor {
 
-		public static Instrumentation getInstrumentation() {
-			return InstrumentationSavingAgent.getInstrumentation();
-		}
+		//public static Instrumentation getInstrumentation() {
+			//return InstrumentationSavingAgent.getInstrumentation();
+		//}
 	}
 
 

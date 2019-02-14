@@ -52,23 +52,38 @@ import org.springframework.util.Assert;
  */
 public class AnnotationConfigApplicationContext extends GenericApplicationContext implements AnnotationConfigRegistry {
 
+	/**
+	 * 这个类顾名思义是一个reader，一个读取器
+	 * 读取什么呢？AnnotatedBeanDefinitionReader意思是读取一个被加了注解的bean
+	 * 这个类在构造方法中实例化的
+	 * 作用：读取到一个加了注解的类，并把他转为BeanDefinition
+	 */
 	private final AnnotatedBeanDefinitionReader reader;
 
+	/**
+	 * 顾名思义，是一个扫描器，扫描所有加了注解的bean
+	 * 这个类在构造方法中实例化的
+	 */
 	private final ClassPathBeanDefinitionScanner scanner;
 
 
 	/**
-	 * Create a new AnnotationConfigApplicationContext that needs to be populated
-	 * through {@link #register} calls and then manually {@linkplain #refresh refreshed}.
+	 * 创建一个需要填充的新的AnnotationConfigApplicationContext，初始化一个bean的读取和扫描器
+	 * 通过{@link #register}调用，然后手动{@linkplain #refresh refresh}。
 	 */
 	public AnnotationConfigApplicationContext() {
+		/**
+		 * 父类的构造方法
+		 * 创建一个读取注解的Bean定义读取器，扫描器
+		 * 什么是bean定义？BeanDefinition
+		 */
 		this.reader = new AnnotatedBeanDefinitionReader(this);
 		this.scanner = new ClassPathBeanDefinitionScanner(this);
 	}
 
 	/**
-	 * Create a new AnnotationConfigApplicationContext with the given DefaultListableBeanFactory.
-	 * @param beanFactory the DefaultListableBeanFactory instance to use for this context
+	 * 使用给定的DefaultListableBeanFactory创建一个新的AnnotationConfigApplicationContext。
+	 * 用于此上下文的DefaultListableBeanFactory实例
 	 */
 	public AnnotationConfigApplicationContext(DefaultListableBeanFactory beanFactory) {
 		super(beanFactory);
@@ -77,10 +92,10 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
-	 * Create a new AnnotationConfigApplicationContext, deriving bean definitions
-	 * from the given annotated classes and automatically refreshing the context.
-	 * @param annotatedClasses one or more annotated classes,
-	 * e.g. {@link Configuration @Configuration} classes
+	 * 创建一个新的AnnotationConfigApplicationContext，派生bean定义
+	 * 从给定的带注释的类中自动刷新上下文。
+	 * @param annotatedClasses 一个或多个带注释的类，
+	 * 例如:{@link Configuration @Configuration}类
 	 */
 	public AnnotationConfigApplicationContext(Class<?>... annotatedClasses) {
 		this();
@@ -89,9 +104,9 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
-	 * Create a new AnnotationConfigApplicationContext, scanning for bean definitions
-	 * in the given packages and automatically refreshing the context.
-	 * @param basePackages the packages to check for annotated classes
+	 * 创建一个新的AnnotationConfigApplicationContext，扫描bean定义
+	 * 在给定的包中并自动刷新上下文。
+	 * @param basePackages 包来检查带注释的类
 	 */
 	public AnnotationConfigApplicationContext(String... basePackages) {
 		this();
@@ -101,8 +116,8 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 
 
 	/**
-	 * Propagates the given custom {@code Environment} to the underlying
-	 * {@link AnnotatedBeanDefinitionReader} and {@link ClassPathBeanDefinitionScanner}.
+	 * 将给定的自定义{@code 环境}传播到底层
+	 * {@link AnnotatedBeanDefinitionReader} 和 {@link ClassPathBeanDefinitionScanner}.
 	 */
 	@Override
 	public void setEnvironment(ConfigurableEnvironment environment) {
@@ -112,11 +127,11 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
-	 * Provide a custom {@link BeanNameGenerator} for use with {@link AnnotatedBeanDefinitionReader}
-	 * and/or {@link ClassPathBeanDefinitionScanner}, if any.
-	 * <p>Default is {@link org.springframework.context.annotation.AnnotationBeanNameGenerator}.
-	 * <p>Any call to this method must occur prior to calls to {@link #register(Class...)}
-	 * and/or {@link #scan(String...)}.
+	 * 提供一个自定义的{@link BeanNameGenerator}，用于与{@link AnnotatedBeanDefinitionReader}一起使用}
+	 * 和/或{@link ClassPathBeanDefinitionScanner}(如果有)。
+	 * <p>默认是{@link org.springframework.context.annotation.AnnotationBeanNameGenerator}。
+	 * <p>此方法的任何调用都必须在调用{@link # register(Class…)}之前进行
+	 * 和/或{ @link #扫描(字符串…)}。
 	 * @see AnnotatedBeanDefinitionReader#setBeanNameGenerator
 	 * @see ClassPathBeanDefinitionScanner#setBeanNameGenerator
 	 */
@@ -128,10 +143,10 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
-	 * Set the {@link ScopeMetadataResolver} to use for detected bean classes.
-	 * <p>The default is an {@link AnnotationScopeMetadataResolver}.
-	 * <p>Any call to this method must occur prior to calls to {@link #register(Class...)}
-	 * and/or {@link #scan(String...)}.
+	 * 将{@link ScopeMetadataResolver}设置为用于检测到的bean类。
+	 * <p>默认是{@link AnnotationScopeMetadataResolver}
+	 * <p>此方法的任何调用都必须在调用{@link # register(Class…)}之前进行
+	 * 和/或{ @link #扫描(字符串…)}
 	 */
 	public void setScopeMetadataResolver(ScopeMetadataResolver scopeMetadataResolver) {
 		this.reader.setScopeMetadataResolver(scopeMetadataResolver);
@@ -140,15 +155,15 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 
 
 	//---------------------------------------------------------------------
-	// Implementation of AnnotationConfigRegistry
+	// 实现AnnotationConfigRegistry接口的方法
 	//---------------------------------------------------------------------
 
 	/**
-	 * Register one or more annotated classes to be processed.
-	 * <p>Note that {@link #refresh()} must be called in order for the context
-	 * to fully process the new classes.
-	 * @param annotatedClasses one or more annotated classes,
-	 * e.g. {@link Configuration @Configuration} classes
+	 * 注册一个或多个要处理的注释类。
+	 * <p>注意，必须为上下文调用{@link # refresh()}
+	 * 以完全处理新类。
+	 * @param annotatedClasses 一个或多个带注释的类，
+	 * 例如: {@link Configuration @Configuration}类
 	 * @see #scan(String...)
 	 * @see #refresh()
 	 */
@@ -158,10 +173,10 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
-	 * Perform a scan within the specified base packages.
-	 * <p>Note that {@link #refresh()} must be called in order for the context
-	 * to fully process the new classes.
-	 * @param basePackages the packages to check for annotated classes
+	 * 在指定的基本包中执行扫描。
+	 * <p>注意，必须为上下文调用{@link #refresh()}
+	 * 以完全处理新类。
+	 * @param basePackages 包来检查带注释的类
 	 * @see #register(Class...)
 	 * @see #refresh()
 	 */
@@ -172,19 +187,19 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 
 
 	//---------------------------------------------------------------------
-	// Convenient methods for registering individual beans
+	// 注册单个bean的方便方法
 	//---------------------------------------------------------------------
 
 	/**
-	 * Register a bean from the given bean class, deriving its metadata from
-	 * class-declared annotations, and optionally providing explicit constructor
-	 * arguments for consideration in the autowiring process.
-	 * <p>The bean name will be generated according to annotated component rules.
-	 * @param annotatedClass the class of the bean
-	 * @param constructorArguments argument values to be fed into Spring's
-	 * constructor resolution algorithm, resolving either all arguments or just
-	 * specific ones, with the rest to be resolved through regular autowiring
-	 * (may be {@code null} or empty)
+	 * 从给定的bean类注册一个bean，从中派生其元数据
+	 * 类声明的注释，并可选地提供显式构造函数
+	 * 在自动布线过程中需要考虑的参数。
+	 * <p> bean名称将根据带注释的组件规则生成。
+	 * @param注释了bean的类
+	 * 参数值被输入到Spring的参数中
+	 * 构造函数解析算法，解决所有参数或只是
+	 * 具体的，其余的要通过常规的自动布线来解决
+	 * (可以是{@code null}或空})
 	 * @since 5.0
 	 */
 	public <T> void registerBean(Class<T> annotatedClass, Object... constructorArguments) {
@@ -192,16 +207,16 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 	}
 
 	/**
-	 * Register a bean from the given bean class, deriving its metadata from
-	 * class-declared annotations, and optionally providing explicit constructor
-	 * arguments for consideration in the autowiring process.
-	 * @param beanName the name of the bean (may be {@code null})
-	 * @param annotatedClass the class of the bean
-	 * @param constructorArguments argument values to be fed into Spring's
-	 * constructor resolution algorithm, resolving either all arguments or just
-	 * specific ones, with the rest to be resolved through regular autowiring
-	 * (may be {@code null} or empty)
-	 * @since 5.0
+	 * 从给定的bean类注册一个bean，从中派生其元数据
+	 * 类声明的注释，并可选地提供显式构造函数
+	 * 在自动布线过程中需要考虑的参数。
+	 * bean的名称(可以是{@code null})
+	 * @param注释了bean的类
+	 * 参数值被输入到Spring的参数中
+	 * 构造函数解析算法，解决所有参数或只是
+	 * 具体的，其余的要通过常规的自动布线来解决
+	 * (可以是{@code null}或空})
+	 *
 	 */
 	public <T> void registerBean(@Nullable String beanName, Class<T> annotatedClass, Object... constructorArguments) {
 		this.reader.doRegisterBean(annotatedClass, null, beanName, null,

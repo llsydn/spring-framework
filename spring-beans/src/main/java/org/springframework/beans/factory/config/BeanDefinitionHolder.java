@@ -24,6 +24,11 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 其实也是一个map，方便传递参数
+ * 就是Map<String, BeanDefinition> beanDefinitionMap的一条数据
+ */
+
+/**
  * Holder for a BeanDefinition with name and aliases.
  * Can be registered as a placeholder for an inner bean.
  *

@@ -22,6 +22,12 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.core.AliasRegistry;
 
 /**
+ * BeanDefinitionRegistry也是一个ioc环境
+ *
+ * 将一个BeanDefinition，注册到beanDefinitionMap中
+ */
+
+/**
  * Interface for registries that hold bean definitions, for example RootBeanDefinition
  * and ChildBeanDefinition instances. Typically implemented by BeanFactories that
  * internally work with the AbstractBeanDefinition hierarchy.

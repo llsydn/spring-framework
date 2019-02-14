@@ -25,7 +25,7 @@ import java.lang.instrument.Instrumentation;
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 2.0
- * @see org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver
+ * @see // org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver
  */
 public final class InstrumentationSavingAgent {
 
@@ -56,13 +56,13 @@ public final class InstrumentationSavingAgent {
 	 * <p>Note that this agent class will typically not be available in the classpath
 	 * unless the agent is actually specified on JVM startup. If you intend to do
 	 * conditional checking with respect to agent availability, consider using
-	 * {@link org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver#getInstrumentation()}
+	 * {@link //org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver#getInstrumentation()}
 	 * instead - which will work without the agent class in the classpath as well.
 	 * @return the {@code Instrumentation} instance previously saved when
 	 * the {@link #premain} or {@link #agentmain} methods was called by the JVM;
 	 * will be {@code null} if this class was not used as Java agent when this
 	 * JVM was started or it wasn't installed as agent using the Attach API.
-	 * @see org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver#getInstrumentation()
+	 * @see //org.springframework.instrument.classloading.InstrumentationLoadTimeWeaver#getInstrumentation()
 	 */
 	public static Instrumentation getInstrumentation() {
 		return instrumentation;
