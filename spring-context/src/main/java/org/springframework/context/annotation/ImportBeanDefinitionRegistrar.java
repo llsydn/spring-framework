@@ -22,7 +22,8 @@ import org.springframework.core.type.AnnotationMetadata;
 
 /**
  * spring的扩展点之一：
- * 可以插手spring工厂的初始化过程
+ * 可以插手spring工厂的初始化过程。
+ * 能够给spring新增一个bean。（beanFactoryPostProcessor，beanPostProcessor这些只能修改bean，无法新增一个bean）
  */
 
 /**

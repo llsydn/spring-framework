@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 public class UserDao {
 
 	public UserDao() {
-		System.out.println("userDao init");
+		// System.out.println("userDao init");
 	}
 
 	public void query() {

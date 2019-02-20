@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * @author lilinshen
  * @title BeanFactoryPostProcessor类可以插手spring工厂bean的初始化过程
+ * BeanDefinitionRegistryPostProcessor是BeanFactoryPostProcessor的子类扩展了，增加了postProcessBeanDefinitionRegistry方法
  * @description 请填写相关描述
  * @date 2019/2/1 17:11
  */
@@ -30,4 +31,5 @@ public class MyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 		beanDefinition.setScope(ConfigurableBeanFactory.SCOPE_SINGLETON);
 
 	}
+
 }
