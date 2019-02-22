@@ -510,6 +510,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
+		// refresh过程只能一个线程处理，不允许并发执行
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
 			// 准备工作包括设置启动时间，是否激活标识位
@@ -521,38 +522,52 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
-			// 准备工厂
+			// 准备工厂，从Spring容器获取BeanFactory(Spring Bean容器)并进行相关的设置为后续的使用做准备：
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
-				// 目前还没有被实现（期待后面的版本迭代）
+				// BeanFactory设置之后再进行后续的一些BeanFactory操作，目前还没有被实现（期待后面的版本迭代）
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				// 在Spring容器中找出实现了BeanFactoryPostProcessor接口的processor并执行。
+				// Spring容器会委托给PostProcessorRegistrationDelegate的invokeBeanFactoryPostProcessors方法执行
 				// 在spring环境中去执行已经被注册的factory processors
 				// 设置执行ProcessBeanFactory（自定义和spring内部）
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				// 从Spring容器中找出的BeanPostProcessor接口的bean，并设置到BeanFactory的属性中。之后bean被实例化的时候会调用这个BeanPostProcessor
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				// 在Spring容器中初始化一些国际化相关的属性。
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				// 在Spring容器中初始化事件广播器，事件广播器用于事件的发布。
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				// 一个模板方法，不同的Spring容器做不同的事情。
+				// 比如web程序的容器AnnotationConfigEmbeddedWebApplicationContext中会调用createEmbeddedServletContainer方法去创建内置的Servlet容器。
+				// 目前SpringBoot只支持3种内置的Servlet容器:Tomcat，Jetty，Undertow
 				onRefresh();
 
 				// Check for listener beans and register them.
+				// 把Spring容器内的时间监听器和BeanFactory中的时间监听器都添加的事件广播器中。然后如果存在early event的话，广播出去。
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				// 实例化BeanFactory中已经被注册但是未实例化的所有实例(懒加载的不需要实例化)。
+				// 比如invokeBeanFactoryPostProcessors方法中根据各种注解解析出来的类，在这个时候都会被初始化。
+				// 实例化的过程各种BeanPostProcessor开始起作用。
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
+				// refresh做完之后需要做的其他事情
+				// springboot,会执行父类的EmbeddedWebApplicationContext#finishRefresh，Servlet容器创建完毕之后在finishRefresh方法中会去启动
 				finishRefresh();
 			}
 
@@ -632,6 +647,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * 配置其标准的特征，比如上下文的加载器ClassLoader和post-processors回调
+	 * 1.设置classloader(用于加载bean)，设置表达式解析器(解析bean定义中的一些表达式)，添加属性编辑注册器(注册属性编辑器)
+	 * 2.添加ApplicationContextAwareProcessor这个BeanPostProcessor。
+	 * 		取消ResourceLoaderAware、ApplicationEventPublisherAware、MessageSourceAware、ApplicationContextAware、EnvironmentAware这5个接口的自动注入。
+	 * 		因为ApplicationContextAwareProcessor把这5个接口的实现工作做了
+	 * 3.设置特殊的类型对应的bean。BeanFactory对应刚刚获取的BeanFactory；ResourceLoader、ApplicationEventPublisher、ApplicationContext
+	 * 		这3个接口对应的bean都设置为当前的Spring容器
+	 * 4.注入一些其它信息的bean，比如environment、systemProperties等
 	 */
 	/**
 	 * Configure the factory's standard context characteristics,
@@ -699,6 +721,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * invokeBeanFactoryPostProcessors方法总结来说就是从Spring容器中找出BeanDefinitionRegistryPostProcessor和BeanFactoryPostProcessor接口的实现类
+	 * 并按照一定的规则顺序进行执行。 其中ConfigurationClassPostProcessor这个BeanDefinitionRegistryPostProcessor优先级最高，它会对项目中的
+	 * @Configuration注解修饰的类(@Component、@ComponentScan、@Import、@ImportResource修饰的类也会被处理)进行解析，解析完成之后把这些bean注册到
+	 * BeanFactory中。需要注意的是这个时候注册进来的bean还没有实例化。
+	 *
 	 * Instantiate and invoke all registered BeanFactoryPostProcessor beans,
 	 * respecting explicit order if given.
 	 * <p>Must be called before singleton instantiation.
@@ -761,6 +788,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 	}
 
+	/**
+	 * EventPublishingRunListener这个SpringApplicationRunListener会监听事件，其中发生contextPrepared事件的时候
+	 * EventPublishingRunListener会把事件广播器注入到BeanFactory中。
+	 *
+	 * 所以initApplicationEventMulticaster不再需要再次注册，只需要拿出BeanFactory中的事件广播器然后设置到Spring容器的属性中即可。
+	 * 如果没有使用SpringBoot的话，Spring容器得需要自己初始化事件广播器。
+	 */
 	/**
 	 * Initialize the ApplicationEventMulticaster.
 	 * Uses SimpleApplicationEventMulticaster if none defined in the context.
@@ -884,6 +918,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.preInstantiateSingletons();
 	}
 
+	/**
+	 * 1.初始化生命周期处理器，并设置到Spring容器中(LifecycleProcessor)
+	 * 2.调用生命周期处理器的onRefresh方法，这个方法会找出Spring容器中实现了SmartLifecycle接口的类并进行start方法的调用
+	 * 3.发布ContextRefreshedEvent事件告知对应的ApplicationListener进行响应的操作
+	 * 4.调用LiveBeansView的registerApplicationContext方法：如果设置了JMX相关的属性，则就调用该方法
+	 * 5.发布EmbeddedServletContainerInitializedEvent事件告知对应的ApplicationListener进行响应的操作
+	 */
 	/**
 	 * Finish the refresh of this context, invoking the LifecycleProcessor's
 	 * onRefresh() method and publishing the

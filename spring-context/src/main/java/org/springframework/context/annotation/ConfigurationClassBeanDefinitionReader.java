@@ -114,6 +114,7 @@ class ConfigurationClassBeanDefinitionReader {
 	public void loadBeanDefinitions(Set<ConfigurationClass> configurationModel) {
 		TrackedConditionEvaluator trackedConditionEvaluator = new TrackedConditionEvaluator();
 		for (ConfigurationClass configClass : configurationModel) {
+			// 对每一个配置类，调用loadBeanDefinitionsForConfigurationClass方法
 			loadBeanDefinitionsForConfigurationClass(configClass, trackedConditionEvaluator);
 		}
 	}
@@ -124,8 +125,9 @@ class ConfigurationClassBeanDefinitionReader {
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
-
+		// 使用条件注解判断是否需要跳过这个配置类
 		if (trackedConditionEvaluator.shouldSkip(configClass)) {
+			// 跳过配置类的话在Spring容器中移除bean的注册
 			String beanName = configClass.getBeanName();
 			if (StringUtils.hasLength(beanName) && this.registry.containsBeanDefinition(beanName)) {
 				this.registry.removeBeanDefinition(beanName);
@@ -135,14 +137,17 @@ class ConfigurationClassBeanDefinitionReader {
 		}
 
 		// 如果一个类是被import的，会被spring标准，这里完成注册
+		// 如果自身是被@Import注释所import的，注册自己
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+		// 注册方法中被@Bean注解修饰的bean
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
-
+		// 注册@ImportResource注解注释的资源文件中的bean
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+		// 注册@Import注解中的ImportBeanDefinitionRegistrar接口的registerBeanDefinitions
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 

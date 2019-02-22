@@ -354,7 +354,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			 * 这里值得注意的是扫描出来的bean当中可能包含了特殊类
 			 * 比如ImportBeanDefinitionRegistrar那么也在这个方法里面处理
 			 * 但是并不是包含在configClassess当中
-			 * configClassess当真主要包含的是importSelector
+			 * configClassess当中主要包含的是importSelector
 			 * 因为ImportBeanDefinitionRegistrar在扫描出来的时候已经被添加到一个list当中去了
 			 */
 			this.reader.loadBeanDefinitions(configClasses);

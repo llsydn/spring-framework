@@ -40,6 +40,12 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * Spring Framework内部使用一种工厂加载机制(Factory Loading Mechanism)。这种机制使用SpringFactoriesLoader完成，
+ * SpringFactoriesLoader使用loadFactories方法加载并实例化从META-INF目录里的spring.factories文件出来的工厂，
+ * 这些spring.factories文件都是从classpath里的jar包里找出来的。
+ *
+ * spring.factories文件是以Java的Properties格式存在，key是接口或抽象类的全名、value是以逗号 “ , “ 分隔的实现类
+ *
  * General purpose factory loading mechanism for internal use within the framework.
  *
  * <p>{@code SpringFactoriesLoader} {@linkplain #loadFactories loads} and instantiates
@@ -118,6 +124,7 @@ public final class SpringFactoriesLoader {
 	 * @see #loadFactories
 	 */
 	public static List<String> loadFactoryNames(Class<?> factoryClass, @Nullable ClassLoader classLoader) {
+		// 解析出properties文件中需要的key值
 		String factoryClassName = factoryClass.getName();
 		return loadSpringFactories(classLoader).getOrDefault(factoryClassName, Collections.emptyList());
 	}
@@ -129,16 +136,21 @@ public final class SpringFactoriesLoader {
 		}
 
 		try {
+			// 常量FACTORIES_RESOURCE_LOCATION的值为META-INF/spring.factories
+			// 使用类加载器找META-INF/spring.factories资源
 			Enumeration<URL> urls = (classLoader != null ?
 					classLoader.getResources(FACTORIES_RESOURCE_LOCATION) :
 					ClassLoader.getSystemResources(FACTORIES_RESOURCE_LOCATION));
 			result = new LinkedMultiValueMap<>();
+			// 遍历找到的资源
 			while (urls.hasMoreElements()) {
 				URL url = urls.nextElement();
 				UrlResource resource = new UrlResource(url);
+				// 使用属性文件加载资源
 				Properties properties = PropertiesLoaderUtils.loadProperties(resource);
 				for (Map.Entry<?, ?> entry : properties.entrySet()) {
 					String factoryClassName = ((String) entry.getKey()).trim();
+					// 找出key为参数factoryClass类对象对应的全名称对应的值
 					for (String factoryName : StringUtils.commaDelimitedListToStringArray((String) entry.getValue())) {
 						result.add(factoryClassName, factoryName.trim());
 					}

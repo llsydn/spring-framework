@@ -36,8 +36,8 @@ public class TestMain1 {
 		CityService cityService = (CityService) applicationContext.getBean("cityService");
 		System.out.println(cityService);
 		// 这里会输出两次查询数据库的sql
-		cityService.query();
-		cityService.query();
+		// cityService.query();
+		// cityService.query();
 	}
 }
 

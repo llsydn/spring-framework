@@ -158,6 +158,7 @@ class ConfigurationClassParser {
 		this.registry = registry;
 		this.componentScanParser = new ComponentScanAnnotationParser(
 				environment, resourceLoader, componentScanBeanNameGenerator, registry);
+		// 构造ConditionEvaluator用于处理条件注解
 		this.conditionEvaluator = new ConditionEvaluator(registry, environment, resourceLoader);
 	}
 
@@ -217,8 +218,8 @@ class ConfigurationClassParser {
 		return this.configurationClasses.keySet();
 	}
 
-
 	protected void processConfigurationClass(ConfigurationClass configClass) throws IOException {
+		// 只有跟解析或者注册bean有关系的类都会使用ConditionEvaluator完成条件注解的判断，这个过程中一些类不满足条件的话就会被skip
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
@@ -253,6 +254,32 @@ class ConfigurationClassParser {
 		this.configurationClasses.put(configClass, configClass);
 	}
 
+	/**
+	 * ConfigurationClassParser解析过程如下：
+	 * 1.处理@PropertySources注解：进行一些配置信息的解析
+	 * 2.处理@ComponentScan注解：使用ComponentScanAnnotationParser扫描basePackage下的需要解析的类(@SpringBootApplication注解也包括了@ComponentScan注解，
+	 * 		只不过basePackages是空的，空的话会去获取当前@Configuration修饰的类所在的包)，并注册到BeanFactory中(这个时候bean并没有进行实例化，而是进行了注册。
+	 * 		具体的实例化在finishBeanFactoryInitialization方法中执行)。对于扫描出来的类，递归解析
+	 * 3.处理@Import注解：先递归找出所有的注解，然后再过滤出只有@Import注解的类，得到@Import注解的值。比如查找@SpringBootApplication注解的
+	 * 		@Import注解数据的话，首先发现@SpringBootApplication不是一个@Import注解，然后递归调用修饰了@SpringBootApplication的注解，
+	 * 		发现有个@EnableAutoConfiguration注解，再次递归发现被@Import(EnableAutoConfigurationImportSelector.class)修饰，还有
+	 * 		@AutoConfigurationPackage注解修饰，再次递归@AutoConfigurationPackage注解，发现被@Import(AutoConfigurationPackages.Registrar.class)注解修饰，
+	 * 		所以@SpringBootApplication注解对应的@Import注解有2个，分别是@Import(AutoConfigurationPackages.Registrar.class)和
+	 * 		@Import(EnableAutoConfigurationImportSelector.class)。找出所有的@Import注解之后，开始处理逻辑：
+	 * 		3.1.遍历这些@Import注解内部的属性类集合
+	 * 		3.2.如果这个类是个ImportSelector接口的实现类，实例化这个ImportSelector，如果这个类也是DeferredImportSelector接口的实现类，那么加入
+	 * 			ConfigurationClassParser的deferredImportSelectors属性中让第6步处理。否则调用ImportSelector的selectImports方法得到需要Import的类，
+	 * 			然后对这些类递归做@Import注解的处理
+	 * 		3.3.如果这个类是ImportBeanDefinitionRegistrar接口的实现类，设置到配置类的importBeanDefinitionRegistrars属性中
+	 * 		3.4.其它情况下把这个类入队到ConfigurationClassParser的importStack(队列)属性中，然后把这个类当成是@Configuration注解
+	 * 			修饰的类递归重头开始解析这个类
+	 * 4.处理@ImportResource注解：获取@ImportResource注解的locations属性，得到资源文件的地址信息。然后遍历这些资源文件并把它们添加
+	 * 		到配置类的importedResources属性中
+	 * 5.处理@Bean注解：获取被@Bean注解修饰的方法，然后添加到配置类的beanMethods属性中
+	 * 6.处理DeferredImportSelector：处理第3步@Import注解产生的DeferredImportSelector，进行selectImports方法的调用找出需要import的类，
+	 * 		然后再调用第3步相同的处理逻辑处理
+	 *
+	 */
 	/**
 	 * Apply processing and build a complete {@link ConfigurationClass} by reading the
 	 * annotations, members and methods from the source class. This method can be called
