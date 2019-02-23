@@ -220,7 +220,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	public <T> T getBean(String name, @Nullable Class<T> requiredType, @Nullable Object... args)
 			throws BeansException {
-
+		// 这又是一个空壳方法
 		return doGetBean(name, requiredType, args, false);
 	}
 
@@ -238,13 +238,32 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	@SuppressWarnings("unchecked")
 	protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
 			@Nullable final Object[] args, boolean typeCheckOnly) throws BeansException {
+		/**
+		 * 通过name获取beanName，这里不使用name直接作为beanName有两个原因
+		 * 1.name可能会以 &开头，表明调用者想获取FactoryBean本身，而非FactoryBean实现类所创建的baen
+		 * 在BeanFactory中，FactoryBaen的实现类和其他的bean存储方式是一致的，即<beanName, bean>,beanName
+		 * 中是没有&这个字符的，所以我们需要将name的首字符&移除，这样才能从缓存里取到FactoryBaen实例
+		 * 2.还是别名的问题，需要转换一下
+		 */
 
 		final String beanName = transformedBeanName(name);
 		Object bean;
 
+		/**
+		 * 这个方法在初始化的时候会调用，在getBean的时候也会调用
+		 * 为什么需要这么做呢？
+		 * 也就是说spring在初始化的时候先获取这个对象
+		 * 判断这个对象是否被实例化好了（普通情况下绝对为空===有一种情况可能不为空）
+		 * 从spring的bean容器中获取一个bean，由于spring中bean容器是一个map（singletonObjects）
+		 * 所以你可以理解个头Singleton(beanName)等于beanMap.get(beanName);
+		 * 由于方法会在spring环境初始化的时候调用一次，还会在getBean的时候调用一次，所以在调试的时候需要注意，不能直接断点在这。
+		 *
+		 * （这里是从缓存中Map<String, Object> singletonObjects获取bean对象）
+		 */
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
+			// 这里的代码是对于日志的记录
 			if (logger.isTraceEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
 					logger.trace("Returning eagerly cached instance of singleton bean '" + beanName +
@@ -254,6 +273,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.trace("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
+			/**
+			 * 如果sharedInstance是普通的单例，下面的方法会直接返回。
+			 * 但如果sharedInstance是FactoryBaen类型，则需要调用getObject工厂方法获取真正的bean实列
+			 * 如果用户想获取FactoryBean本身，这里也不会做特别的处理，直接返回即可。
+			 * 毕竟FactoryBean的实列类本身也是一种bean，只不过具有一点特殊的功能而已。
+			 */
 			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
 		}
 
@@ -313,8 +338,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					}
 				}
 
-				// Create bean instance.
+				// Create bean instance. 单例的时候，去实列化对象
 				if (mbd.isSingleton()) {
+					// 创建出对象（spring容器初始化的时候调用）
+					// lambda表达式
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
 							return createBean(beanName, mbd, args);

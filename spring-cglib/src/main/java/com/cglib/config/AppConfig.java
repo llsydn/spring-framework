@@ -5,6 +5,7 @@ import com.cglib.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
  * @author lilinshen
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration //这个注解不加，也能运行，加了之后这个类就变成了cglib代理类
 @ComponentScan(value = "com.cglib")
+@EnableAspectJAutoProxy //开启@Aspect注解
 public class AppConfig {
 
 	@Bean

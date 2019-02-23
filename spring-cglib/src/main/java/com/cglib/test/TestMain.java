@@ -1,6 +1,7 @@
 package com.cglib.test;
 
 import com.cglib.config.AppConfig;
+import com.cglib.dao.IndexDao;
 import com.cglib.proxy.MyMethodInterceptor;
 import com.cglib.service.IndexService;
 import com.cglib.service.UserService;
@@ -39,6 +40,11 @@ public class TestMain {
 		enhancer.setCallback(new MyMethodInterceptor());
 		UserService userService = (UserService) enhancer.create();
 		userService.query();
+
+		// @Aspect，springaop代理
+		IndexDao indexDao = applicationContext.getBean(IndexDao.class);
+		indexDao.query();
+
 	}
 }
 

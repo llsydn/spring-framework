@@ -341,6 +341,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
+		/**
+		 * getBean是一个空壳方法，所有的逻辑都封装在doGetBean方法中
+		 */
 		return getBean(requiredType, (Object[]) null);
 	}
 
@@ -413,6 +416,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 	@Nullable
 	private <T> T resolveBean(ResolvableType requiredType, @Nullable Object[] args, boolean nonUniqueAsNull) {
+		// NameBeanHolder可以理解为一个数据结构和map差不多，里面就是存了bean的名字和bean实例对象
+		// 一个简单的bean和名字的容器
+		// 通过resolveNameBean方法得到这个holder，所以要看resolveNamedBean如何得到这个holder
 		NamedBeanHolder<T> namedBean = resolveNamedBean(requiredType, args, nonUniqueAsNull);
 		if (namedBean != null) {
 			return namedBean.getBeanInstance();
@@ -1100,7 +1106,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	@Nullable
 	private <T> NamedBeanHolder<T> resolveNamedBean(
 			ResolvableType requiredType, @Nullable Object[] args, boolean nonUniqueAsNull) throws BeansException {
-
+		// 得到对象的名字，所以对象可能有别名故而需要处理别名
 		Assert.notNull(requiredType, "Required type must not be null");
 		String[] candidateNames = getBeanNamesForType(requiredType);
 
@@ -1118,6 +1124,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		if (candidateNames.length == 1) {
 			String beanName = candidateNames[0];
+			// 这的getBean才是真正获取对象的方法
 			return new NamedBeanHolder<>(beanName, (T) getBean(beanName, requiredType.toClass(), args));
 		}
 		else if (candidateNames.length > 1) {

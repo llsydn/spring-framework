@@ -425,12 +425,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		return result;
 	}
 
+	// 执行后置处理器的after方法
 	@Override
 	public Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
 			throws BeansException {
 
 		Object result = existingBean;
+		// getBeanPostProcessors获取到所有的beanPostProcessor后置处理器（默认有6个）
 		for (BeanPostProcessor processor : getBeanPostProcessors()) {
+			// 执行后置处理器的postProcessAfterInitialization方法
 			Object current = processor.postProcessAfterInitialization(result, beanName);
 			if (current == null) {
 				return result;
@@ -474,6 +477,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Prepare method overrides.
+		// 处理lookup-method和replace-method配置，Spring将两个配置统称为override method
 		try {
 			mbdToUse.prepareMethodOverrides();
 		}
@@ -483,6 +487,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			// 在bean初始化前应用后置处理，如果后置处理返回的bean不为空，则直接返回
+			// 这个类需要通过代码演示
 			// Give BeanPostProcessors a chance to return a proxy instead of the target bean instance.
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
@@ -495,6 +501,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		try {
+			// 调用doCreateBean去创建bean
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isTraceEnabled()) {
 				logger.trace("Finished creating instance of bean '" + beanName + "'");
@@ -529,14 +536,25 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
 			throws BeanCreationException {
 
-		// Instantiate the bean.
+		// Instantiate the bean. bean的包裹对象
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
+			/**
+			 * 创建bean实例，并将实例包裹在beanWrapper实现类对象中返回
+			 * createBeanInstance中包含三种创建bean实例的方式：
+			 * 	1.通过工厂方法创建bean实列
+			 * 	2.通过构造方法自动注入（autowire by constructor）的方式创建bean实列
+			 * 	3.通过无参构造方法创建bean实列
+			 *
+			 * 若bean的配置信息中配置了lookup-method和replace-method，则会使用CGLIB
+			 * 增强bean实例。
+			 */
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
+		// 这里还是原生对象
 		final Object bean = instanceWrapper.getWrappedInstance();
 		Class<?> beanType = instanceWrapper.getWrappedClass();
 		if (beanType != NullBean.class) {
@@ -572,7 +590,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Initialize the bean instance.
 		Object exposedObject = bean;
 		try {
+			// 设置属性，非常重要
 			populateBean(beanName, mbd, instanceWrapper);
+			// 执行后置处理器，aop就是在这里完成处理的
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -1735,6 +1755,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
 			// 在bean实列化之前，执行BeanPostProcessor的postProcessBeforeInitialization的方法
+			// 执行后置处理器的before方法
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
@@ -1748,6 +1769,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
 			// 在bean实列化之后，执行BeanPostProcessor的postProcessAfterInitialization的方法
+			// 执行后置处理器的after方法
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 
