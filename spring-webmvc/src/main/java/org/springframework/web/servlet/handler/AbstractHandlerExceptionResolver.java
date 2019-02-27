@@ -121,6 +121,8 @@ public abstract class AbstractHandlerExceptionResolver implements HandlerExcepti
 
 
 	/**
+	 * 处理异常
+	 *
 	 * Check whether this resolver is supposed to apply (i.e. if the supplied handler
 	 * matches any of the configured {@linkplain #setMappedHandlers handlers} or
 	 * {@linkplain #setMappedHandlerClasses handler classes}), and then delegate
@@ -133,6 +135,7 @@ public abstract class AbstractHandlerExceptionResolver implements HandlerExcepti
 
 		if (shouldApplyTo(request, handler)) {
 			prepareResponse(ex, response);
+			// 处理异常
 			ModelAndView result = doResolveException(request, response, handler, ex);
 			if (result != null) {
 				// Print warn message when warn logger is not enabled...

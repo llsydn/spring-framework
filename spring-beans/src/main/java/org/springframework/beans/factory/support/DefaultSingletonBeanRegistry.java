@@ -208,6 +208,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
+			// 先从缓存中根据beanName去获取bean（判断是否已经被创建了）
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
@@ -259,9 +260,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
+					/**
+					 * 将beanName从singletonsCurrentlyInCreation这样一个set集合中，移除
+					 * 表示beanName对于的bean已经被创建完了
+					 */
 					afterSingletonCreation(beanName);
 				}
+				// 判断是否是一个新的bean
 				if (newSingleton) {
+					// 如果是新的bean，添加的缓存中singletonObject对象中
 					addSingleton(beanName, singletonObject);
 				}
 			}

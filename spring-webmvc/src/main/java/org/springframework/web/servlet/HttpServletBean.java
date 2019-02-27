@@ -138,6 +138,9 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		return new StandardServletEnvironment();
 	}
 
+	// 当浏览器第一次请求过来的时候，经过Servlet.init()-->GenericServlet.init()-->HttpServletBean.init()
+	// 再执行initServletBean(); FrameworkServlet实现了该类方法
+	// Servlet（子类）GenericServlet（子类）HttpServletBean
 	/**
 	 * Map config parameters onto bean properties of this servlet, and
 	 * invoke subclass initialization.

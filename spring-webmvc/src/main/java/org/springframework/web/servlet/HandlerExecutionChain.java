@@ -43,7 +43,7 @@ public class HandlerExecutionChain {
 	private final Object handler;
 
 	@Nullable
-	private HandlerInterceptor[] interceptors;
+	private HandlerInterceptor[] interceptors; //拦截器
 
 	@Nullable
 	private List<HandlerInterceptor> interceptorList;
@@ -123,20 +123,27 @@ public class HandlerExecutionChain {
 
 
 	/**
+	 * 执行拦截器链的：PreHandle方法
+	 *
 	 * Apply preHandle methods of registered interceptors.
 	 * @return {@code true} if the execution chain should proceed with the
 	 * next interceptor or the handler itself. Else, DispatcherServlet assumes
 	 * that this interceptor has already dealt with the response itself.
 	 */
 	boolean applyPreHandle(HttpServletRequest request, HttpServletResponse response) throws Exception {
+		// 拿到所有的拦截器，顺序遍历执行
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			for (int i = 0; i < interceptors.length; i++) {
 				HandlerInterceptor interceptor = interceptors[i];
+				// 执行拦截器链的preHandle方法
 				if (!interceptor.preHandle(request, response, this.handler)) {
+					// 但返回的是false，执行afterCompletion方法
 					triggerAfterCompletion(request, response, null);
+					// 返回false
 					return false;
 				}
+				// 记录一下索引
 				this.interceptorIndex = i;
 			}
 		}
@@ -144,30 +151,36 @@ public class HandlerExecutionChain {
 	}
 
 	/**
+	 * 执行拦截器链的：PostHandle方法
+	 *
 	 * Apply postHandle methods of registered interceptors.
 	 */
 	void applyPostHandle(HttpServletRequest request, HttpServletResponse response, @Nullable ModelAndView mv)
 			throws Exception {
-
+		// 拿到所有的拦截器，倒序遍历执行
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
 			for (int i = interceptors.length - 1; i >= 0; i--) {
 				HandlerInterceptor interceptor = interceptors[i];
+				// 执行拦截器链的preHandle方法
 				interceptor.postHandle(request, response, this.handler, mv);
 			}
 		}
 	}
 
 	/**
+	 * 执行拦截器的：afterCompletion方法
+	 *
 	 * Trigger afterCompletion callbacks on the mapped HandlerInterceptors.
 	 * Will just invoke afterCompletion for all interceptors whose preHandle invocation
 	 * has successfully completed and returned true.
 	 */
 	void triggerAfterCompletion(HttpServletRequest request, HttpServletResponse response, @Nullable Exception ex)
 			throws Exception {
-
+		// 拿到所有的拦截器
 		HandlerInterceptor[] interceptors = getInterceptors();
 		if (!ObjectUtils.isEmpty(interceptors)) {
+			// 有记录最后一个放行拦截器的索引，从他开始把之前所有放行的拦截器的afterCompletion都执行
 			for (int i = this.interceptorIndex; i >= 0; i--) {
 				HandlerInterceptor interceptor = interceptors[i];
 				try {

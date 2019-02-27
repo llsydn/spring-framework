@@ -139,8 +139,10 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 			throws BeansException {
 
 		super(parent);
+		// 将需要扫描的配置文件.xml数组保存到spring容器的configLocations对象中
 		setConfigLocations(configLocations);
 		if (refresh) {
+			// 扫描并创建spring容器
 			refresh();
 		}
 	}

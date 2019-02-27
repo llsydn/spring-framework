@@ -519,6 +519,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			// Tell the subclass to refresh the internal bean factory.
 			// 返回一个factory，为什么需要返回一个工厂？（因为需要对工厂进行初始化）
+			// (注意)当使用的xml配置文件创建spring容器的，这里就会进行扫描.xml文件
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
@@ -915,6 +916,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		// 实例化BeanFactory中已经被注册但是未实例化的所有实例(懒加载的不需要实例化)。
 		beanFactory.preInstantiateSingletons();
 	}
 

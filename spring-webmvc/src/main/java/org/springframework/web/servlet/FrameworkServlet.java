@@ -514,6 +514,9 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 
 
 	/**
+	 * 在任何bean属性之后调用的{@link HttpServletBean}的重写方法
+	 * 创建此servlet的WebApplicationContext。
+	 *
 	 * Overridden method of {@link HttpServletBean}, invoked after any bean properties
 	 * have been set. Creates this servlet's WebApplicationContext.
 	 */
@@ -884,6 +887,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	}
 
 	/**
+	 * 重写了父类的doGet方法（继承HttpServletBean--->继承HttpServlet）
+	 *
 	 * Delegate GET requests to processRequest/doService.
 	 * <p>Will also be invoked by HttpServlet's default implementation of {@code doHead},
 	 * with a {@code NoBodyResponse} that just captures the content length.
@@ -1002,6 +1007,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		initContextHolders(request, localeContext, requestAttributes);
 
 		try {
+			// 调用的是子类DispatchServlet的doService方法
 			doService(request, response);
 		}
 		catch (ServletException | IOException ex) {

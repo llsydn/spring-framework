@@ -145,6 +145,7 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 	@Override
 	@Nullable
 	public View resolveViewName(String viewName, Locale locale) throws Exception {
+		// 判断是否缓存的
 		if (!isCache()) {
 			return createView(viewName, locale);
 		}
@@ -153,9 +154,11 @@ public abstract class AbstractCachingViewResolver extends WebApplicationObjectSu
 			View view = this.viewAccessCache.get(cacheKey);
 			if (view == null) {
 				synchronized (this.viewCreationCache) {
+					// 先从缓存中获取view
 					view = this.viewCreationCache.get(cacheKey);
 					if (view == null) {
 						// Ask the subclass to create the View object.
+						// 创建视图view对象
 						view = createView(viewName, locale);
 						if (view == null && this.cacheUnresolved) {
 							view = UNRESOLVED_VIEW;

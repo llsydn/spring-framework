@@ -163,6 +163,7 @@ public class DefaultHandlerExceptionResolver extends AbstractHandlerExceptionRes
 	}
 
 
+	// SpringMvc默认的异常
 	@Override
 	@Nullable
 	protected ModelAndView doResolveException(
