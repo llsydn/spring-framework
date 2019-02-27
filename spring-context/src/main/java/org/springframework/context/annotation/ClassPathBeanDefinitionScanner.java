@@ -271,15 +271,22 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
+
+		// 循环处理basePackages
 		for (String basePackage : basePackages) {
 			// 扫描basePackages路径下的所有java文件
-			// 并把他转成BeanDefinition类型
+			// 根据包名找到符合条件的BeanDefinition集合
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
 				// 解析scope属性
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
+
+				// 由findCandidateComponents内部可知，这里的candidate是ScannedGenericBeanDefinition
+				// 而ScannedGenericBeanDefinition是AbstractBeanDefinition和AnnotatedBeanDefinition的之类
+				// 所以下面的两个if都会进入
+
 				if (candidate instanceof AbstractBeanDefinition) {
 					// 如果这个类是AbstractBeanDefinition的子类
 					// 则为他设置默认值，比如：lazy，init destory
@@ -291,6 +298,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 					// 当前前提是这个类必须是AnnotatedBeanDefinition类型的，也就是加了注解的类
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
+
 				if (checkCandidate(beanName, candidate)) {
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
 					definitionHolder =
