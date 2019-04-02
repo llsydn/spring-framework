@@ -108,8 +108,16 @@ import org.springframework.util.ReflectionUtils;
  * @see #onStartup(Set, ServletContext)
  * @see WebApplicationInitializer
  */
-@HandlesTypes(WebApplicationInitializer.class)
+@HandlesTypes(WebApplicationInitializer.class) // 感兴趣的类，这个注解可以拿到所有实现了WebApplicationInitializer接口的实现类
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
+
+	/**
+	 * ServletContainerInitializer是servlet3.0的特性，
+	 * 容器在启动应用的时候，会扫描当前应用每一个jar包里面的META-INF/services/javax.servlet.ServletContainerInitializer，
+	 *
+	 * SpringServletContainerInitializer 实现了 ServletContainerInitializer接口，在容器启动的时候会执行
+	 * SpringServletContainerInitializer类中onStartup的方法
+	 */
 
 	/**
 	 * Delegate the {@code ServletContext} to any {@link WebApplicationInitializer}
@@ -140,6 +148,9 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 	@Override
 	public void onStartup(@Nullable Set<Class<?>> webAppInitializerClasses, ServletContext servletContext)
 			throws ServletException {
+		/**
+		 * Set<Class<?>> webAppInitializerClasses 这个注入的类集合和 前面的 @HandlesTypes(WebApplicationInitializer.class) 注解有关
+		 */
 
 		List<WebApplicationInitializer> initializers = new LinkedList<>();
 
