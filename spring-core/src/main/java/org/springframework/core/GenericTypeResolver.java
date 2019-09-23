@@ -41,15 +41,11 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * @author Phillip Webb
  * @since 2.5.2
  */
-public final class GenericTypeResolver {
+public abstract class GenericTypeResolver {
 
-	/** Cache from Class to TypeVariable Map. */
+	/** Cache from Class to TypeVariable Map */
 	@SuppressWarnings("rawtypes")
 	private static final Map<Class<?>, Map<TypeVariable, Type>> typeVariableCache = new ConcurrentReferenceHashMap<>();
-
-
-	private GenericTypeResolver() {
-	}
 
 
 	/**
@@ -229,7 +225,7 @@ public final class GenericTypeResolver {
 	 */
 	@SuppressWarnings("rawtypes")
 	public static Class<?> resolveType(Type genericType, Map<TypeVariable, Type> map) {
-		return ResolvableType.forType(genericType, new TypeVariableMapVariableResolver(map)).toClass();
+		return ResolvableType.forType(genericType, new TypeVariableMapVariableResolver(map)).resolve(Object.class);
 	}
 
 	/**

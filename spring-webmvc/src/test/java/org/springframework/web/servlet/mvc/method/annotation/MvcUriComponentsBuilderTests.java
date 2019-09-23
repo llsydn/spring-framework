@@ -23,7 +23,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
 
 import org.hamcrest.Matchers;
 import org.joda.time.DateTime;
@@ -37,9 +36,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.test.MockFilterChain;
 import org.springframework.mock.web.test.MockHttpServletRequest;
-import org.springframework.mock.web.test.MockHttpServletResponse;
 import org.springframework.mock.web.test.MockServletContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.MultiValueMap;
@@ -52,11 +49,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
-import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -66,13 +61,14 @@ import static org.junit.Assert.*;
 import static org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder.*;
 
 /**
- * Unit tests for {@link MvcUriComponentsBuilder}.
+ * Unit tests for {@link org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder}.
  *
  * @author Oliver Gierke
  * @author Dietrich Schulten
  * @author Rossen Stoyanchev
  * @author Sam Brannen
  */
+@SuppressWarnings("unused")
 public class MvcUriComponentsBuilderTests {
 
 	private final MockHttpServletRequest request = new MockHttpServletRequest();
@@ -140,38 +136,27 @@ public class MvcUriComponentsBuilderTests {
 	}
 
 	@Test
-	public void usesForwardedHostAsHostIfHeaderIsSet() throws Exception {
+	public void usesForwardedHostAsHostIfHeaderIsSet() {
 		this.request.addHeader("X-Forwarded-Host", "somethingDifferent");
-		adaptRequestFromForwardedHeaders();
 		UriComponents uriComponents = fromController(PersonControllerImpl.class).build();
 
 		assertThat(uriComponents.toUriString(), startsWith("http://somethingDifferent"));
 	}
 
 	@Test
-	public void usesForwardedHostAndPortFromHeader() throws Exception {
+	public void usesForwardedHostAndPortFromHeader() {
 		request.addHeader("X-Forwarded-Host", "foobar:8088");
-		adaptRequestFromForwardedHeaders();
 		UriComponents uriComponents = fromController(PersonControllerImpl.class).build();
 
 		assertThat(uriComponents.toUriString(), startsWith("http://foobar:8088"));
 	}
 
 	@Test
-	public void usesFirstHostOfXForwardedHost() throws Exception {
-		this.request.addHeader("X-Forwarded-Host", "barfoo:8888, localhost:8088");
-		adaptRequestFromForwardedHeaders();
+	public void usesFirstHostOfXForwardedHost() {
+		request.addHeader("X-Forwarded-Host", "barfoo:8888, localhost:8088");
 		UriComponents uriComponents = fromController(PersonControllerImpl.class).build();
 
 		assertThat(uriComponents.toUriString(), startsWith("http://barfoo:8888"));
-	}
-
-	// SPR-16668
-	private void adaptRequestFromForwardedHeaders() throws Exception {
-		MockFilterChain chain = new MockFilterChain();
-		new ForwardedHeaderFilter().doFilter(this.request, new MockHttpServletResponse(), chain);
-		HttpServletRequest adaptedRequest = (HttpServletRequest) chain.getRequest();
-		RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(adaptedRequest));
 	}
 
 	@Test
@@ -276,7 +261,7 @@ public class MvcUriComponentsBuilderTests {
 		assertThat(uriComponents.toUriString(), endsWith("/something/else"));
 	}
 
-	@Test
+ 	@Test
 	public void fromMethodCallOnSubclass() {
 		UriComponents uriComponents = fromMethodCall(on(ExtendedController.class).myMethod(null)).build();
 
@@ -378,9 +363,7 @@ public class MvcUriComponentsBuilderTests {
 
 	@Test
 	public void fromMappingNamePlain() {
-
 		initWebApplicationContext(WebConfig.class);
-
 		this.request.setServerName("example.org");
 		this.request.setServerPort(9999);
 		this.request.setContextPath("/base");
@@ -392,7 +375,6 @@ public class MvcUriComponentsBuilderTests {
 
 	@Test
 	public void fromMappingNameWithCustomBaseUrl() {
-
 		initWebApplicationContext(WebConfig.class);
 
 		UriComponentsBuilder baseUrl = UriComponentsBuilder.fromUriString("http://example.org:9999/base");
@@ -400,10 +382,9 @@ public class MvcUriComponentsBuilderTests {
 		String url = mvcBuilder.withMappingName("PAC#getAddressesForCountry").arg(0, "DE").buildAndExpand(123);
 		assertEquals("http://example.org:9999/base/people/123/addresses/DE", url);
 	}
-
+   
 	@Test // SPR-17027
 	public void fromMappingNameWithEncoding() {
-
 		initWebApplicationContext(WebConfig.class);
 
 		this.request.setServerName("example.org");
@@ -415,38 +396,12 @@ public class MvcUriComponentsBuilderTests {
 		assertEquals("/base/people/_%2B_/addresses/DE%3BFR", url);
 	}
 
-	@Test
-	public void fromControllerWithPrefix() {
-
-		initWebApplicationContext(PathPrefixWebConfig.class);
-
-		this.request.setServerName("example.org");
-		this.request.setServerPort(9999);
-		this.request.setContextPath("/base");
-
-		assertEquals("http://example.org:9999/base/api/people/123/addresses",
-				fromController(PersonsAddressesController.class).buildAndExpand("123").toString());
-	}
-
-	@Test
-	public void fromMethodWithPrefix() {
-
-		initWebApplicationContext(PathPrefixWebConfig.class);
-
-		this.request.setServerName("example.org");
-		this.request.setServerPort(9999);
-		this.request.setContextPath("/base");
-
-		assertEquals("http://example.org:9999/base/api/people/123/addresses/DE",
-				fromMethodCall(on(PersonsAddressesController.class).getAddressesForCountry("DE"))
-						.buildAndExpand("123").toString());
-	}
-
 	private void initWebApplicationContext(Class<?> configClass) {
 		AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 		context.setServletContext(new MockServletContext());
 		context.register(configClass);
 		context.refresh();
+
 		this.request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, context);
 	}
 
@@ -466,12 +421,12 @@ public class MvcUriComponentsBuilderTests {
 	}
 
 
-	static class PersonControllerImpl implements PersonController {
+	private class PersonControllerImpl implements PersonController {
 	}
 
 
 	@RequestMapping("/people/{id}/addresses")
-	static class PersonsAddressesController {
+	private static class PersonsAddressesController {
 
 		@RequestMapping("/{country}")
 		HttpEntity<Void> getAddressesForCountry(@PathVariable String country) {
@@ -538,7 +493,7 @@ public class MvcUriComponentsBuilderTests {
 
 
 	@RequestMapping("/user/{userId}/contacts")
-	static class UserContactController {
+	private static class UserContactController {
 
 		@RequestMapping("/create")
 		public String showCreate(@PathVariable Integer userId) {
@@ -553,7 +508,7 @@ public class MvcUriComponentsBuilderTests {
 	}
 
 
-	static class PersonCrudController extends AbstractCrudController<Person, Long> {
+	private static class PersonCrudController extends AbstractCrudController<Person, Long> {
 
 		@RequestMapping(path = "/{id}", method = RequestMethod.GET)
 		public Person get(@PathVariable Long id) {
@@ -563,7 +518,7 @@ public class MvcUriComponentsBuilderTests {
 
 
 	@Controller
-	static class MetaAnnotationController {
+	private static class MetaAnnotationController {
 
 		@RequestMapping
 		public void handle() {
@@ -589,21 +544,6 @@ public class MvcUriComponentsBuilderTests {
 
 	@EnableWebMvc
 	static class WebConfig implements WebMvcConfigurer {
-
-		@Bean
-		public PersonsAddressesController controller() {
-			return new PersonsAddressesController();
-		}
-	}
-
-
-	@EnableWebMvc
-	static class PathPrefixWebConfig implements WebMvcConfigurer {
-
-		@Override
-		public void configurePathMatch(PathMatchConfigurer configurer) {
-			configurer.addPathPrefix("/api", PersonsAddressesController.class::equals);
-		}
 
 		@Bean
 		public PersonsAddressesController controller() {

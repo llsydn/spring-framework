@@ -564,7 +564,7 @@ public class DispatcherServletTests {
 		}
 		catch (ServletException ex) {
 			// expected
-			assertTrue(ex.getMessage().contains("No adapter for handler"));
+			assertTrue(ex.getMessage().indexOf("No adapter for handler") != -1);
 		}
 	}
 
@@ -584,7 +584,7 @@ public class DispatcherServletTests {
 		}
 		catch (ServletException ex) {
 			// expected
-			assertTrue(ex.getMessage().contains("failed0"));
+			assertTrue(ex.getMessage().indexOf("failed0") != -1);
 		}
 	}
 

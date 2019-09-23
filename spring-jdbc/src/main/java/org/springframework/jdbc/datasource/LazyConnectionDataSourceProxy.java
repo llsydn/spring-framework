@@ -21,7 +21,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import javax.sql.DataSource;
 
@@ -79,7 +78,7 @@ import org.springframework.lang.Nullable;
  */
 public class LazyConnectionDataSourceProxy extends DelegatingDataSource {
 
-	/** Constants instance for TransactionDefinition. */
+	/** Constants instance for TransactionDefinition */
 	private static final Constants constants = new Constants(Connection.class);
 
 	private static final Log logger = LogFactory.getLog(LazyConnectionDataSourceProxy.class);
@@ -160,12 +159,16 @@ public class LazyConnectionDataSourceProxy extends DelegatingDataSource {
 		// via a Connection from the target DataSource, if possible.
 		if (this.defaultAutoCommit == null || this.defaultTransactionIsolation == null) {
 			try {
-				try (Connection con = obtainTargetDataSource().getConnection()) {
+				Connection con = obtainTargetDataSource().getConnection();
+				try {
 					checkDefaultConnectionProperties(con);
+				}
+				finally {
+					con.close();
 				}
 			}
 			catch (SQLException ex) {
-				logger.debug("Could not retrieve default auto-commit and transaction isolation settings", ex);
+				logger.warn("Could not retrieve default auto-commit and transaction isolation settings", ex);
 			}
 		}
 	}
@@ -261,8 +264,6 @@ public class LazyConnectionDataSourceProxy extends DelegatingDataSource {
 
 		private boolean readOnly = false;
 
-		private int holdability = ResultSet.CLOSE_CURSORS_AT_COMMIT;
-
 		private boolean closed = false;
 
 		@Nullable
@@ -347,13 +348,6 @@ public class LazyConnectionDataSourceProxy extends DelegatingDataSource {
 					this.readOnly = (Boolean) args[0];
 					return null;
 				}
-				else if (method.getName().equals("getHoldability")) {
-					return this.holdability;
-				}
-				else if (method.getName().equals("setHoldability")) {
-					this.holdability = (Integer) args[0];
-					return null;
-				}
 				else if (method.getName().equals("commit")) {
 					// Ignore: no statements created yet.
 					return null;
@@ -407,8 +401,8 @@ public class LazyConnectionDataSourceProxy extends DelegatingDataSource {
 		private Connection getTargetConnection(Method operation) throws SQLException {
 			if (this.target == null) {
 				// No target Connection held -> fetch one.
-				if (logger.isTraceEnabled()) {
-					logger.trace("Connecting to database for operation '" + operation.getName() + "'");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Connecting to database for operation '" + operation.getName() + "'");
 				}
 
 				// Fetch physical Connection from DataSource.
@@ -440,8 +434,8 @@ public class LazyConnectionDataSourceProxy extends DelegatingDataSource {
 
 			else {
 				// Target Connection already held -> return it.
-				if (logger.isTraceEnabled()) {
-					logger.trace("Using existing database connection for operation '" + operation.getName() + "'");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Using existing database connection for operation '" + operation.getName() + "'");
 				}
 			}
 

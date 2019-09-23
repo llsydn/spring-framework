@@ -19,6 +19,7 @@ package org.springframework.http.codec;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,18 +30,14 @@ import reactor.core.publisher.Mono;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.CodecException;
 import org.springframework.core.codec.Encoder;
-import org.springframework.core.codec.Hints;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * {@code HttpMessageWriter} for {@code "text/event-stream"} responses.
@@ -96,7 +93,7 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 	@Override
 	public boolean canWrite(ResolvableType elementType, @Nullable MediaType mediaType) {
 		return (mediaType == null || MediaType.TEXT_EVENT_STREAM.includes(mediaType) ||
-				ServerSentEvent.class.isAssignableFrom(elementType.toClass()));
+				ServerSentEvent.class.isAssignableFrom(elementType.resolve(Object.class)));
 	}
 
 	@Override
@@ -113,7 +110,8 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 	private Flux<Publisher<DataBuffer>> encode(Publisher<?> input, ResolvableType elementType,
 			MediaType mediaType, DataBufferFactory factory, Map<String, Object> hints) {
 
-		ResolvableType valueType = (ServerSentEvent.class.isAssignableFrom(elementType.toClass()) ?
+		Class<?> elementClass = elementType.getRawClass();
+		ResolvableType valueType = (elementClass != null && ServerSentEvent.class.isAssignableFrom(elementClass) ?
 				elementType.getGeneric() : elementType);
 
 		return Flux.from(input).map(element -> {
@@ -137,7 +135,7 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 				writeField("retry", retry.toMillis(), sb);
 			}
 			if (comment != null) {
-				sb.append(':').append(StringUtils.replace(comment, "\n", "\n:")).append("\n");
+				sb.append(':').append(comment.replaceAll("\\n", "\n:")).append("\n");
 			}
 			if (data != null) {
 				sb.append("data:");
@@ -145,8 +143,7 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 
 			return Flux.concat(encodeText(sb, mediaType, factory),
 					encodeData(data, valueType, mediaType, factory, hints),
-					encodeText("\n", mediaType, factory))
-					.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release);
+					encodeText("\n", mediaType, factory));
 		});
 	}
 
@@ -167,7 +164,7 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 
 		if (data instanceof String) {
 			String text = (String) data;
-			return Flux.from(encodeText(StringUtils.replace(text, "\n", "\ndata:") + "\n", mediaType, factory));
+			return Flux.from(encodeText(text.replaceAll("\\n", "\ndata:") + "\n", mediaType, factory));
 		}
 
 		if (this.encoder == null) {
@@ -182,8 +179,8 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 	private Mono<DataBuffer> encodeText(CharSequence text, MediaType mediaType, DataBufferFactory bufferFactory) {
 		Assert.notNull(mediaType.getCharset(), "Expected MediaType with charset");
 		byte[] bytes = text.toString().getBytes(mediaType.getCharset());
-		return Mono.defer(() ->
-				Mono.just(bufferFactory.allocateBuffer(bytes.length).write(bytes)));
+		DataBuffer buffer = bufferFactory.allocateBuffer(bytes.length).write(bytes);
+		return Mono.just(buffer);
 	}
 
 	@Override
@@ -191,8 +188,9 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 			@Nullable MediaType mediaType, ServerHttpRequest request, ServerHttpResponse response,
 			Map<String, Object> hints) {
 
-		Map<String, Object> allHints = Hints.merge(hints,
-				getEncodeHints(actualType, elementType, mediaType, request, response));
+		Map<String, Object> allHints = new HashMap<>();
+		allHints.putAll(getEncodeHints(actualType, elementType, mediaType, request, response));
+		allHints.putAll(hints);
 
 		return write(input, elementType, mediaType, response, allHints);
 	}
@@ -204,7 +202,7 @@ public class ServerSentEventHttpMessageWriter implements HttpMessageWriter<Objec
 			HttpMessageEncoder<?> encoder = (HttpMessageEncoder<?>) this.encoder;
 			return encoder.getEncodeHints(actualType, elementType, mediaType, request, response);
 		}
-		return Hints.none();
+		return Collections.emptyMap();
 	}
 
 }

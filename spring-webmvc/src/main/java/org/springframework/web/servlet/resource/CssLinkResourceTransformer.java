@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import org.springframework.util.StringUtils;
  * file to match the public URL paths that should be exposed to clients (e.g.
  * with an MD5 content-based hash inserted in the URL).
  *
- * <p>The implementation looks for links in CSS {@code @import} statements and
+ * <p>The implementation looks for links in CSS {@code @imports} statements and
  * also inside CSS {@code url()} functions. All links are then passed through the
  * {@link ResourceResolverChain} and resolved relative to the location of the
  * containing CSS file. If successfully resolved, the link is modified, otherwise
@@ -62,7 +62,6 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 	}
 
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public Resource transform(HttpServletRequest request, Resource resource, ResourceTransformerChain transformerChain)
 			throws IOException {
@@ -71,9 +70,12 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 
 		String filename = resource.getFilename();
 		if (!"css".equals(StringUtils.getFilenameExtension(filename)) ||
-				resource instanceof EncodedResourceResolver.EncodedResource ||
 				resource instanceof GzipResourceResolver.GzippedResource) {
 			return resource;
+		}
+
+		if (logger.isTraceEnabled()) {
+			logger.trace("Transforming resource: " + resource);
 		}
 
 		byte[] bytes = FileCopyUtils.copyToByteArray(resource.getInputStream());
@@ -85,6 +87,9 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 		}
 
 		if (links.isEmpty()) {
+			if (logger.isTraceEnabled()) {
+				logger.trace("No links found.");
+			}
 			return resource;
 		}
 
@@ -98,6 +103,14 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 				String absolutePath = toAbsolutePath(link, request);
 				newLink = resolveUrlPath(absolutePath, request, resource, transformerChain);
 			}
+			if (logger.isTraceEnabled()) {
+				if (newLink != null && !newLink.equals(link)) {
+					logger.trace("Link modified: " + newLink + " (original: " + link + ")");
+				}
+				else {
+					logger.trace("Link not modified: " + link);
+				}
+			}
 			writer.write(newLink != null ? newLink : link);
 			index = linkContentChunkInfo.getEnd();
 		}
@@ -108,7 +121,7 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 
 	private boolean hasScheme(String link) {
 		int schemeIndex = link.indexOf(':');
-		return ((schemeIndex > 0 && !link.substring(0, schemeIndex).contains("/")) || link.indexOf("//") == 0);
+		return (schemeIndex > 0 && !link.substring(0, schemeIndex).contains("/")) || link.indexOf("//") == 0;
 	}
 
 
@@ -123,12 +136,9 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 	}
 
 
-	/**
-	 * Abstract base class for {@link LinkParser} implementations.
-	 */
 	protected abstract static class AbstractLinkParser implements LinkParser {
 
-		/** Return the keyword to use to search for links, e.g. "@import", "url(" */
+		/** Return the keyword to use to search for links, e.g. "@imports", "url(" */
 		protected abstract String getKeyword();
 
 		@Override
@@ -167,7 +177,9 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 		 * Invoked after a keyword match, after whitespaces removed, and when
 		 * the next char is neither a single nor double quote.
 		 */
-		protected abstract int extractLink(int index, String content, SortedSet<ContentChunkInfo> linksToAdd);
+		protected abstract int extractLink(int index, String content,
+				SortedSet<ContentChunkInfo> linksToAdd);
+
 	}
 
 
@@ -175,7 +187,7 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 
 		@Override
 		protected String getKeyword() {
-			return "@import";
+			return "@imports";
 		}
 
 		@Override
@@ -183,8 +195,8 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 			if (content.substring(index, index + 4).equals("url(")) {
 				// Ignore, UrlLinkParser will take care
 			}
-			else if (logger.isTraceEnabled()) {
-				logger.trace("Unexpected syntax for @import link at index " + index);
+			else if (logger.isErrorEnabled()) {
+				logger.error("Unexpected syntax for @imports link at index " + index);
 			}
 			return index;
 		}

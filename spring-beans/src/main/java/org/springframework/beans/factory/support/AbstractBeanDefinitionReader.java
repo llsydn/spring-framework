@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.beans.factory.support;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -46,9 +45,9 @@ import org.springframework.util.Assert;
  * @since 11.12.2003
  * @see BeanDefinitionReaderUtils
  */
-public abstract class AbstractBeanDefinitionReader implements BeanDefinitionReader, EnvironmentCapable {
+public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable, BeanDefinitionReader {
 
-	/** Logger available to subclasses. */
+	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	private final BeanDefinitionRegistry registry;
@@ -183,11 +182,11 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	@Override
 	public int loadBeanDefinitions(Resource... resources) throws BeanDefinitionStoreException {
 		Assert.notNull(resources, "Resource array must not be null");
-		int count = 0;
+		int counter = 0;
 		for (Resource resource : resources) {
-			count += loadBeanDefinitions(resource);
+			counter += loadBeanDefinitions(resource);
 		}
-		return count;
+		return counter;
 	}
 
 	@Override
@@ -214,21 +213,23 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 		ResourceLoader resourceLoader = getResourceLoader();
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(
-					"Cannot load bean definitions from location [" + location + "]: no ResourceLoader available");
+					"Cannot imports bean definitions from location [" + location + "]: no ResourceLoader available");
 		}
 
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
 			try {
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
-				int count = loadBeanDefinitions(resources);
+				int loadCount = loadBeanDefinitions(resources);
 				if (actualResources != null) {
-					Collections.addAll(actualResources, resources);
+					for (Resource resource : resources) {
+						actualResources.add(resource);
+					}
 				}
-				if (logger.isTraceEnabled()) {
-					logger.trace("Loaded " + count + " bean definitions from location pattern [" + location + "]");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Loaded " + loadCount + " bean definitions from location pattern [" + location + "]");
 				}
-				return count;
+				return loadCount;
 			}
 			catch (IOException ex) {
 				throw new BeanDefinitionStoreException(
@@ -238,25 +239,25 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 		else {
 			// Can only load single resources by absolute URL.
 			Resource resource = resourceLoader.getResource(location);
-			int count = loadBeanDefinitions(resource);
+			int loadCount = loadBeanDefinitions(resource);
 			if (actualResources != null) {
 				actualResources.add(resource);
 			}
-			if (logger.isTraceEnabled()) {
-				logger.trace("Loaded " + count + " bean definitions from location [" + location + "]");
+			if (logger.isDebugEnabled()) {
+				logger.debug("Loaded " + loadCount + " bean definitions from location [" + location + "]");
 			}
-			return count;
+			return loadCount;
 		}
 	}
 
 	@Override
 	public int loadBeanDefinitions(String... locations) throws BeanDefinitionStoreException {
 		Assert.notNull(locations, "Location array must not be null");
-		int count = 0;
+		int counter = 0;
 		for (String location : locations) {
-			count += loadBeanDefinitions(location);
+			counter += loadBeanDefinitions(location);
 		}
-		return count;
+		return counter;
 	}
 
 }

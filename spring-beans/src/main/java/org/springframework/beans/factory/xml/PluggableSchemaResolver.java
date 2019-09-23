@@ -71,7 +71,7 @@ public class PluggableSchemaResolver implements EntityResolver {
 
 	private final String schemaMappingsLocation;
 
-	/** Stores the mapping of schema URL -> local schema path. */
+	/** Stores the mapping of schema URL -> local schema path */
 	@Nullable
 	private volatile Map<String, String> schemaMappings;
 
@@ -119,8 +119,8 @@ public class PluggableSchemaResolver implements EntityResolver {
 					InputSource source = new InputSource(resource.getInputStream());
 					source.setPublicId(publicId);
 					source.setSystemId(systemId);
-					if (logger.isTraceEnabled()) {
-						logger.trace("Found XML schema [" + systemId + "] in classpath: " + resourceLocation);
+					if (logger.isDebugEnabled()) {
+						logger.debug("Found XML schema [" + systemId + "] in classpath: " + resourceLocation);
 					}
 					return source;
 				}
@@ -143,14 +143,14 @@ public class PluggableSchemaResolver implements EntityResolver {
 			synchronized (this) {
 				schemaMappings = this.schemaMappings;
 				if (schemaMappings == null) {
-					if (logger.isTraceEnabled()) {
-						logger.trace("Loading schema mappings from [" + this.schemaMappingsLocation + "]");
+					if (logger.isDebugEnabled()) {
+						logger.debug("Loading schema mappings from [" + this.schemaMappingsLocation + "]");
 					}
 					try {
 						Properties mappings =
 								PropertiesLoaderUtils.loadAllProperties(this.schemaMappingsLocation, this.classLoader);
-						if (logger.isTraceEnabled()) {
-							logger.trace("Loaded schema mappings: " + mappings);
+						if (logger.isDebugEnabled()) {
+							logger.debug("Loaded schema mappings: " + mappings);
 						}
 						schemaMappings = new ConcurrentHashMap<>(mappings.size());
 						CollectionUtils.mergePropertiesIntoMap(mappings, schemaMappings);

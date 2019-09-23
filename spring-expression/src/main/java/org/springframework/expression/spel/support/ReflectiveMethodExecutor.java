@@ -26,7 +26,6 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.MethodExecutor;
 import org.springframework.expression.TypedValue;
 import org.springframework.lang.Nullable;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
@@ -38,9 +37,7 @@ import org.springframework.util.ReflectionUtils;
  */
 public class ReflectiveMethodExecutor implements MethodExecutor {
 
-	private final Method originalMethod;
-
-	private final Method methodToInvoke;
+	private final Method method;
 
 	@Nullable
 	private final Integer varargsPosition;
@@ -58,8 +55,7 @@ public class ReflectiveMethodExecutor implements MethodExecutor {
 	 * @param method the method to invoke
 	 */
 	public ReflectiveMethodExecutor(Method method) {
-		this.originalMethod = method;
-		this.methodToInvoke = ClassUtils.getInterfaceMethodIfPossible(method);
+		this.method = method;
 		if (method.isVarArgs()) {
 			Class<?>[] paramTypes = method.getParameterTypes();
 			this.varargsPosition = paramTypes.length - 1;
@@ -73,8 +69,8 @@ public class ReflectiveMethodExecutor implements MethodExecutor {
 	/**
 	 * Return the original method that this executor has been configured for.
 	 */
-	public final Method getMethod() {
-		return this.originalMethod;
+	public Method getMethod() {
+		return this.method;
 	}
 
 	/**
@@ -89,7 +85,7 @@ public class ReflectiveMethodExecutor implements MethodExecutor {
 	public Class<?> getPublicDeclaringClass() {
 		if (!this.computedPublicDeclaringClass) {
 			this.publicDeclaringClass =
-					discoverPublicDeclaringClass(this.originalMethod, this.originalMethod.getDeclaringClass());
+					discoverPublicDeclaringClass(this.method, this.method.getDeclaringClass());
 			this.computedPublicDeclaringClass = true;
 		}
 		return this.publicDeclaringClass;
@@ -121,17 +117,17 @@ public class ReflectiveMethodExecutor implements MethodExecutor {
 	public TypedValue execute(EvaluationContext context, Object target, Object... arguments) throws AccessException {
 		try {
 			this.argumentConversionOccurred = ReflectionHelper.convertArguments(
-					context.getTypeConverter(), arguments, this.originalMethod, this.varargsPosition);
-			if (this.originalMethod.isVarArgs()) {
+					context.getTypeConverter(), arguments, this.method, this.varargsPosition);
+			if (this.method.isVarArgs()) {
 				arguments = ReflectionHelper.setupArgumentsForVarargsInvocation(
-						this.originalMethod.getParameterTypes(), arguments);
+						this.method.getParameterTypes(), arguments);
 			}
-			ReflectionUtils.makeAccessible(this.methodToInvoke);
-			Object value = this.methodToInvoke.invoke(target, arguments);
-			return new TypedValue(value, new TypeDescriptor(new MethodParameter(this.originalMethod, -1)).narrow(value));
+			ReflectionUtils.makeAccessible(this.method);
+			Object value = this.method.invoke(target, arguments);
+			return new TypedValue(value, new TypeDescriptor(new MethodParameter(this.method, -1)).narrow(value));
 		}
 		catch (Exception ex) {
-			throw new AccessException("Problem invoking method: " + this.methodToInvoke, ex);
+			throw new AccessException("Problem invoking method: " + this.method, ex);
 		}
 	}
 

@@ -165,20 +165,21 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
  * configuration:
  *
  * <pre class="code">
- * &lt;beans>
+ * {@code
+ * <beans>
  *
- *     &lt;task:annotation-driven scheduler="taskScheduler"/&gt;
+ *     <task:annotation-driven scheduler="taskScheduler"/>
  *
- *     &lt;task:scheduler id="taskScheduler" pool-size="42"/&gt;
+ *     <task:scheduler id="taskScheduler" pool-size="42"/>
  *
- *     &lt;task:scheduled-tasks scheduler="taskScheduler"&gt;
- *         &lt;task:scheduled ref="myTask" method="work" fixed-rate="1000"/&gt;
- *     &lt;/task:scheduled-tasks&gt;
+ *     <task:scheduled-tasks scheduler="taskScheduler">
+ *         <task:scheduled ref="myTask" method="work" fixed-rate="1000"/>
+ *     </task:scheduled-tasks>
  *
- *     &lt;bean id="myTask" class="com.foo.MyTask"/&gt;
+ *     <bean id="myTask" class="com.foo.MyTask"/>
  *
- * &lt;/beans&gt;
- * </pre>
+ * </beans>
+ * }</pre>
  *
  * The examples are equivalent save that in XML a <em>fixed-rate</em> period is used
  * instead of a custom <em>{@code Trigger}</em> implementation; this is because the

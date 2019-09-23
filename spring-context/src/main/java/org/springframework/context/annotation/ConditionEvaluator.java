@@ -72,32 +72,25 @@ class ConditionEvaluator {
 	}
 
 	/**
-	 * 判断是否跳过解析注册该bean
-	 *
 	 * Determine if an item should be skipped based on {@code @Conditional} annotations.
 	 * @param metadata the meta data
 	 * @param phase the phase of the call
 	 * @return if the item should be skipped
 	 */
 	public boolean shouldSkip(@Nullable AnnotatedTypeMetadata metadata, @Nullable ConfigurationPhase phase) {
-		// 如果这个类没有被@Conditional注解所修饰，不会skip
 		if (metadata == null || !metadata.isAnnotated(Conditional.class.getName())) {
 			return false;
 		}
-		// 如果参数中沒有设置条件注解的生效阶段
+
 		if (phase == null) {
-			// 是配置类的话直接使用PARSE_CONFIGURATION阶段
 			if (metadata instanceof AnnotationMetadata &&
 					ConfigurationClassUtils.isConfigurationCandidate((AnnotationMetadata) metadata)) {
 				return shouldSkip(metadata, ConfigurationPhase.PARSE_CONFIGURATION);
 			}
-			// 否则使用REGISTER_BEAN阶段
 			return shouldSkip(metadata, ConfigurationPhase.REGISTER_BEAN);
 		}
 
-		// 要解析的配置类的条件集合
 		List<Condition> conditions = new ArrayList<>();
-		// 获取配置类的条件注解得到条件数据，并添加到集合中
 		for (String[] conditionClasses : getConditionClasses(metadata)) {
 			for (String conditionClass : conditionClasses) {
 				Condition condition = getCondition(conditionClass, this.context.getClassLoader());
@@ -105,16 +98,13 @@ class ConditionEvaluator {
 			}
 		}
 
-		// 对条件集合做个排序
 		AnnotationAwareOrderComparator.sort(conditions);
-		// 遍历条件集合
+
 		for (Condition condition : conditions) {
 			ConfigurationPhase requiredPhase = null;
 			if (condition instanceof ConfigurationCondition) {
 				requiredPhase = ((ConfigurationCondition) condition).getConfigurationPhase();
 			}
-			// 没有这个解析类不需要阶段的判断或者解析类和参数中的阶段一致才会继续进行
-			// 阶段一致切不满足条件的话，返回true并跳过这个bean的解析
 			if ((requiredPhase == null || requiredPhase == phase) && !condition.matches(this.context, metadata)) {
 				return true;
 			}

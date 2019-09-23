@@ -221,8 +221,7 @@ public class JmsListenerAnnotationBeanPostProcessor
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		if (bean instanceof AopInfrastructureBean || bean instanceof JmsListenerContainerFactory ||
-				bean instanceof JmsListenerEndpointRegistry) {
+		if (bean instanceof AopInfrastructureBean) {
 			// Ignore AOP infrastructure such as scoped proxies.
 			return bean;
 		}

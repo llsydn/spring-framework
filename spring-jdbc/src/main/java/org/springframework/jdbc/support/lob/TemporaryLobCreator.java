@@ -179,21 +179,16 @@ public class TemporaryLobCreator implements LobCreator {
 
 	@Override
 	public void close() {
-		for (Blob blob : this.temporaryBlobs) {
-			try {
+		try {
+			for (Blob blob : this.temporaryBlobs) {
 				blob.free();
 			}
-			catch (SQLException ex) {
-				logger.warn("Could not free BLOB", ex);
-			}
-		}
-		for (Clob clob : this.temporaryClobs) {
-			try {
+			for (Clob clob : this.temporaryClobs) {
 				clob.free();
 			}
-			catch (SQLException ex) {
-				logger.warn("Could not free CLOB", ex);
-			}
+		}
+		catch (SQLException ex) {
+			logger.error("Could not free LOBs", ex);
 		}
 	}
 

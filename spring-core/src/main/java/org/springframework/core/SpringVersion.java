@@ -31,11 +31,7 @@ import org.springframework.lang.Nullable;
  * @author Juergen Hoeller
  * @since 1.1
  */
-public final class SpringVersion {
-
-	private SpringVersion() {
-	}
-
+public class SpringVersion {
 
 	/**
 	 * Return the full version string of the present Spring codebase,

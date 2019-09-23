@@ -227,6 +227,9 @@ public class TextareaTag extends AbstractHtmlInputElementTag {
 
 	public static final String ONSELECT_ATTRIBUTE = "onselect";
 
+	@Deprecated
+	public static final String READONLY_ATTRIBUTE = "readonly";
+
 
 	@Nullable
 	private String rows;

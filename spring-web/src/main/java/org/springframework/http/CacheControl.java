@@ -253,55 +253,48 @@ public class CacheControl {
 
 
 	/**
-	 * Return the "Cache-Control" header value, if any.
-	 * @return the header value, or {@code null} if no directive was added
+	 * Return the "Cache-Control" header value.
+	 * @return {@code null} if no directive was added, or the header value otherwise
 	 */
 	@Nullable
 	public String getHeaderValue() {
-		String headerValue = toHeaderValue();
-		return (StringUtils.hasText(headerValue) ? headerValue : null);
-	}
-
-	/**
-	 * Return the "Cache-Control" header value.
-	 * @return the header value (potentially empty)
-	 */
-	private String toHeaderValue() {
-		StringBuilder headerValue = new StringBuilder();
+		StringBuilder ccValue = new StringBuilder();
 		if (this.maxAge != -1) {
-			appendDirective(headerValue, "max-age=" + this.maxAge);
+			appendDirective(ccValue, "max-age=" + Long.toString(this.maxAge));
 		}
 		if (this.noCache) {
-			appendDirective(headerValue, "no-cache");
+			appendDirective(ccValue, "no-cache");
 		}
 		if (this.noStore) {
-			appendDirective(headerValue, "no-store");
+			appendDirective(ccValue, "no-store");
 		}
 		if (this.mustRevalidate) {
-			appendDirective(headerValue, "must-revalidate");
+			appendDirective(ccValue, "must-revalidate");
 		}
 		if (this.noTransform) {
-			appendDirective(headerValue, "no-transform");
+			appendDirective(ccValue, "no-transform");
 		}
 		if (this.cachePublic) {
-			appendDirective(headerValue, "public");
+			appendDirective(ccValue, "public");
 		}
 		if (this.cachePrivate) {
-			appendDirective(headerValue, "private");
+			appendDirective(ccValue, "private");
 		}
 		if (this.proxyRevalidate) {
-			appendDirective(headerValue, "proxy-revalidate");
+			appendDirective(ccValue, "proxy-revalidate");
 		}
 		if (this.sMaxAge != -1) {
-			appendDirective(headerValue, "s-maxage=" + this.sMaxAge);
+			appendDirective(ccValue, "s-maxage=" + Long.toString(this.sMaxAge));
 		}
 		if (this.staleIfError != -1) {
-			appendDirective(headerValue, "stale-if-error=" + this.staleIfError);
+			appendDirective(ccValue, "stale-if-error=" + Long.toString(this.staleIfError));
 		}
 		if (this.staleWhileRevalidate != -1) {
-			appendDirective(headerValue, "stale-while-revalidate=" + this.staleWhileRevalidate);
+			appendDirective(ccValue, "stale-while-revalidate=" + Long.toString(this.staleWhileRevalidate));
 		}
-		return headerValue.toString();
+
+		String ccHeaderValue = ccValue.toString();
+		return (StringUtils.hasText(ccHeaderValue) ? ccHeaderValue : null);
 	}
 
 	private void appendDirective(StringBuilder builder, String value) {
@@ -309,12 +302,6 @@ public class CacheControl {
 			builder.append(", ");
 		}
 		builder.append(value);
-	}
-
-
-	@Override
-	public String toString() {
-		return "CacheControl [" + toHeaderValue() + "]";
 	}
 
 }

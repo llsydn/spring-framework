@@ -125,10 +125,10 @@ public class PropertiesPersisterTests {
 			propCopy = new String(propOut.toByteArray());
 		}
 		if (header != null) {
-			assertTrue(propCopy.contains(header));
+			assertTrue(propCopy.indexOf(header) != -1);
 		}
-		assertTrue(propCopy.contains("\ncode1=message1"));
-		assertTrue(propCopy.contains("\ncode2=message2"));
+		assertTrue(propCopy.indexOf("\ncode1=message1") != -1);
+		assertTrue(propCopy.indexOf("\ncode2=message2") != -1);
 		return propCopy;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,19 +151,20 @@ public class ViewResolutionResultHandler extends HandlerResultHandlerSupport
 			return true;
 		}
 
-		Class<?> type = result.getReturnType().toClass();
+		Class<?> type = result.getReturnType().getRawClass();
 		ReactiveAdapter adapter = getAdapter(result);
 		if (adapter != null) {
 			if (adapter.isNoValue()) {
 				return true;
 			}
-			type = result.getReturnType().getGeneric().toClass();
+			type = result.getReturnType().getGeneric().resolve(Object.class);
 		}
 
-		return (CharSequence.class.isAssignableFrom(type) || Rendering.class.isAssignableFrom(type) ||
-				Model.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type) ||
-				void.class.equals(type) || View.class.isAssignableFrom(type) ||
-				!BeanUtils.isSimpleProperty(type));
+		return (type != null &&
+				(CharSequence.class.isAssignableFrom(type) || Rendering.class.isAssignableFrom(type) ||
+						Model.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type) ||
+						void.class.equals(type) || View.class.isAssignableFrom(type) ||
+						!BeanUtils.isSimpleProperty(type)));
 	}
 
 	private boolean hasModelAnnotation(MethodParameter parameter) {
@@ -203,12 +204,12 @@ public class ViewResolutionResultHandler extends HandlerResultHandlerSupport
 					MethodParameter parameter = result.getReturnTypeSource();
 					Locale locale = LocaleContextHolder.getLocale(exchange.getLocaleContext());
 
-					Class<?> clazz = valueType.toClass();
-					if (clazz == Object.class) {
+					Class<?> clazz = valueType.getRawClass();
+					if (clazz == null) {
 						clazz = returnValue.getClass();
 					}
 
-					if (returnValue == NO_VALUE || clazz == void.class || clazz == Void.class) {
+					if (returnValue == NO_VALUE || Void.class.equals(clazz) || void.class.equals(clazz)) {
 						viewsMono = resolveViews(getDefaultViewName(exchange), locale);
 					}
 					else if (CharSequence.class.isAssignableFrom(clazz) && !hasModelAnnotation(parameter)) {
@@ -285,7 +286,7 @@ public class ViewResolutionResultHandler extends HandlerResultHandlerSupport
 		return Optional.ofNullable(returnType.getMethodAnnotation(ModelAttribute.class))
 				.filter(ann -> StringUtils.hasText(ann.value()))
 				.map(ModelAttribute::value)
-				.orElseGet(() -> Conventions.getVariableNameForParameter(returnType));
+				.orElse(Conventions.getVariableNameForParameter(returnType));
 	}
 
 	private void updateBindingContext(BindingContext context, ServerWebExchange exchange) {

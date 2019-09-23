@@ -465,24 +465,6 @@ public class ScheduledAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	public void propertyPlaceholderWithInactiveCron() {
-		String businessHoursCronExpression = "-";
-		BeanDefinition processorDefinition = new RootBeanDefinition(ScheduledAnnotationBeanPostProcessor.class);
-		BeanDefinition placeholderDefinition = new RootBeanDefinition(PropertyPlaceholderConfigurer.class);
-		Properties properties = new Properties();
-		properties.setProperty("schedules.businessHours", businessHoursCronExpression);
-		placeholderDefinition.getPropertyValues().addPropertyValue("properties", properties);
-		BeanDefinition targetDefinition = new RootBeanDefinition(PropertyPlaceholderWithCronTestBean.class);
-		context.registerBeanDefinition("postProcessor", processorDefinition);
-		context.registerBeanDefinition("placeholder", placeholderDefinition);
-		context.registerBeanDefinition("target", targetDefinition);
-		context.refresh();
-
-		ScheduledTaskHolder postProcessor = context.getBean("postProcessor", ScheduledTaskHolder.class);
-		assertTrue(postProcessor.getScheduledTasks().isEmpty());
-	}
-
-	@Test
 	public void propertyPlaceholderWithFixedDelayInMillis() {
 		propertyPlaceholderWithFixedDelay(false);
 	}

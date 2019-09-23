@@ -65,7 +65,7 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 						return false;
 					}
 				}
-				if (con.getContentLengthLong() > 0) {
+				if (con.getContentLengthLong() >= 0) {
 					return true;
 				}
 				if (httpCon != null) {
@@ -95,30 +95,7 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 				return (file.canRead() && !file.isDirectory());
 			}
 			else {
-				// Try InputStream resolution for jar resources
-				URLConnection con = url.openConnection();
-				customizeConnection(con);
-				if (con instanceof HttpURLConnection) {
-					HttpURLConnection httpCon = (HttpURLConnection) con;
-					int code = httpCon.getResponseCode();
-					if (code != HttpURLConnection.HTTP_OK) {
-						httpCon.disconnect();
-						return false;
-					}
-				}
-				long contentLength = con.getContentLengthLong();
-				if (contentLength > 0) {
-					return true;
-				}
-				else if (contentLength == 0) {
-					// Empty file or directory -> not considered readable...
-					return false;
-				}
-				else {
-					// Fall back to stream existence: can we open the stream?
-					getInputStream().close();
-					return true;
-				}
+				return true;
 			}
 		}
 		catch (IOException ex) {
@@ -226,13 +203,7 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 		URL url = getURL();
 		if (ResourceUtils.isFileURL(url)) {
 			// Proceed with file system resolution
-			File file = getFile();
-			long length = file.length();
-			if (length == 0L && !file.exists()) {
-				throw new FileNotFoundException(getDescription() +
-						" cannot be resolved in the file system for checking its content length");
-			}
-			return length;
+			return getFile().length();
 		}
 		else {
 			// Try a URL connection content-length header
@@ -245,16 +216,10 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 	@Override
 	public long lastModified() throws IOException {
 		URL url = getURL();
-		boolean fileCheck = false;
 		if (ResourceUtils.isFileURL(url) || ResourceUtils.isJarURL(url)) {
 			// Proceed with file system resolution
-			fileCheck = true;
 			try {
-				File fileToCheck = getFileForLastModifiedCheck();
-				long lastModified = fileToCheck.lastModified();
-				if (lastModified > 0L || fileToCheck.exists()) {
-					return lastModified;
-				}
+				return super.lastModified();
 			}
 			catch (FileNotFoundException ex) {
 				// Defensively fall back to URL connection check instead
@@ -263,12 +228,7 @@ public abstract class AbstractFileResolvingResource extends AbstractResource {
 		// Try a URL connection last-modified header
 		URLConnection con = url.openConnection();
 		customizeConnection(con);
-		long lastModified = con.getLastModified();
-		if (fileCheck && lastModified == 0 && con.getContentLengthLong() <= 0) {
-			throw new FileNotFoundException(getDescription() +
-					" cannot be resolved in the file system for checking its last-modified timestamp");
-		}
-		return lastModified;
+		return con.getLastModified();
 	}
 
 	/**

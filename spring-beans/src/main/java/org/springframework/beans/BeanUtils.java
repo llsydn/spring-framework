@@ -119,13 +119,11 @@ public abstract class BeanUtils {
 			throw new BeanInstantiationException(clazz, "Specified class is an interface");
 		}
 		try {
-			return instantiateClass(clazz.getDeclaredConstructor());
+			Constructor<T> ctor = (KotlinDetector.isKotlinType(clazz) ?
+					KotlinDelegate.getPrimaryConstructor(clazz) : clazz.getDeclaredConstructor());
+			return instantiateClass(ctor);
 		}
 		catch (NoSuchMethodException ex) {
-			Constructor<T> ctor = findPrimaryConstructor(clazz);
-			if (ctor != null) {
-				return instantiateClass(ctor);
-			}
 			throw new BeanInstantiationException(clazz, "No default constructor found", ex);
 		}
 		catch (LinkageError err) {
@@ -167,9 +165,10 @@ public abstract class BeanUtils {
 	public static <T> T instantiateClass(Constructor<T> ctor, Object... args) throws BeanInstantiationException {
 		Assert.notNull(ctor, "Constructor must not be null");
 		try {
-			// makeAccessible,即使Bean的构造函数是private、protected的，依然不影响Bean的构造
+			// 设置构造方法为可访问
 			ReflectionUtils.makeAccessible(ctor);
-			return (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(ctor.getDeclaringClass()) ?
+			//反射创建对象 ctor.newInstance(args)
+			return (KotlinDetector.isKotlinType(ctor.getDeclaringClass()) ?
 					KotlinDelegate.instantiateClass(ctor, args) : ctor.newInstance(args));
 		}
 		catch (InstantiationException ex) {
@@ -199,7 +198,7 @@ public abstract class BeanUtils {
 	@Nullable
 	public static <T> Constructor<T> findPrimaryConstructor(Class<T> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
-		if (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(clazz)) {
+		if (KotlinDetector.isKotlinType(clazz)) {
 			Constructor<T> kotlinPrimaryConstructor = KotlinDelegate.findPrimaryConstructor(clazz);
 			if (kotlinPrimaryConstructor != null) {
 				return kotlinPrimaryConstructor;
@@ -499,8 +498,8 @@ public abstract class BeanUtils {
 		try {
 			Class<?> editorClass = cl.loadClass(editorName);
 			if (!PropertyEditor.class.isAssignableFrom(editorClass)) {
-				if (logger.isInfoEnabled()) {
-					logger.info("Editor class [" + editorName +
+				if (logger.isWarnEnabled()) {
+					logger.warn("Editor class [" + editorName +
 							"] does not implement [java.beans.PropertyEditor] interface");
 				}
 				unknownEditorTypes.add(targetType);
@@ -509,8 +508,8 @@ public abstract class BeanUtils {
 			return (PropertyEditor) instantiateClass(editorClass);
 		}
 		catch (ClassNotFoundException ex) {
-			if (logger.isTraceEnabled()) {
-				logger.trace("No property editor [" + editorName + "] found for type " +
+			if (logger.isDebugEnabled()) {
+				logger.debug("No property editor [" + editorName + "] found for type " +
 						targetType.getName() + " according to 'Editor' suffix convention");
 			}
 			unknownEditorTypes.add(targetType);
@@ -701,6 +700,22 @@ public abstract class BeanUtils {
 	 * Inner class to avoid a hard dependency on Kotlin at runtime.
 	 */
 	private static class KotlinDelegate {
+
+		/**
+		 * Determine the Java constructor corresponding to the Kotlin primary constructor.
+		 * @param clazz the {@link Class} of the Kotlin class
+		 * @throws NoSuchMethodException if no such constructor found
+		 * @since 5.0.3
+		 * @see #findPrimaryConstructor
+		 * @see Class#getDeclaredConstructor
+		 */
+		public static <T> Constructor<T> getPrimaryConstructor(Class<T> clazz) throws NoSuchMethodException {
+			Constructor<T> ctor = findPrimaryConstructor(clazz);
+			if (ctor == null) {
+				throw new NoSuchMethodException();
+			}
+			return ctor;
+		}
 
 		/**
 		 * Retrieve the Java constructor corresponding to the Kotlin primary constructor, if any.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import javax.naming.OperationNotSupportedException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -81,9 +80,7 @@ public class SimpleNamingContext implements Context {
 	 * Create a new naming context with the given naming root,
 	 * the given name/object map, and the JNDI environment entries.
 	 */
-	public SimpleNamingContext(
-			String root, Hashtable<String, Object> boundObjects, @Nullable Hashtable<String, Object> env) {
-
+	public SimpleNamingContext(String root, Hashtable<String, Object> boundObjects, Hashtable<String, Object> env) {
 		this.root = root;
 		this.boundObjects = boundObjects;
 		if (env != null) {
@@ -209,7 +206,6 @@ public class SimpleNamingContext implements Context {
 	}
 
 	@Override
-	@Nullable
 	public Object addToEnvironment(String propName, Object propVal) {
 		return this.environment.put(propName, propVal);
 	}
@@ -297,7 +293,7 @@ public class SimpleNamingContext implements Context {
 	}
 
 
-	private abstract static class AbstractNamingEnumeration<T> implements NamingEnumeration<T> {
+	private static abstract class AbstractNamingEnumeration<T> implements NamingEnumeration<T> {
 
 		private Iterator<T> iterator;
 
@@ -357,7 +353,7 @@ public class SimpleNamingContext implements Context {
 	}
 
 
-	private static final class NameClassPairEnumeration extends AbstractNamingEnumeration<NameClassPair> {
+	private static class NameClassPairEnumeration extends AbstractNamingEnumeration<NameClassPair> {
 
 		private NameClassPairEnumeration(SimpleNamingContext context, String root) throws NamingException {
 			super(context, root);
@@ -370,7 +366,7 @@ public class SimpleNamingContext implements Context {
 	}
 
 
-	private static final class BindingEnumeration extends AbstractNamingEnumeration<Binding> {
+	private static class BindingEnumeration extends AbstractNamingEnumeration<Binding> {
 
 		private BindingEnumeration(SimpleNamingContext context, String root) throws NamingException {
 			super(context, root);

@@ -64,7 +64,7 @@ import org.springframework.web.client.support.RestGatewaySupport;
  * @since 3.2
  */
 @SuppressWarnings("deprecation")
-public final class MockRestServiceServer {
+public class MockRestServiceServer {
 
 	private final RequestExpectationManager expectationManager;
 

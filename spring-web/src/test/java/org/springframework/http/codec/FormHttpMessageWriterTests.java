@@ -16,31 +16,26 @@
 
 package org.springframework.http.codec;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import org.junit.Test;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.io.buffer.AbstractLeakCheckingTestCase;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.support.DataBufferTestUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.http.server.reactive.test.MockServerHttpResponse;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sebastien Deleuze
  */
-public class FormHttpMessageWriterTests extends AbstractLeakCheckingTestCase {
+public class FormHttpMessageWriterTests {
 
 	private final FormHttpMessageWriter writer = new FormHttpMessageWriter();
 
@@ -80,28 +75,14 @@ public class FormHttpMessageWriterTests extends AbstractLeakCheckingTestCase {
 		body.add("name 2", "value 2+1");
 		body.add("name 2", "value 2+2");
 		body.add("name 3", null);
-		MockServerHttpResponse response = new MockServerHttpResponse(this.bufferFactory);
+		MockServerHttpResponse response = new MockServerHttpResponse();
 		this.writer.write(Mono.just(body), null, MediaType.APPLICATION_FORM_URLENCODED, response, null).block();
 
-		String expected = "name+1=value+1&name+2=value+2%2B1&name+2=value+2%2B2&name+3";
-		StepVerifier.create(response.getBody())
-				.consumeNextWith(stringConsumer(
-						expected))
-				.expectComplete()
-				.verify();
+		String responseBody = response.getBodyAsString().block();
+		assertEquals("name+1=value+1&name+2=value+2%2B1&name+2=value+2%2B2&name+3", responseBody);
 		HttpHeaders headers = response.getHeaders();
 		assertEquals("application/x-www-form-urlencoded;charset=UTF-8", headers.getContentType().toString());
-		assertEquals(expected.length(), headers.getContentLength());
+		assertEquals(responseBody.getBytes().length, headers.getContentLength());
 	}
-
-	private Consumer<DataBuffer> stringConsumer(String expected) {
-		return dataBuffer -> {
-			String value =
-					DataBufferTestUtils.dumpString(dataBuffer, StandardCharsets.UTF_8);
-			DataBufferUtils.release(dataBuffer);
-			assertEquals(expected, value);
-		};
-	}
-
 
 }

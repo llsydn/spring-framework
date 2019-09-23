@@ -177,16 +177,16 @@ public class WebLogicRequestUpgradeStrategy extends AbstractTyrusRequestUpgradeS
 		public SubjectHelper() {
 			try {
 				String className = "weblogic.servlet.internal.WebAppServletContext";
-				this.securityContextMethod = method(className, "getSecurityContext");
+				securityContextMethod = method(className, "getSecurityContext");
 
 				className = "weblogic.servlet.security.internal.SecurityModule";
-				this.currentUserMethod = method(className, "getCurrentUser",
+				currentUserMethod = method(className, "getCurrentUser",
 						type("weblogic.servlet.security.internal.ServletSecurityContext"),
 						HttpServletRequest.class);
 
 				className = "weblogic.servlet.security.internal.WebAppSecurity";
-				this.providerMethod = method(className, "getProvider");
-				this.anonymousSubjectMethod = this.providerMethod.getReturnType().getDeclaredMethod("getAnonymousSubject");
+				providerMethod = method(className, "getProvider");
+				anonymousSubjectMethod = providerMethod.getReturnType().getDeclaredMethod("getAnonymousSubject");
 			}
 			catch (Exception ex) {
 				throw new IllegalStateException("No compatible WebSocket version found", ex);
@@ -196,11 +196,11 @@ public class WebLogicRequestUpgradeStrategy extends AbstractTyrusRequestUpgradeS
 		public Object getSubject(HttpServletRequest request) {
 			try {
 				ServletContext servletContext = request.getServletContext();
-				Object securityContext = this.securityContextMethod.invoke(servletContext);
-				Object subject = this.currentUserMethod.invoke(null, securityContext, request);
+				Object securityContext = securityContextMethod.invoke(servletContext);
+				Object subject = currentUserMethod.invoke(null, securityContext, request);
 				if (subject == null) {
-					Object securityProvider = this.providerMethod.invoke(null);
-					subject = this.anonymousSubjectMethod.invoke(securityProvider);
+					Object securityProvider = providerMethod.invoke(null);
+					subject = anonymousSubjectMethod.invoke(securityProvider);
 				}
 				return subject;
 			}

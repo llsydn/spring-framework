@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,33 +16,31 @@
 
 package org.springframework.core.codec;
 
-import java.nio.charset.StandardCharsets;
-import java.util.function.Consumer;
+import java.util.Collections;
 
 import org.junit.Test;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
+import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.util.MimeTypeUtils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Arjen Poutsma
  */
-public class ByteArrayDecoderTests extends AbstractDecoderTestCase<ByteArrayDecoder> {
+public class ByteArrayDecoderTests extends AbstractDataBufferAllocatingTestCase {
 
-	private final byte[] fooBytes = "foo".getBytes(StandardCharsets.UTF_8);
-
-	private final byte[] barBytes = "bar".getBytes(StandardCharsets.UTF_8);
+	private final ByteArrayDecoder decoder = new ByteArrayDecoder();
 
 
-	public ByteArrayDecoderTests() {
-		super(new ByteArrayDecoder());
-	}
-
-	@Override
 	@Test
 	public void canDecode() {
 		assertTrue(this.decoder.canDecode(ResolvableType.forClass(byte[].class),
@@ -53,38 +51,35 @@ public class ByteArrayDecoderTests extends AbstractDecoderTestCase<ByteArrayDeco
 				MimeTypeUtils.APPLICATION_JSON));
 	}
 
-	@Override
 	@Test
 	public void decode() {
-		Flux<DataBuffer> input = Flux.concat(
-				dataBuffer(this.fooBytes),
-				dataBuffer(this.barBytes));
+		DataBuffer fooBuffer = stringBuffer("foo");
+		DataBuffer barBuffer = stringBuffer("bar");
+		Flux<DataBuffer> source = Flux.just(fooBuffer, barBuffer);
+		Flux<byte[]> output = this.decoder.decode(source,
+				ResolvableType.forClassWithGenerics(Publisher.class, byte[].class),
+				null, Collections.emptyMap());
 
-		testDecodeAll(input, byte[].class, step -> step
-				.consumeNextWith(expectBytes(this.fooBytes))
-				.consumeNextWith(expectBytes(this.barBytes))
-				.verifyComplete());
-
+		StepVerifier.create(output)
+				.consumeNextWith(bytes -> assertArrayEquals("foo".getBytes(), bytes))
+				.consumeNextWith(bytes -> assertArrayEquals("bar".getBytes(), bytes))
+				.expectComplete()
+				.verify();
 	}
 
-	@Override
 	@Test
 	public void decodeToMono() {
-		Flux<DataBuffer> input = Flux.concat(
-				dataBuffer(this.fooBytes),
-				dataBuffer(this.barBytes));
+		DataBuffer fooBuffer = stringBuffer("foo");
+		DataBuffer barBuffer = stringBuffer("bar");
+		Flux<DataBuffer> source = Flux.just(fooBuffer, barBuffer);
+		Mono<byte[]> output = this.decoder.decodeToMono(source,
+				ResolvableType.forClassWithGenerics(Publisher.class, byte[].class),
+				null, Collections.emptyMap());
 
-		byte[] expected = new byte[this.fooBytes.length + this.barBytes.length];
-		System.arraycopy(this.fooBytes, 0, expected, 0, this.fooBytes.length);
-		System.arraycopy(this.barBytes, 0, expected, this.fooBytes.length, this.barBytes.length);
-
-		testDecodeToMonoAll(input, byte[].class, step -> step
-				.consumeNextWith(expectBytes(expected))
-				.verifyComplete());
-	}
-
-	private Consumer<byte[]> expectBytes(byte[] expected) {
-		return bytes -> assertArrayEquals(expected, bytes);
+		StepVerifier.create(output)
+				.consumeNextWith(bytes -> assertArrayEquals("foobar".getBytes(), bytes))
+				.expectComplete()
+				.verify();
 	}
 
 }

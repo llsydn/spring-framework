@@ -16,15 +16,10 @@
 
 package org.springframework.context.annotation;
 
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.core.type.AnnotationMetadata;
-
-/**
- * spring的扩展点之一：
- * 可以插手spring工厂的初始化过程。
- * 能够给spring新增一个bean。（beanFactoryPostProcessor，beanPostProcessor这些只能修改bean，无法新增一个bean）
- */
 
 /**
  * Interface to be implemented by types that register additional bean definitions when
@@ -66,5 +61,4 @@ public interface ImportBeanDefinitionRegistrar {
 	 */
 	public void registerBeanDefinitions(
 			AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry);
-
 }

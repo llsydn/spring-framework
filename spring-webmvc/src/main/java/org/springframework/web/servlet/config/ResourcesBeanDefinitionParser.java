@@ -58,9 +58,9 @@ import org.springframework.web.servlet.resource.WebJarsResourceResolver;
 /**
  * {@link org.springframework.beans.factory.xml.BeanDefinitionParser} that parses a
  * {@code resources} element to register a {@link ResourceHttpRequestHandler} and
- * register a {@link SimpleUrlHandlerMapping} for mapping resource requests, and a
- * {@link HttpRequestHandlerAdapter}. Will also create a resource handling chain with
- * {@link ResourceResolver ResourceResolvers} and {@link ResourceTransformer ResourceTransformers}.
+ * register a {@link SimpleUrlHandlerMapping} for mapping resource requests,
+ * and a {@link HttpRequestHandlerAdapter}. Will also create a resource handling
+ * chain with {@link ResourceResolver}s and {@link ResourceTransformer}s.
  *
  * @author Keith Donald
  * @author Jeremy Grelle

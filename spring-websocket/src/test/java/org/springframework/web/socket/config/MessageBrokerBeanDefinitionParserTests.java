@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,6 @@ public class MessageBrokerBeanDefinitionParserTests {
 		assertEquals(Arrays.asList("v10.stomp", "v11.stomp", "v12.stomp"), subProtocolWsHandler.getSubProtocols());
 		assertEquals(25 * 1000, subProtocolWsHandler.getSendTimeLimit());
 		assertEquals(1024 * 1024, subProtocolWsHandler.getSendBufferSizeLimit());
-		assertEquals(30 * 1000, subProtocolWsHandler.getTimeToFirstMessage());
 
 		Map<String, SubProtocolHandler> handlerMap = subProtocolWsHandler.getProtocolHandlerMap();
 		StompSubProtocolHandler stompHandler = (StompSubProtocolHandler) handlerMap.get("v12.stomp");
@@ -208,7 +207,6 @@ public class MessageBrokerBeanDefinitionParserTests {
 		assertEquals("my-selector", registry.getSelectorHeaderName());
 		assertNotNull(brokerMessageHandler.getTaskScheduler());
 		assertArrayEquals(new long[] {15000, 15000}, brokerMessageHandler.getHeartbeatValue());
-		assertTrue(brokerMessageHandler.isPreservePublishOrder());
 
 		List<Class<? extends MessageHandler>> subscriberTypes = Arrays.asList(SimpAnnotationMethodMessageHandler.class,
 						UserDestinationMessageHandler.class, SimpleBrokerMessageHandler.class);
@@ -216,7 +214,7 @@ public class MessageBrokerBeanDefinitionParserTests {
 		testExecutor("clientInboundChannel", Runtime.getRuntime().availableProcessors() * 2, Integer.MAX_VALUE, 60);
 
 		subscriberTypes = Collections.singletonList(SubProtocolWebSocketHandler.class);
-		testChannel("clientOutboundChannel", subscriberTypes, 2);
+		testChannel("clientOutboundChannel", subscriberTypes, 1);
 		testExecutor("clientOutboundChannel", Runtime.getRuntime().availableProcessors() * 2, Integer.MAX_VALUE, 60);
 
 		subscriberTypes = Arrays.asList(SimpleBrokerMessageHandler.class, UserDestinationMessageHandler.class);
@@ -277,7 +275,6 @@ public class MessageBrokerBeanDefinitionParserTests {
 		assertEquals(5000, messageBroker.getSystemHeartbeatReceiveInterval());
 		assertEquals(5000, messageBroker.getSystemHeartbeatSendInterval());
 		assertThat(messageBroker.getDestinationPrefixes(), Matchers.containsInAnyOrder("/topic","/queue"));
-		assertTrue(messageBroker.isPreservePublishOrder());
 
 		List<Class<? extends MessageHandler>> subscriberTypes = Arrays.asList(SimpAnnotationMethodMessageHandler.class,
 				UserDestinationMessageHandler.class, StompBrokerRelayMessageHandler.class);
@@ -285,7 +282,7 @@ public class MessageBrokerBeanDefinitionParserTests {
 		testExecutor("clientInboundChannel", Runtime.getRuntime().availableProcessors() * 2, Integer.MAX_VALUE, 60);
 
 		subscriberTypes = Collections.singletonList(SubProtocolWebSocketHandler.class);
-		testChannel("clientOutboundChannel", subscriberTypes, 2);
+		testChannel("clientOutboundChannel", subscriberTypes, 1);
 		testExecutor("clientOutboundChannel", Runtime.getRuntime().availableProcessors() * 2, Integer.MAX_VALUE, 60);
 
 		subscriberTypes = Arrays.asList(StompBrokerRelayMessageHandler.class, UserDestinationMessageHandler.class);
@@ -323,7 +320,7 @@ public class MessageBrokerBeanDefinitionParserTests {
 				"processed CONNECT\\(0\\)-CONNECTED\\(0\\)-DISCONNECT\\(0\\)\\], " +
 				"inboundChannel\\[pool size = \\d, active threads = \\d, queued tasks = \\d, " +
 				"completed tasks = \\d\\], " +
-				"outboundChannel\\[pool size = \\d, active threads = \\d, queued tasks = \\d, " +
+				"outboundChannelpool size = \\d, active threads = \\d, queued tasks = \\d, " +
 				"completed tasks = \\d\\], " +
 				"sockJsScheduler\\[pool size = \\d, active threads = \\d, queued tasks = \\d, " +
 				"completed tasks = \\d\\]";
@@ -445,23 +442,27 @@ public class MessageBrokerBeanDefinitionParserTests {
 	}
 
 
-	private void testChannel(
-			String channelName, List<Class<? extends  MessageHandler>> subscriberTypes, int interceptorCount) {
+	private void testChannel(String channelName, List<Class<? extends  MessageHandler>> subscriberTypes,
+			int interceptorCount) {
 
 		AbstractSubscribableChannel channel = this.appContext.getBean(channelName, AbstractSubscribableChannel.class);
+
 		for (Class<? extends  MessageHandler> subscriberType : subscriberTypes) {
 			MessageHandler subscriber = this.appContext.getBean(subscriberType);
-			assertNotNull("No subscription for " + subscriberType, subscriber);
+			assertNotNull("No subsription for " + subscriberType, subscriber);
 			assertTrue(channel.hasSubscription(subscriber));
 		}
+
 		List<ChannelInterceptor> interceptors = channel.getInterceptors();
 		assertEquals(interceptorCount, interceptors.size());
 		assertEquals(ImmutableMessageChannelInterceptor.class, interceptors.get(interceptors.size()-1).getClass());
 	}
 
 	private void testExecutor(String channelName, int corePoolSize, int maxPoolSize, int keepAliveSeconds) {
+
 		ThreadPoolTaskExecutor taskExecutor =
 				this.appContext.getBean(channelName + "Executor", ThreadPoolTaskExecutor.class);
+
 		assertEquals(corePoolSize, taskExecutor.getCorePoolSize());
 		assertEquals(maxPoolSize, taskExecutor.getMaxPoolSize());
 		assertEquals(keepAliveSeconds, taskExecutor.getKeepAliveSeconds());
@@ -479,7 +480,6 @@ public class MessageBrokerBeanDefinitionParserTests {
 		return (handler instanceof WebSocketHandlerDecorator) ?
 				((WebSocketHandlerDecorator) handler).getLastHandler() : handler;
 	}
-
 }
 
 
@@ -506,6 +506,7 @@ class CustomReturnValueHandler implements HandlerMethodReturnValueHandler {
 
 	@Override
 	public void handleReturnValue(Object returnValue, MethodParameter returnType, Message<?> message) throws Exception {
+
 	}
 }
 
@@ -536,15 +537,12 @@ class TestWebSocketHandlerDecorator extends WebSocketHandlerDecorator {
 class TestStompErrorHandler extends StompSubProtocolErrorHandler {
 }
 
-
 class TestValidator implements Validator {
-
 	@Override
 	public boolean supports(Class<?> clazz) {
 		return false;
 	}
 
 	@Override
-	public void validate(@Nullable Object target, Errors errors) {
-	}
+	public void validate(@Nullable Object target, Errors errors) { }
 }

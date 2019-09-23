@@ -16,18 +16,15 @@
 
 package org.springframework.http.codec;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 
 import org.junit.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.io.buffer.AbstractLeakCheckingTestCase;
-import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.mock.http.server.reactive.test.MockServerHttpRequest;
@@ -39,7 +36,7 @@ import static org.junit.Assert.*;
  *
  * @author Sebastien Deleuze
  */
-public class ServerSentEventHttpMessageReaderTests extends AbstractLeakCheckingTestCase {
+public class ServerSentEventHttpMessageReaderTests extends AbstractDataBufferAllocatingTestCase {
 
 	private ServerSentEventHttpMessageReader messageReader =
 			new ServerSentEventHttpMessageReader(new Jackson2JsonDecoder());
@@ -59,10 +56,9 @@ public class ServerSentEventHttpMessageReaderTests extends AbstractLeakCheckingT
 
 	@Test
 	public void readServerSentEvents() {
-		MockServerHttpRequest request = MockServerHttpRequest.post("/")
-				.body(Mono.just(stringBuffer(
-						"id:c42\nevent:foo\nretry:123\n:bla\n:bla bla\n:bla bla bla\ndata:bar\n\n" +
-						"id:c43\nevent:bar\nretry:456\ndata:baz\n\n")));
+		MockServerHttpRequest request = MockServerHttpRequest.post("/").body(
+				"id:c42\nevent:foo\nretry:123\n:bla\n:bla bla\n:bla bla bla\ndata:bar\n\n" +
+				"id:c43\nevent:bar\nretry:456\ndata:baz\n\n");
 
 		Flux<ServerSentEvent> events = this.messageReader
 				.read(ResolvableType.forClassWithGenerics(ServerSentEvent.class, String.class),
@@ -120,8 +116,8 @@ public class ServerSentEventHttpMessageReaderTests extends AbstractLeakCheckingT
 
 	@Test
 	public void readString() {
-		MockServerHttpRequest request = MockServerHttpRequest.post("/")
-				.body(Mono.just(stringBuffer("data:foo\ndata:bar\n\ndata:baz\n\n")));
+		String body = "data:foo\ndata:bar\n\ndata:baz\n\n";
+		MockServerHttpRequest request = MockServerHttpRequest.post("/").body(body);
 
 		Flux<String> data = messageReader.read(ResolvableType.forClass(String.class),
 				request, Collections.emptyMap()).cast(String.class);
@@ -135,10 +131,9 @@ public class ServerSentEventHttpMessageReaderTests extends AbstractLeakCheckingT
 
 	@Test
 	public void readPojo() {
-		MockServerHttpRequest request = MockServerHttpRequest.post("/")
-				.body(Mono.just(stringBuffer(
-						"data:{\"foo\": \"foofoo\", \"bar\": \"barbar\"}\n\n" +
-								"data:{\"foo\": \"foofoofoo\", \"bar\": \"barbarbar\"}\n\n")));
+		MockServerHttpRequest request = MockServerHttpRequest.post("/").body(
+				"data:{\"foo\": \"foofoo\", \"bar\": \"barbar\"}\n\n" +
+				"data:{\"foo\": \"foofoofoo\", \"bar\": \"barbarbar\"}\n\n");
 
 		Flux<Pojo> data = messageReader.read(ResolvableType.forClass(Pojo.class), request,
 				Collections.emptyMap()).cast(Pojo.class);
@@ -159,8 +154,7 @@ public class ServerSentEventHttpMessageReaderTests extends AbstractLeakCheckingT
 	@Test  // SPR-15331
 	public void decodeFullContentAsString() {
 		String body = "data:foo\ndata:bar\n\ndata:baz\n\n";
-		MockServerHttpRequest request = MockServerHttpRequest.post("/")
-				.body(Mono.just(stringBuffer(body)));
+		MockServerHttpRequest request = MockServerHttpRequest.post("/").body(body);
 
 		String actual = messageReader
 				.readMono(ResolvableType.forClass(String.class), request, Collections.emptyMap())
@@ -169,32 +163,5 @@ public class ServerSentEventHttpMessageReaderTests extends AbstractLeakCheckingT
 
 		assertEquals(body, actual);
 	}
-
-	@Test
-	public void readError() {
-		Flux<DataBuffer> body =
-				Flux.just(stringBuffer("data:foo\ndata:bar\n\ndata:baz\n\n"))
-						.concatWith(Flux.error(new RuntimeException()));
-
-		MockServerHttpRequest request = MockServerHttpRequest.post("/")
-				.body(body);
-
-		Flux<String> data = messageReader.read(ResolvableType.forClass(String.class),
-				request, Collections.emptyMap()).cast(String.class);
-
-		StepVerifier.create(data)
-				.expectNextMatches(elem -> elem.equals("foo\nbar"))
-				.expectNextMatches(elem -> elem.equals("baz"))
-				.expectError()
-				.verify();
-	}
-
-	private DataBuffer stringBuffer(String value) {
-		byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-		DataBuffer buffer = this.bufferFactory.allocateBuffer(bytes.length);
-		buffer.write(bytes);
-		return buffer;
-	}
-
 
 }

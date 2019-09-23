@@ -48,7 +48,6 @@ import static org.junit.Assert.*;
  * @author Sam Brannen
  * @author Brian Clozel
  * @author Jakub Narloch
- * @author Av Pinzur
  */
 public class MockHttpServletRequestTests {
 
@@ -124,38 +123,6 @@ public class MockHttpServletRequestTests {
 		assertEquals(-1, request.getContentLength());
 		assertEquals(-1, request.getInputStream().read());
 		assertNull(request.getContentAsByteArray());
-	}
-
-	@Test  // SPR-16505
-	public void getReaderTwice() throws IOException {
-		byte[] bytes = "body".getBytes(Charset.defaultCharset());
-		request.setContent(bytes);
-		assertSame(request.getReader(), request.getReader());
-	}
-
-	@Test  // SPR-16505
-	public void getInputStreamTwice() throws IOException {
-		byte[] bytes = "body".getBytes(Charset.defaultCharset());
-		request.setContent(bytes);
-		assertSame(request.getInputStream(), request.getInputStream());
-	}
-
-	@Test  // SPR-16499
-	public void getReaderAfterGettingInputStream() throws IOException {
-		exception.expect(IllegalStateException.class);
-		exception.expectMessage(
-				"Cannot call getReader() after getInputStream() has already been called for the current request");
-		request.getInputStream();
-		request.getReader();
-	}
-
-	@Test  // SPR-16499
-	public void getInputStreamAfterGettingReader() throws IOException {
-		exception.expect(IllegalStateException.class);
-		exception.expectMessage(
-				"Cannot call getInputStream() after getReader() has already been called for the current request");
-		request.getReader();
-		request.getInputStream();
 	}
 
 	@Test
@@ -341,7 +308,6 @@ public class MockHttpServletRequestTests {
 		List<Locale> actual = Collections.list(request.getLocales());
 		assertEquals(Arrays.asList(Locale.forLanguageTag("fr-ch"), Locale.forLanguageTag("fr"),
 				Locale.forLanguageTag("en"), Locale.forLanguageTag("de")), actual);
-		assertEquals(headerValue, request.getHeader("Accept-Language"));
 	}
 
 	@Test
@@ -534,25 +500,25 @@ public class MockHttpServletRequestTests {
 	}
 
 	@Test
-	public void httpHeaderRfcFormattedDate() {
+	public void httpHeaderRfcFormatedDate() {
 		request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, "Tue, 21 Jul 2015 10:00:00 GMT");
 		assertEquals(1437472800000L, request.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE));
 	}
 
 	@Test
-	public void httpHeaderFirstVariantFormattedDate() {
+	public void httpHeaderFirstVariantFormatedDate() {
 		request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, "Tue, 21-Jul-15 10:00:00 GMT");
 		assertEquals(1437472800000L, request.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE));
 	}
 
 	@Test
-	public void httpHeaderSecondVariantFormattedDate() {
+	public void httpHeaderSecondVariantFormatedDate() {
 		request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, "Tue Jul 21 10:00:00 2015");
 		assertEquals(1437472800000L, request.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void httpHeaderFormattedDateError() {
+	public void httpHeaderFormatedDateError() {
 		request.addHeader(HttpHeaders.IF_MODIFIED_SINCE, "This is not a date");
 		request.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE);
 	}

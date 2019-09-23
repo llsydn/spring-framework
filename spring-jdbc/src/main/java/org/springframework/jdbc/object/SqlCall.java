@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,31 +41,32 @@ import org.springframework.util.Assert;
 public abstract class SqlCall extends RdbmsOperation {
 
 	/**
+	 * Object enabling us to create CallableStatementCreators
+	 * efficiently, based on this class's declared parameters.
+	 */
+	@Nullable
+	private CallableStatementCreatorFactory callableStatementFactory;
+
+	/**
 	 * Flag used to indicate that this call is for a function and to
 	 * use the {? = call get_invoice_count(?)} syntax.
 	 */
 	private boolean function = false;
 
 	/**
-	 * Flag used to indicate that the sql for this call should be used exactly as
-	 * it is defined. No need to add the escape syntax and parameter place holders.
+	 * Flag used to indicate that the sql for this call should be used exactly as it is
+	 * defined.  No need to add the escape syntax and parameter place holders.
 	 */
 	private boolean sqlReadyForUse = false;
 
 	/**
 	 * Call string as defined in java.sql.CallableStatement.
-	 * String of form {call add_invoice(?, ?, ?)} or {? = call get_invoice_count(?)}
-	 * if isFunction is set to true. Updated after each parameter is added.
+	 * String of form {call add_invoice(?, ?, ?)}
+	 * or {? = call get_invoice_count(?)} if isFunction is set to true
+	 * Updated after each parameter is added.
 	 */
 	@Nullable
 	private String callString;
-
-	/**
-	 * Object enabling us to create CallableStatementCreators
-	 * efficiently, based on this class's declared parameters.
-	 */
-	@Nullable
-	private CallableStatementCreatorFactory callableStatementFactory;
 
 
 	/**
@@ -82,8 +83,8 @@ public abstract class SqlCall extends RdbmsOperation {
 	/**
 	 * Create a new SqlCall object with SQL, but without parameters.
 	 * Must add parameters or settle with none.
-	 * @param ds the DataSource to obtain connections from
-	 * @param sql the SQL to execute
+	 * @param ds DataSource to obtain connections from
+	 * @param sql SQL to execute
 	 */
 	public SqlCall(DataSource ds, String sql) {
 		setDataSource(ds);
@@ -102,7 +103,7 @@ public abstract class SqlCall extends RdbmsOperation {
 	 * Return whether this call is for a function.
 	 */
 	public boolean isFunction() {
-		return this.function;
+		return function;
 	}
 
 	/**
@@ -116,7 +117,7 @@ public abstract class SqlCall extends RdbmsOperation {
 	 * Return whether the SQL can be used as is.
 	 */
 	public boolean isSqlReadyForUse() {
-		return this.sqlReadyForUse;
+		return sqlReadyForUse;
 	}
 
 
@@ -128,32 +129,30 @@ public abstract class SqlCall extends RdbmsOperation {
 	@Override
 	protected final void compileInternal() {
 		if (isSqlReadyForUse()) {
-			this.callString = resolveSql();
+			this.callString = getSql();
 		}
 		else {
-			StringBuilder callString = new StringBuilder(32);
 			List<SqlParameter> parameters = getDeclaredParameters();
 			int parameterCount = 0;
 			if (isFunction()) {
-				callString.append("{? = call ").append(resolveSql()).append('(');
+				this.callString = "{? = call " + getSql() + "(";
 				parameterCount = -1;
 			}
 			else {
-				callString.append("{call ").append(resolveSql()).append('(');
+				this.callString = "{call " + getSql() + "(";
 			}
 			for (SqlParameter parameter : parameters) {
-				if (!parameter.isResultsParameter()) {
+				if (!(parameter.isResultsParameter())) {
 					if (parameterCount > 0) {
-						callString.append(", ");
+						this.callString += ", ";
 					}
 					if (parameterCount >= 0) {
-						callString.append('?');
+						this.callString += "?";
 					}
 					parameterCount++;
 				}
 			}
-			callString.append(")}");
-			this.callString = callString.toString();
+			this.callString += ")}";
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug("Compiled stored procedure. Call string is [" + this.callString + "]");

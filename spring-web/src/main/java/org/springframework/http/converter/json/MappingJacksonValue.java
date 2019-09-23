@@ -45,6 +45,9 @@ public class MappingJacksonValue {
 	@Nullable
 	private FilterProvider filters;
 
+	@Nullable
+	private String jsonpFunction;
+
 
 	/**
 	 * Create a new instance wrapping the given POJO to be serialized.
@@ -108,6 +111,27 @@ public class MappingJacksonValue {
 	@Nullable
 	public FilterProvider getFilters() {
 		return this.filters;
+	}
+
+	/**
+	 * Set the name of the JSONP function name.
+	 * @deprecated Will be removed as of Spring Framework 5.1, use
+	 * <a href="https://docs.spring.io/spring/docs/5.0.x/spring-framework-reference/web.html#mvc-cors">CORS</a> instead.
+	 */
+	@Deprecated
+	public void setJsonpFunction(@Nullable String functionName) {
+		this.jsonpFunction = functionName;
+	}
+
+	/**
+	 * Return the configured JSONP function name.
+	 * @deprecated Will be removed as of Spring Framework 5.1, use
+	 * <a href="https://docs.spring.io/spring/docs/5.0.x/spring-framework-reference/web.html#mvc-cors">CORS</a> instead.
+	 */
+	@Deprecated
+	@Nullable
+	public String getJsonpFunction() {
+		return this.jsonpFunction;
 	}
 
 }

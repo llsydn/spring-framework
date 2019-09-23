@@ -293,9 +293,6 @@ public enum SpelMessage {
 	}
 
 
-	/**
-	 * Message kinds.
-	 */
 	public enum Kind { INFO, WARNING, ERROR }
 
 }

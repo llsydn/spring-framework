@@ -205,8 +205,8 @@ public class UrlTag extends HtmlEscapingAwareTag implements ParamAware {
 	}
 
 	/**
-	 * Set the scope to export the URL variable to. This attribute has no
-	 * meaning unless var is also defined.
+	 * Set the scope to export the URL variable to.
+	 * This attribute has no meaning unless {@code var} is also defined.
 	 */
 	public void setScope(String scope) {
 		this.scope = TagUtils.getScope(scope);
@@ -362,7 +362,7 @@ public class UrlTag extends HtmlEscapingAwareTag implements ParamAware {
 				usedParams.add(param.getName());
 				String value = param.getValue();
 				try {
-					uri = StringUtils.replace(uri, template,
+					uri = uri.replace(template,
 							(value != null ? UriUtils.encodePath(value, encoding) : ""));
 				}
 				catch (UnsupportedCharsetException ex) {
@@ -375,7 +375,7 @@ public class UrlTag extends HtmlEscapingAwareTag implements ParamAware {
 					usedParams.add(param.getName());
 					String value = param.getValue();
 					try {
-						uri = StringUtils.replace(uri, template,
+						uri = uri.replace(template,
 								(value != null ? UriUtils.encodePathSegment(value, encoding) : ""));
 					}
 					catch (UnsupportedCharsetException ex) {

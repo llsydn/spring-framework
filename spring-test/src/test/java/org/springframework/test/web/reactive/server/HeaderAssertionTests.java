@@ -17,7 +17,6 @@
 package org.springframework.test.web.reactive.server;
 
 import java.net.URI;
-import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
@@ -33,14 +32,15 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.http.client.reactive.MockClientHttpRequest;
 import org.springframework.mock.http.client.reactive.MockClientHttpResponse;
 
-import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link HeaderAssertions}.
+ *
  * @author Rossen Stoyanchev
  * @author Sam Brannen
+ * @since 5.0
  */
 public class HeaderAssertionTests {
 
@@ -79,7 +79,7 @@ public class HeaderAssertionTests {
 	}
 
 	@Test
-	public void valueEqualsWithMultipleValues() {
+	public void valueEqualsWithMultipeValues() {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("foo", "bar");
 		headers.add("foo", "baz");
@@ -125,15 +125,6 @@ public class HeaderAssertionTests {
 			assertEquals("Response header 'Content-Type'=[application/json;charset=UTF-8] " +
 					"does not match [.*ISO-8859-1.*]", cause.getMessage());
 		}
-	}
-
-	@Test
-	public void valueMatcher() {
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("foo", "bar");
-		HeaderAssertions assertions = headerAssertions(headers);
-
-		assertions.value("foo", containsString("a"));
 	}
 
 	@Test
@@ -258,7 +249,7 @@ public class HeaderAssertionTests {
 		MonoProcessor<byte[]> emptyContent = MonoProcessor.create();
 		emptyContent.onComplete();
 
-		ExchangeResult result = new ExchangeResult(request, response, emptyContent, emptyContent, Duration.ZERO, null);
+		ExchangeResult result = new ExchangeResult(request, response, emptyContent, emptyContent, null);
 		return new HeaderAssertions(result, mock(WebTestClient.ResponseSpec.class));
 	}
 

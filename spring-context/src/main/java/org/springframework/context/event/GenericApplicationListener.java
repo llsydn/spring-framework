@@ -44,20 +44,8 @@ public interface GenericApplicationListener extends ApplicationListener<Applicat
 
 	/**
 	 * Determine whether this listener actually supports the given source type.
-	 * <p>The default implementation always returns {@code true}.
 	 * @param sourceType the source type, or {@code null} if no source
 	 */
-	default boolean supportsSourceType(@Nullable Class<?> sourceType) {
-		return true;
-	}
-
-	/**
-	 * Determine this listener's order in a set of listeners for the same event.
-	 * <p>The default implementation returns {@link #LOWEST_PRECEDENCE}.
-	 */
-	@Override
-	default int getOrder() {
-		return LOWEST_PRECEDENCE;
-	}
+	boolean supportsSourceType(@Nullable Class<?> sourceType);
 
 }

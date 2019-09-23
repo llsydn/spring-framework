@@ -79,7 +79,7 @@ public class WebSocketStompClient extends StompClientSupport implements SmartLif
 
 	private boolean autoStartup = true;
 
-	private int phase = DEFAULT_PHASE;
+	private int phase = Integer.MAX_VALUE;
 
 	private volatile boolean running = false;
 
@@ -192,6 +192,12 @@ public class WebSocketStompClient extends StompClientSupport implements SmartLif
 				((Lifecycle) getWebSocketClient()).stop();
 			}
 		}
+	}
+
+	@Override
+	public void stop(Runnable callback) {
+		stop();
+		callback.run();
 	}
 
 	@Override

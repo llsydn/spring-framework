@@ -58,7 +58,6 @@ import org.springframework.util.xml.StaxUtils;
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
  * @since 3.2
- * @param <T> the converted object type
  */
 @SuppressWarnings("rawtypes")
 public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
@@ -132,7 +131,7 @@ public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
 	}
 
 	@Override
-	protected T readFromSource(Class<? extends T> clazz, HttpHeaders headers, Source source) throws Exception {
+	protected T readFromSource(Class<? extends T> clazz, HttpHeaders headers, Source source) throws IOException {
 		// should not be called, since we return false for canRead(Class)
 		throw new UnsupportedOperationException();
 	}
@@ -160,20 +159,18 @@ public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
 				}
 				else {
 					// should not happen, since we check in canRead(Type)
-					throw new HttpMessageNotReadableException(
-							"Cannot unmarshal to [" + elementClass + "]", inputMessage);
+					throw new HttpMessageNotReadableException("Cannot unmarshal to [" + elementClass + "]");
 				}
 				event = moveToNextElement(streamReader);
 			}
 			return result;
 		}
 		catch (XMLStreamException ex) {
-			throw new HttpMessageNotReadableException(
-					"Failed to read XML stream: " + ex.getMessage(), ex, inputMessage);
+			throw new HttpMessageNotReadableException("Failed to read XML stream: " + ex.getMessage(), ex);
 		}
 		catch (UnmarshalException ex) {
 			throw new HttpMessageNotReadableException(
-					"Could not unmarshal to [" + elementClass + "]: " + ex.getMessage(), ex, inputMessage);
+					"Could not unmarshal to [" + elementClass + "]: " + ex.getMessage(), ex);
 		}
 		catch (JAXBException ex) {
 			throw new HttpMessageConversionException("Invalid JAXB setup: " + ex.getMessage(), ex);
@@ -239,7 +236,7 @@ public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
 	}
 
 	@Override
-	protected void writeToResult(T t, HttpHeaders headers, Result result) throws Exception {
+	protected void writeToResult(T t, HttpHeaders headers, Result result) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

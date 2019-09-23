@@ -91,15 +91,14 @@ final class SimpleClientHttpResponse extends AbstractClientHttpResponse {
 
 	@Override
 	public void close() {
-		try {
-			if (this.responseStream == null) {
-				getBody();
+		if (this.responseStream != null) {
+			try {
+				StreamUtils.drain(this.responseStream);
+				this.responseStream.close();
 			}
-			StreamUtils.drain(this.responseStream);
-			this.responseStream.close();
-		}
-		catch (Exception ex) {
-			// ignore
+			catch (Exception ex) {
+				// ignore
+			}
 		}
 	}
 

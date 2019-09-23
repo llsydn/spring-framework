@@ -255,11 +255,11 @@ public class RadioButtonTagTests extends AbstractFormTagTests {
 	}
 
 	private void assertTagOpened(String output) {
-		assertTrue(output.contains("<input "));
+		assertTrue(output.indexOf("<input ") > -1);
 	}
 
 	private void assertTagClosed(String output) {
-		assertTrue(output.contains("/>"));
+		assertTrue(output.indexOf("/>") > -1);
 	}
 
 	private Float getFloat() {

@@ -21,11 +21,13 @@ import java.time.Duration;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.server.reactive.AbstractHttpHandlerIntegrationTests;
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -73,11 +75,12 @@ public class FlushingIntegrationTests extends AbstractHttpHandlerIntegrationTest
 		Mono<String> result = this.webClient.get()
 				.uri("/write-and-complete")
 				.retrieve()
-				.bodyToMono(String.class);
+				.bodyToFlux(String.class)
+				.reduce((s1, s2) -> s1 + s2);
 
 		try {
 			StepVerifier.create(result)
-					.consumeNextWith(value -> assertEquals(64 * 1024, value.length()))
+					.consumeNextWith(value -> assertTrue(value.length() == 20000 * "0123456789".length()))
 					.expectComplete()
 					.verify(Duration.ofSeconds(10L));
 		}
@@ -119,46 +122,34 @@ public class FlushingIntegrationTests extends AbstractHttpHandlerIntegrationTest
 		@Override
 		public Mono<Void> handle(ServerHttpRequest request, ServerHttpResponse response) {
 			String path = request.getURI().getPath();
-			switch (path) {
-				case "/write-and-flush":
-					return response.writeAndFlushWith(
-							testInterval(Duration.ofMillis(50), 2)
-									.map(longValue -> wrap("data" + longValue + "\n", response))
-									.map(Flux::just)
-									.mergeWith(Flux.never()));
-
-				case "/write-and-complete":
-					return response.writeWith(
-							chunks1K().take(64).map(s -> wrap(s, response)));
-
-				case "/write-and-never-complete":
-					// Reactor requires at least 50 to flush, Tomcat/Undertow 8, Jetty 1
-					return response.writeWith(
-							chunks1K().take(64).map(s -> wrap(s, response)).mergeWith(Flux.never()));
-
-				default:
-					return response.writeWith(Flux.empty());
+			if (path.endsWith("write-and-flush")) {
+				Flux<Publisher<DataBuffer>> responseBody = interval(Duration.ofMillis(50), 2)
+						.map(l -> toDataBuffer("data" + l + "\n", response.bufferFactory()))
+						.map(Flux::just);
+				return response.writeAndFlushWith(responseBody.concatWith(Flux.never()));
 			}
+			else if (path.endsWith("write-and-complete")) {
+				Flux<DataBuffer> responseBody = Flux
+						.just("0123456789")
+						.repeat(20000)
+						.map(value -> toDataBuffer(value + "\n", response.bufferFactory()));
+				return response.writeWith(responseBody);
+			}
+			else if (path.endsWith("write-and-never-complete")) {
+				Flux<DataBuffer> responseBody = Flux
+						.just("0123456789")
+						.repeat(20000)
+						.map(value -> toDataBuffer(value + "\n", response.bufferFactory()));
+				return response.writeWith(responseBody.mergeWith(Flux.never()));
+			}
+			return response.writeWith(Flux.empty());
 		}
 
-		private Flux<String> chunks1K() {
-			return Flux.generate(sink -> {
-				StringBuilder sb = new StringBuilder();
-				do {
-					for (char c : "0123456789".toCharArray()) {
-						sb.append(c);
-						if (sb.length() + 1 == 1024) {
-							sink.next(sb.append("\n").toString());
-							return;
-						}
-					}
-				} while (true);
-			});
-		}
-
-		private DataBuffer wrap(String value, ServerHttpResponse response) {
-			byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-			return response.bufferFactory().wrap(bytes);
+		private DataBuffer toDataBuffer(String value, DataBufferFactory factory) {
+			byte[] data = (value).getBytes(StandardCharsets.UTF_8);
+			DataBuffer buffer = factory.allocateBuffer(data.length);
+			buffer.write(data);
+			return buffer;
 		}
 	}
 

@@ -28,9 +28,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import static java.nio.charset.StandardCharsets.*;
+import static java.time.format.DateTimeFormatter.*;
 
 /**
  * Represent the Content-Disposition type and parameters as defined in RFC 2183.
@@ -40,7 +39,7 @@ import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
  * @since 5.0
  * @see <a href="https://tools.ietf.org/html/rfc2183">RFC 2183</a>
  */
-public final class ContentDisposition {
+public class ContentDisposition {
 
 	@Nullable
 	private final String type;

@@ -27,12 +27,7 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.transaction.TransactionDefinition;
 
 /**
- * Describes a transaction attribute on an individual method or on a class.
- *
- * <p>At the class level, this annotation applies as a default to all methods of
- * the declaring class and its subclasses. Note that it does not apply to ancestor
- * classes up the class hierarchy; methods need to be locally redeclared in order
- * to participate in a subclass-level annotation.
+ * Describes transaction attributes on a method or class.
  *
  * <p>This annotation type is generally directly comparable to Spring's
  * {@link org.springframework.transaction.interceptor.RuleBasedTransactionAttribute}

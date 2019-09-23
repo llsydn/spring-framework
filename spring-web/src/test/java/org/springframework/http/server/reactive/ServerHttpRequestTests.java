@@ -59,7 +59,7 @@ public class ServerHttpRequestTests {
 	}
 
 	@Test
-	public void queryParamsWithMultipleValues() throws Exception {
+	public void queryParamsWithMulitpleValues() throws Exception {
 		MultiValueMap<String, String> params = createHttpRequest("/path?a=1&a=2").getQueryParams();
 		assertEquals(1, params.size());
 		assertEquals(Arrays.asList("1", "2"), params.get("a"));

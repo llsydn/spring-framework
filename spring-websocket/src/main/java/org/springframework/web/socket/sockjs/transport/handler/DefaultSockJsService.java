@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
 import javax.servlet.ServletContext;
 
 import org.apache.commons.logging.Log;
@@ -78,11 +79,14 @@ public class DefaultSockJsService extends TransportHandlingSockJsService impleme
 	}
 
 
+	@SuppressWarnings("deprecation")
 	private static Set<TransportHandler> getDefaultTransportHandlers(@Nullable Collection<TransportHandler> overrides) {
 		Set<TransportHandler> result = new LinkedHashSet<>(8);
 		result.add(new XhrPollingTransportHandler());
 		result.add(new XhrReceivingTransportHandler());
 		result.add(new XhrStreamingTransportHandler());
+		result.add(new JsonpPollingTransportHandler());
+		result.add(new JsonpReceivingTransportHandler());
 		result.add(new EventSourceTransportHandler());
 		result.add(new HtmlFileTransportHandler());
 		try {

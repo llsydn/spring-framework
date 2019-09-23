@@ -18,6 +18,7 @@ package org.springframework.beans.factory.config;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,11 +26,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.MappingNode;
+import org.yaml.snakeyaml.parser.ParserException;
 import org.yaml.snakeyaml.reader.UnicodeReader;
 
 import org.springframework.core.CollectionFactory;
@@ -63,7 +68,7 @@ public abstract class YamlProcessor {
 	/**
 	 * A map of document matchers allowing callers to selectively use only
 	 * some of the documents in a YAML resource. In YAML documents are
-	 * separated by {@code ---} lines, and each document is converted
+	 * separated by <code>---<code> lines, and each document is converted
 	 * to properties before the match is made. E.g.
 	 * <pre class="code">
 	 * environment: dev
@@ -343,7 +348,7 @@ public abstract class YamlProcessor {
 
 
 	/**
-	 * Status returned from {@link DocumentMatcher#matches(java.util.Properties)}.
+	 * Status returned from {@link DocumentMatcher#matches(java.util.Properties)}
 	 */
 	public enum MatchStatus {
 
@@ -390,6 +395,50 @@ public abstract class YamlProcessor {
 		 * Take the first resource in the list that exists and use just that.
 		 */
 		FIRST_FOUND
+	}
+
+
+	/**
+	 * A specialized {@link Constructor} that checks for duplicate keys.
+	 * @deprecated as of Spring Framework 5.0.6 (not used anymore here),
+	 * superseded by SnakeYAML's own duplicate key handling
+	 */
+	@Deprecated
+	protected static class StrictMapAppenderConstructor extends Constructor {
+
+		// Declared as public for use in subclasses
+		public StrictMapAppenderConstructor() {
+			super();
+		}
+
+		@Override
+		protected Map<Object, Object> constructMapping(MappingNode node) {
+			try {
+				return super.constructMapping(node);
+			}
+			catch (IllegalStateException ex) {
+				throw new ParserException("while parsing MappingNode",
+						node.getStartMark(), ex.getMessage(), node.getEndMark());
+			}
+		}
+
+		@Override
+		protected Map<Object, Object> createDefaultMap() {
+			final Map<Object, Object> delegate = super.createDefaultMap();
+			return new AbstractMap<Object, Object>() {
+				@Override
+				public Object put(Object key, Object value) {
+					if (delegate.containsKey(key)) {
+						throw new IllegalStateException("Duplicate key: " + key);
+					}
+					return delegate.put(key, value);
+				}
+				@Override
+				public Set<Entry<Object, Object>> entrySet() {
+					return delegate.entrySet();
+				}
+			};
+		}
 	}
 
 }

@@ -138,11 +138,6 @@ public class ServerWebExchangeDecorator implements ServerWebExchange {
 	}
 
 	@Override
-	public String getLogPrefix() {
-		return getDelegate().getLogPrefix();
-	}
-
-	@Override
 	public String toString() {
 		return getClass().getSimpleName() + " [delegate=" + getDelegate() + "]";
 	}

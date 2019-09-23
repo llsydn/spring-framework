@@ -31,8 +31,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static org.hamcrest.Matchers.*;
-
 /**
  * Samples of tests using {@link WebTestClient} with serialized JSON content.
  *
@@ -66,14 +64,16 @@ public class JsonContentTests {
 				.jsonPath("$[2].name").isEqualTo("John");
 	}
 
-	@Test
-	public void jsonPathMatches() {
+	@Test // https://stackoverflow.com/questions/49149376/webtestclient-check-that-jsonpath-contains-sub-string
+	public void jsonPathContainsSubstringViaRegex() {
 		this.client.get().uri("/persons/John")
 				.accept(MediaType.APPLICATION_JSON_UTF8)
 				.exchange()
 				.expectStatus().isOk()
 				.expectBody()
-				.jsonPath("$.name").value(containsString("oh"));
+				// The following determines if at least one person is returned with a
+				// name containing "oh", and "John" matches that.
+				.jsonPath("$[?(@.name =~ /.*oh.*/)].name").hasJsonPath();
 	}
 
 	@Test

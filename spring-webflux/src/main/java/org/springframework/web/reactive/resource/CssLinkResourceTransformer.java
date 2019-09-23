@@ -45,7 +45,7 @@ import org.springframework.web.server.ServerWebExchange;
  * file to match the public URL paths that should be exposed to clients (e.g.
  * with an MD5 content-based hash inserted in the URL).
  *
- * <p>The implementation looks for links in CSS {@code @import} statements and
+ * <p>The implementation looks for links in CSS {@code @imports} statements and
  * also inside CSS {@code url()} functions. All links are then passed through the
  * {@link ResourceResolverChain} and resolved relative to the location of the
  * containing CSS file. If successfully resolved, the link is modified, otherwise
@@ -69,29 +69,31 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 	}
 
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public Mono<Resource> transform(ServerWebExchange exchange, Resource inputResource,
 			ResourceTransformerChain transformerChain) {
 
 		return transformerChain.transform(exchange, inputResource)
-				.flatMap(outputResource -> {
-					String filename = outputResource.getFilename();
+				.flatMap(ouptputResource -> {
+					String filename = ouptputResource.getFilename();
 					if (!"css".equals(StringUtils.getFilenameExtension(filename)) ||
-							inputResource instanceof EncodedResourceResolver.EncodedResource ||
 							inputResource instanceof GzipResourceResolver.GzippedResource) {
-						return Mono.just(outputResource);
+						return Mono.just(ouptputResource);
+					}
+
+					if (logger.isTraceEnabled()) {
+						logger.trace("Transforming resource: " + ouptputResource);
 					}
 
 					DataBufferFactory bufferFactory = exchange.getResponse().bufferFactory();
 					Flux<DataBuffer> flux = DataBufferUtils
-							.read(outputResource, bufferFactory, StreamUtils.BUFFER_SIZE);
+							.read(ouptputResource, bufferFactory, StreamUtils.BUFFER_SIZE);
 					return DataBufferUtils.join(flux)
 							.flatMap(dataBuffer -> {
 								CharBuffer charBuffer = DEFAULT_CHARSET.decode(dataBuffer.asByteBuffer());
 								DataBufferUtils.release(dataBuffer);
 								String cssContent = charBuffer.toString();
-								return transformContent(cssContent, outputResource, transformerChain, exchange);
+								return transformContent(cssContent, ouptputResource, transformerChain, exchange);
 							});
 				});
 	}
@@ -101,6 +103,9 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 
 		List<ContentChunkInfo> contentChunkInfos = parseContent(cssContent);
 		if (contentChunkInfos.isEmpty()) {
+			if (logger.isTraceEnabled()) {
+				logger.trace("No links found.");
+			}
 			return Mono.just(resource);
 		}
 
@@ -161,12 +166,9 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 	}
 
 
-	/**
-	 * Abstract base class for {@link LinkParser} implementations.
-	 */
 	protected abstract static class AbstractLinkParser implements LinkParser {
 
-		/** Return the keyword to use to search for links, e.g. "@import", "url(" */
+		/** Return the keyword to use to search for links, e.g. "@imports", "url(" */
 		protected abstract String getKeyword();
 
 		@Override
@@ -215,7 +217,7 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 
 		@Override
 		protected String getKeyword() {
-			return "@import";
+			return "@imports";
 		}
 
 		@Override
@@ -223,8 +225,8 @@ public class CssLinkResourceTransformer extends ResourceTransformerSupport {
 			if (content.substring(position, position + 4).equals("url(")) {
 				// Ignore, UrlFunctionContentParser will take care
 			}
-			else if (logger.isTraceEnabled()) {
-				logger.trace("Unexpected syntax for @import link at index " + position);
+			else if (logger.isErrorEnabled()) {
+				logger.error("Unexpected syntax for @imports link at index " + position);
 			}
 			return position;
 		}

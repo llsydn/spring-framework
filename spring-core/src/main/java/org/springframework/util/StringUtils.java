@@ -772,7 +772,6 @@ public abstract class StringUtils {
 	public static Locale parseLocale(String localeValue) {
 		String[] tokens = tokenizeLocaleSource(localeValue);
 		if (tokens.length == 1) {
-			validateLocalePart(localeValue);
 			Locale resolved = Locale.forLanguageTag(localeValue);
 			return (resolved.getLanguage().length() > 0 ? resolved : null);
 		}
@@ -821,7 +820,7 @@ public abstract class StringUtils {
 			}
 		}
 
-		if (variant.isEmpty() && country.startsWith("#")) {
+		if ("".equals(variant) && country.startsWith("#")) {
 			variant = country;
 			country = "";
 		}
@@ -832,7 +831,7 @@ public abstract class StringUtils {
 	private static void validateLocalePart(String localePart) {
 		for (int i = 0; i < localePart.length(); i++) {
 			char ch = localePart.charAt(i);
-			if (ch != ' ' && ch != '_' && ch != '-' && ch != '#' && !Character.isLetterOrDigit(ch)) {
+			if (ch != ' ' && ch != '_' && ch != '#' && !Character.isLetterOrDigit(ch)) {
 				throw new IllegalArgumentException(
 						"Locale part \"" + localePart + "\" contains invalid characters");
 			}
@@ -986,9 +985,9 @@ public abstract class StringUtils {
 	 * @param array the original {@code String} array (potentially empty)
 	 * @return the resulting array (of the same size) with trimmed elements
 	 */
-	public static String[] trimArrayElements(String[] array) {
+	public static String[] trimArrayElements(@Nullable String[] array) {
 		if (ObjectUtils.isEmpty(array)) {
-			return array;
+			return new String[0];
 		}
 
 		String[] result = new String[array.length];
@@ -1192,7 +1191,7 @@ public abstract class StringUtils {
 		}
 
 		List<String> result = new ArrayList<>();
-		if (delimiter.isEmpty()) {
+		if ("".equals(delimiter)) {
 			for (int i = 0; i < str.length(); i++) {
 				result.add(deleteAny(str.substring(i, i + 1), charsToDelete));
 			}

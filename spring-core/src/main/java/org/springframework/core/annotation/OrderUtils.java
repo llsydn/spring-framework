@@ -36,7 +36,7 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 @SuppressWarnings("unchecked")
 public abstract class OrderUtils {
 
-	/** Cache marker for a non-annotated Class. */
+	/** Cache marker for a non-annotated Class */
 	private static final Object NOT_ANNOTATED = new Object();
 
 
@@ -55,10 +55,10 @@ public abstract class OrderUtils {
 	}
 
 
-	/** Cache for @Order value (or NOT_ANNOTATED marker) per Class. */
+	/** Cache for @Order value (or NOT_ANNOTATED marker) per Class */
 	private static final Map<Class<?>, Object> orderCache = new ConcurrentReferenceHashMap<>(64);
 
-	/** Cache for @Priority value (or NOT_ANNOTATED marker) per Class. */
+	/** Cache for @Priority value (or NOT_ANNOTATED marker) per Class */
 	private static final Map<Class<?>, Object> priorityCache = new ConcurrentReferenceHashMap<>();
 
 

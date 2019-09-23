@@ -17,11 +17,11 @@
 package org.springframework.cache.jcache.interceptor;
 
 import java.util.Collection;
-import java.util.function.Supplier;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -34,8 +34,6 @@ import org.springframework.cache.interceptor.SimpleCacheResolver;
 import org.springframework.cache.interceptor.SimpleKeyGenerator;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.function.SingletonSupplier;
-import org.springframework.util.function.SupplierUtils;
 
 /**
  * The default {@link JCacheOperationSource} implementation delegating
@@ -43,53 +41,27 @@ import org.springframework.util.function.SupplierUtils;
  * when not present.
  *
  * @author Stephane Nicoll
- * @author Juergen Hoeller
  * @since 4.1
  */
 public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSource
-		implements BeanFactoryAware, SmartInitializingSingleton {
+		implements BeanFactoryAware, InitializingBean, SmartInitializingSingleton {
 
 	@Nullable
-	private SingletonSupplier<CacheManager> cacheManager;
+	private CacheManager cacheManager;
 
 	@Nullable
-	private SingletonSupplier<CacheResolver> cacheResolver;
+	private CacheResolver cacheResolver;
 
 	@Nullable
-	private SingletonSupplier<CacheResolver> exceptionCacheResolver;
+	private CacheResolver exceptionCacheResolver;
 
-	private SingletonSupplier<KeyGenerator> keyGenerator;
+	private KeyGenerator keyGenerator = new SimpleKeyGenerator();
 
-	private final SingletonSupplier<KeyGenerator> adaptedKeyGenerator =
-			SingletonSupplier.of(() -> new KeyGeneratorAdapter(this, getKeyGenerator()));
+	@Nullable
+	private KeyGenerator adaptedKeyGenerator;
 
 	@Nullable
 	private BeanFactory beanFactory;
-
-
-	/**
-	 * Construct a new {@code DefaultJCacheOperationSource} with the default key generator.
-	 * @see SimpleKeyGenerator
-	 */
-	public DefaultJCacheOperationSource() {
-		this.keyGenerator = SingletonSupplier.of(SimpleKeyGenerator::new);
-	}
-
-	/**
-	 * Construct a new {@code DefaultJCacheOperationSource} with the given cache manager,
-	 * cache resolver and key generator suppliers, applying the corresponding default
-	 * if a supplier is not resolvable.
-	 * @since 5.1
-	 */
-	public DefaultJCacheOperationSource(
-			@Nullable Supplier<CacheManager> cacheManager, @Nullable Supplier<CacheResolver> cacheResolver,
-			@Nullable Supplier<CacheResolver> exceptionCacheResolver, @Nullable Supplier<KeyGenerator> keyGenerator) {
-
-		this.cacheManager = SingletonSupplier.ofNullable(cacheManager);
-		this.cacheResolver = SingletonSupplier.ofNullable(cacheResolver);
-		this.exceptionCacheResolver = SingletonSupplier.ofNullable(exceptionCacheResolver);
-		this.keyGenerator = new SingletonSupplier<>(keyGenerator, SimpleKeyGenerator::new);
-	}
 
 
 	/**
@@ -97,7 +69,7 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 * Only mandatory if the {@linkplain CacheResolver cache resolver} has not been set.
 	 */
 	public void setCacheManager(@Nullable CacheManager cacheManager) {
-		this.cacheManager = SingletonSupplier.ofNullable(cacheManager);
+		this.cacheManager = cacheManager;
 	}
 
 	/**
@@ -105,7 +77,7 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 */
 	@Nullable
 	public CacheManager getCacheManager() {
-		return SupplierUtils.resolve(this.cacheManager);
+		return this.cacheManager;
 	}
 
 	/**
@@ -113,7 +85,7 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 * implementation using the specified cache manager will be used.
 	 */
 	public void setCacheResolver(@Nullable CacheResolver cacheResolver) {
-		this.cacheResolver = SingletonSupplier.ofNullable(cacheResolver);
+		this.cacheResolver = cacheResolver;
 	}
 
 	/**
@@ -121,7 +93,7 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 */
 	@Nullable
 	public CacheResolver getCacheResolver() {
-		return SupplierUtils.resolve(this.cacheResolver);
+		return this.cacheResolver;
 	}
 
 	/**
@@ -129,7 +101,7 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 * implementation using the specified cache manager will be used.
 	 */
 	public void setExceptionCacheResolver(@Nullable CacheResolver exceptionCacheResolver) {
-		this.exceptionCacheResolver = SingletonSupplier.ofNullable(exceptionCacheResolver);
+		this.exceptionCacheResolver = exceptionCacheResolver;
 	}
 
 	/**
@@ -137,7 +109,7 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 */
 	@Nullable
 	public CacheResolver getExceptionCacheResolver() {
-		return SupplierUtils.resolve(this.exceptionCacheResolver);
+		return this.exceptionCacheResolver;
 	}
 
 	/**
@@ -146,14 +118,14 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 * {@link javax.cache.annotation.CacheValue} will be used.
 	 */
 	public void setKeyGenerator(KeyGenerator keyGenerator) {
-		this.keyGenerator = SingletonSupplier.of(keyGenerator);
+		this.keyGenerator = keyGenerator;
 	}
 
 	/**
 	 * Return the specified key generator to use.
 	 */
 	public KeyGenerator getKeyGenerator() {
-		return this.keyGenerator.obtain();
+		return this.keyGenerator;
 	}
 
 	@Override
@@ -161,6 +133,11 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 		this.beanFactory = beanFactory;
 	}
 
+
+	@Override
+	public void afterPropertiesSet() {
+		this.adaptedKeyGenerator = new KeyGeneratorAdapter(this, this.keyGenerator);
+	}
 
 	@Override
 	public void afterSingletonsInstantiated() {
@@ -189,10 +166,10 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	}
 
 	protected CacheManager getDefaultCacheManager() {
-		if (getCacheManager() == null) {
+		if (this.cacheManager == null) {
 			Assert.state(this.beanFactory != null, "BeanFactory required for default CacheManager resolution");
 			try {
-				this.cacheManager = SingletonSupplier.of(this.beanFactory.getBean(CacheManager.class));
+				this.cacheManager = this.beanFactory.getBean(CacheManager.class);
 			}
 			catch (NoUniqueBeanDefinitionException ex) {
 				throw new IllegalStateException("No unique bean of type CacheManager found. "+
@@ -203,28 +180,29 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 						"bean or remove the @EnableCaching annotation from your configuration.");
 			}
 		}
-		return getCacheManager();
+		return this.cacheManager;
 	}
 
 	@Override
 	protected CacheResolver getDefaultCacheResolver() {
-		if (getCacheResolver() == null) {
-			this.cacheResolver = SingletonSupplier.of(new SimpleCacheResolver(getDefaultCacheManager()));
+		if (this.cacheResolver == null) {
+			this.cacheResolver = new SimpleCacheResolver(getDefaultCacheManager());
 		}
-		return getCacheResolver();
+		return this.cacheResolver;
 	}
 
 	@Override
 	protected CacheResolver getDefaultExceptionCacheResolver() {
-		if (getExceptionCacheResolver() == null) {
-			this.exceptionCacheResolver = SingletonSupplier.of(new LazyCacheResolver());
+		if (this.exceptionCacheResolver == null) {
+			this.exceptionCacheResolver = new LazyCacheResolver();
 		}
-		return getExceptionCacheResolver();
+		return this.exceptionCacheResolver;
 	}
 
 	@Override
 	protected KeyGenerator getDefaultKeyGenerator() {
-		return this.adaptedKeyGenerator.obtain();
+		Assert.state(this.adaptedKeyGenerator != null, "KeyGenerator not initialized");
+		return this.adaptedKeyGenerator;
 	}
 
 
@@ -241,12 +219,15 @@ public class DefaultJCacheOperationSource extends AnnotationJCacheOperationSourc
 	 */
 	class LazyCacheResolver implements CacheResolver {
 
-		private final SingletonSupplier<CacheResolver> cacheResolver =
-				SingletonSupplier.of(() -> new SimpleExceptionCacheResolver(getDefaultCacheManager()));
+		@Nullable
+		private CacheResolver cacheResolver;
 
 		@Override
 		public Collection<? extends Cache> resolveCaches(CacheOperationInvocationContext<?> context) {
-			return this.cacheResolver.obtain().resolveCaches(context);
+			if (this.cacheResolver == null) {
+				this.cacheResolver = new SimpleExceptionCacheResolver(getDefaultCacheManager());
+			}
+			return this.cacheResolver.resolveCaches(context);
 		}
 	}
 

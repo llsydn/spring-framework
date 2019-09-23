@@ -31,10 +31,10 @@ import org.springframework.lang.Nullable;
 public class BeanDefinitionStoreException extends FatalBeanException {
 
 	@Nullable
-	private final String resourceDescription;
+	private String resourceDescription;
 
 	@Nullable
-	private final String beanName;
+	private String beanName;
 
 
 	/**
@@ -43,8 +43,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	 */
 	public BeanDefinitionStoreException(String msg) {
 		super(msg);
-		this.resourceDescription = null;
-		this.beanName = null;
 	}
 
 	/**
@@ -54,8 +52,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	 */
 	public BeanDefinitionStoreException(String msg, @Nullable Throwable cause) {
 		super(msg, cause);
-		this.resourceDescription = null;
-		this.beanName = null;
 	}
 
 	/**
@@ -66,7 +62,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	public BeanDefinitionStoreException(@Nullable String resourceDescription, String msg) {
 		super(msg);
 		this.resourceDescription = resourceDescription;
-		this.beanName = null;
 	}
 
 	/**
@@ -78,7 +73,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	public BeanDefinitionStoreException(@Nullable String resourceDescription, String msg, @Nullable Throwable cause) {
 		super(msg, cause);
 		this.resourceDescription = resourceDescription;
-		this.beanName = null;
 	}
 
 	/**

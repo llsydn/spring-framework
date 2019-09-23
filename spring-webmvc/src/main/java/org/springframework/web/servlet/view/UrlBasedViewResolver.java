@@ -122,7 +122,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	@Nullable
 	private String requestContextAttribute;
 
-	/** Map of static attributes, keyed by attribute name (String). */
+	/** Map of static attributes, keyed by attribute name (String) */
 	private final Map<String, Object> staticAttributes = new HashMap<>();
 
 	@Nullable
@@ -325,7 +325,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * Set static attributes from a Map, for all views returned by this resolver.
 	 * This allows to set any kind of attribute values, for example bean references.
 	 * <p>Can be populated with a "map" or "props" element in XML bean definitions.
-	 * @param attributes a Map with name Strings as keys and attribute objects as values
+	 * @param attributes Map with name Strings as keys and attribute objects as values
 	 * @see AbstractView#setAttributesMap
 	 */
 	public void setAttributesMap(@Nullable Map<String, ?> attributes) {
@@ -470,7 +470,6 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 			return null;
 		}
 
-		// 判断是否有前缀：redirect:
 		// Check for special "redirect:" prefix.
 		if (viewName.startsWith(REDIRECT_URL_PREFIX)) {
 			String redirectUrl = viewName.substring(REDIRECT_URL_PREFIX.length());
@@ -483,15 +482,12 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 			return applyLifecycleMethods(REDIRECT_URL_PREFIX, view);
 		}
 
-		// 判断是否有前缀：forward:
 		// Check for special "forward:" prefix.
 		if (viewName.startsWith(FORWARD_URL_PREFIX)) {
 			String forwardUrl = viewName.substring(FORWARD_URL_PREFIX.length());
-			InternalResourceView view = new InternalResourceView(forwardUrl);
-			return applyLifecycleMethods(FORWARD_URL_PREFIX, view);
+			return new InternalResourceView(forwardUrl);
 		}
 
-		// 都没有就调用父类的方法
 		// Else fall back to superclass implementation: calling loadView.
 		return super.createView(viewName, locale);
 	}
@@ -552,7 +548,6 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 		Assert.state(viewClass != null, "No view class");
 
 		AbstractUrlBasedView view = (AbstractUrlBasedView) BeanUtils.instantiateClass(viewClass);
-		// 设置前缀和后缀
 		view.setUrl(getPrefix() + viewName + getSuffix());
 
 		String contentType = getContentType();

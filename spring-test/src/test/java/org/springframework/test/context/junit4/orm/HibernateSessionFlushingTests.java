@@ -18,7 +18,6 @@ package org.springframework.test.context.junit4.orm;
 
 import javax.persistence.PersistenceException;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Before;
@@ -30,7 +29,6 @@ import org.springframework.test.context.junit4.AbstractTransactionalJUnit4Spring
 import org.springframework.test.context.junit4.orm.domain.DriversLicense;
 import org.springframework.test.context.junit4.orm.domain.Person;
 import org.springframework.test.context.junit4.orm.service.PersonService;
-import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.Assert.*;
 import static org.springframework.test.transaction.TransactionTestUtils.*;
@@ -40,8 +38,6 @@ import static org.springframework.test.transaction.TransactionTestUtils.*;
  * Hibernate.
  *
  * @author Sam Brannen
- * @author Juergen Hoeller
- * @author Vlad Mihalcea
  * @since 3.0
  */
 @ContextConfiguration
@@ -57,13 +53,20 @@ public class HibernateSessionFlushingTests extends AbstractTransactionalJUnit4Sp
 	private SessionFactory sessionFactory;
 
 
+	protected int countRowsInPersonTable() {
+		return countRowsInTable("person");
+	}
+
+	protected void assertPersonCount(int expectedCount) {
+		assertEquals("Verifying number of rows in the 'person' table.", expectedCount, countRowsInPersonTable());
+	}
+
 	@Before
-	public void setup() {
+	public void setUp() {
 		assertInTransaction(true);
 		assertNotNull("PersonService should have been autowired.", personService);
 		assertNotNull("SessionFactory should have been autowired.", sessionFactory);
 	}
-
 
 	@Test
 	public void findSam() {
@@ -74,25 +77,13 @@ public class HibernateSessionFlushingTests extends AbstractTransactionalJUnit4Sp
 		assertEquals("Verifying Sam's driver's license number", Long.valueOf(1234), driversLicense.getNumber());
 	}
 
-	@Test  // SPR-16956
-	@Transactional(readOnly = true)
-	public void findSamWithReadOnlySession() {
-		Person sam = personService.findByName(SAM);
-		sam.setName("Vlad");
-		// By setting setDefaultReadOnly(true), the user can no longer modify any entity...
-		Session session = sessionFactory.getCurrentSession();
-		session.flush();
-		session.refresh(sam);
-		assertEquals("Sam", sam.getName());
-	}
-
 	@Test
 	public void saveJuergenWithDriversLicense() {
 		DriversLicense driversLicense = new DriversLicense(2L, 2222L);
 		Person juergen = new Person(JUERGEN, driversLicense);
-		int numRows = countRowsInTable("person");
+		int numRows = countRowsInPersonTable();
 		personService.save(juergen);
-		assertEquals("Verifying number of rows in the 'person' table.", numRows + 1, countRowsInTable("person"));
+		assertPersonCount(numRows + 1);
 		assertNotNull("Should be able to save and retrieve Juergen", personService.findByName(JUERGEN));
 		assertNotNull("Juergen's ID should have been set", juergen.getId());
 	}
@@ -100,6 +91,13 @@ public class HibernateSessionFlushingTests extends AbstractTransactionalJUnit4Sp
 	@Test(expected = ConstraintViolationException.class)
 	public void saveJuergenWithNullDriversLicense() {
 		personService.save(new Person(JUERGEN));
+	}
+
+	private void updateSamWithNullDriversLicense() {
+		Person sam = personService.findByName(SAM);
+		assertNotNull("Should be able to find Sam", sam);
+		sam.setDriversLicense(null);
+		personService.save(sam);
 	}
 
 	@Test
@@ -121,13 +119,6 @@ public class HibernateSessionFlushingTests extends AbstractTransactionalJUnit4Sp
 			// Wrapped in Hibernate 5.2, with the constraint violation as cause
 			throw ex.getCause();
 		}
-	}
-
-	private void updateSamWithNullDriversLicense() {
-		Person sam = personService.findByName(SAM);
-		assertNotNull("Should be able to find Sam", sam);
-		sam.setDriversLicense(null);
-		personService.save(sam);
 	}
 
 }

@@ -23,6 +23,9 @@ import java.util.function.Consumer;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ReactiveAdapterRegistry;
 import org.springframework.core.ResolvableType;
@@ -56,6 +59,9 @@ import org.springframework.web.method.support.ModelAndViewContainer;
  * @since 4.2
  */
 public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodReturnValueHandler {
+
+	private static final Log logger = LogFactory.getLog(ResponseBodyEmitterReturnValueHandler.class);
+
 
 	private final List<HttpMessageConverter<?>> messageConverters;
 
@@ -186,6 +192,9 @@ public class ResponseBodyEmitterReturnValueHandler implements HandlerMethodRetur
 
 		@SuppressWarnings("unchecked")
 		private <T> void sendInternal(T data, @Nullable MediaType mediaType) throws IOException {
+			if (logger.isTraceEnabled()) {
+				logger.trace("Writing [" + data + "]");
+			}
 			for (HttpMessageConverter<?> converter : ResponseBodyEmitterReturnValueHandler.this.messageConverters) {
 				if (converter.canWrite(data.getClass(), mediaType)) {
 					((HttpMessageConverter<T>) converter).write(data, mediaType, this.outputMessage);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,11 @@ import org.springframework.web.reactive.config.WebFluxConfigurationSupport;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.result.method.annotation.AbstractRequestMappingIntegrationTests;
+import org.springframework.web.server.i18n.LocaleContextResolver;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.i18n.FixedLocaleContextResolver;
-import org.springframework.web.server.i18n.LocaleContextResolver;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Sebastien Deleuze
@@ -51,15 +51,6 @@ import static org.junit.Assert.*;
 public class LocaleContextResolverIntegrationTests extends AbstractRequestMappingIntegrationTests {
 
 	private final WebClient webClient = WebClient.create();
-
-
-	@Override
-	protected ApplicationContext initApplicationContext() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-		context.register(WebConfig.class);
-		context.refresh();
-		return context;
-	}
 
 	@Test
 	public void fixedLocale() {
@@ -74,6 +65,14 @@ public class LocaleContextResolverIntegrationTests extends AbstractRequestMappin
 					assertEquals(Locale.GERMANY, response.headers().asHttpHeaders().getContentLanguage());
 				})
 				.verifyComplete();
+	}
+
+	@Override
+	protected ApplicationContext initApplicationContext() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+		context.register(WebConfig.class);
+		context.refresh();
+		return context;
 	}
 
 
@@ -112,8 +111,8 @@ public class LocaleContextResolverIntegrationTests extends AbstractRequestMappin
 				return Mono.empty();
 			}
 		}
-	}
 
+	}
 
 	@Controller
 	@SuppressWarnings("unused")
@@ -123,6 +122,7 @@ public class LocaleContextResolverIntegrationTests extends AbstractRequestMappin
 		public String foo() {
 			return "foo";
 		}
+
 	}
 
 }

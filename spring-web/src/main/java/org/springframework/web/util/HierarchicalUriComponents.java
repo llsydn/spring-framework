@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -756,8 +756,6 @@ final class HierarchicalUriComponents extends UriComponents {
 
 		private final StringBuilder currentLiteral = new StringBuilder();
 
-		private final StringBuilder currentVariable = new StringBuilder();
-
 		private final StringBuilder output = new StringBuilder();
 
 
@@ -769,21 +767,22 @@ final class HierarchicalUriComponents extends UriComponents {
 		@Override
 		public String apply(String source, Type type) {
 
-			// Only URI variable (nothing to encode)..
+			// Only URI variable, nothing to encode..
 			if (source.length() > 1 && source.charAt(0) == '{' && source.charAt(source.length() -1) == '}') {
 				return source;
 			}
 
-			// Only literal (encode full source)..
+			// Only literal, encode all..
 			if (source.indexOf('{') == -1) {
 				return encodeUriComponent(source, this.charset, type);
 			}
 
-			// Mixed literal parts and URI variables, maybe (encode literal parts only)..
+			// Mixed, encode all except for URI variables..
+
 			int level = 0;
 			clear(this.currentLiteral);
-			clear(this.currentVariable);
 			clear(this.output);
+
 			for (char c : source.toCharArray()) {
 				if (c == '{') {
 					level++;
@@ -791,25 +790,21 @@ final class HierarchicalUriComponents extends UriComponents {
 						encodeAndAppendCurrentLiteral(type);
 					}
 				}
-				if (c == '}' && level > 0) {
+				if (c == '}') {
 					level--;
-					this.currentVariable.append('}');
-					if (level == 0) {
-						this.output.append(this.currentVariable);
-						clear(this.currentVariable);
-					}
+					Assert.isTrue(level >=0, "Mismatched open and close braces");
 				}
-				else if (level > 0) {
-					this.currentVariable.append(c);
+				if (level > 0 || (level == 0 && c == '}')) {
+					this.output.append(c);
 				}
 				else {
 					this.currentLiteral.append(c);
 				}
 			}
-			if (level > 0) {
-				this.currentLiteral.append(this.currentVariable);
-			}
+
+			Assert.isTrue(level == 0, "Mismatched open and close braces");
 			encodeAndAppendCurrentLiteral(type);
+
 			return this.output.toString();
 		}
 

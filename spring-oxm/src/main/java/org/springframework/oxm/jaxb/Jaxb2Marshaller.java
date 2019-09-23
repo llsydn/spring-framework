@@ -127,11 +127,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 
 	private static final String CID = "cid:";
 
-	private static final EntityResolver NO_OP_ENTITY_RESOLVER =
-			(publicId, systemId) -> new InputSource(new StringReader(""));
 
-
-	/** Logger available to subclasses. */
+	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	@Nullable
@@ -317,7 +314,7 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 
 	/**
 	 * Specify the {@code XmlAdapter}s to be registered with the JAXB {@code Marshaller}
-	 * and {@code Unmarshaller}.
+	 * and {@code Unmarshaller}
 	 */
 	public void setAdapters(XmlAdapter<?, ?>... adapters) {
 		this.adapters = adapters;
@@ -515,8 +512,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	}
 
 	private JAXBContext createJaxbContextFromContextPath(String contextPath) throws JAXBException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Creating JAXBContext with context path [" + this.contextPath + "]");
+		if (logger.isInfoEnabled()) {
+			logger.info("Creating JAXBContext with context path [" + this.contextPath + "]");
 		}
 		if (this.jaxbContextProperties != null) {
 			if (this.beanClassLoader != null) {
@@ -539,8 +536,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	}
 
 	private JAXBContext createJaxbContextFromClasses(Class<?>... classesToBeBound) throws JAXBException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Creating JAXBContext with classes to be bound [" +
+		if (logger.isInfoEnabled()) {
+			logger.info("Creating JAXBContext with classes to be bound [" +
 					StringUtils.arrayToCommaDelimitedString(classesToBeBound) + "]");
 		}
 		if (this.jaxbContextProperties != null) {
@@ -552,8 +549,8 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 	}
 
 	private JAXBContext createJaxbContextFromPackages(String... packagesToScan) throws JAXBException {
-		if (logger.isDebugEnabled()) {
-			logger.debug("Creating JAXBContext by scanning packages [" +
+		if (logger.isInfoEnabled()) {
+			logger.info("Creating JAXBContext by scanning packages [" +
 					StringUtils.arrayToCommaDelimitedString(packagesToScan) + "]");
 		}
 		ClassPathJaxb2TypeScanner scanner = new ClassPathJaxb2TypeScanner(this.beanClassLoader, packagesToScan);
@@ -869,7 +866,7 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 			return new SAXSource(xmlReader, inputSource);
 		}
 		catch (SAXException ex) {
-			logger.info("Processing of external entities could not be disabled", ex);
+			logger.warn("Processing of external entities could not be disabled", ex);
 			return source;
 		}
 	}
@@ -1081,5 +1078,9 @@ public class Jaxb2Marshaller implements MimeMarshaller, MimeUnmarshaller, Generi
 			return "ByteArrayDataSource";
 		}
 	}
+
+
+	private static final EntityResolver NO_OP_ENTITY_RESOLVER =
+			(publicId, systemId) -> new InputSource(new StringReader(""));
 
 }

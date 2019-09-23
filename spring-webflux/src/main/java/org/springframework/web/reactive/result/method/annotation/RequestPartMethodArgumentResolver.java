@@ -70,47 +70,33 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageReaderArgu
 		boolean isRequired = (requestPart == null || requestPart.required());
 		String name = getPartName(parameter, requestPart);
 
-		Flux<Part> parts = exchange.getMultipartData()
+		Flux<Part> values = exchange.getMultipartData()
 				.flatMapMany(map -> {
-					List<Part> list = map.get(name);
-					if (CollectionUtils.isEmpty(list)) {
+					List<Part> parts = map.get(name);
+					if (CollectionUtils.isEmpty(parts)) {
 						return (isRequired ? Flux.error(getMissingPartException(name, parameter)) : Flux.empty());
 					}
-					return Flux.fromIterable(list);
+					return Flux.fromIterable(parts);
 				});
 
-		if (Part.class.isAssignableFrom(parameter.getParameterType())) {
-			return parts.next().cast(Object.class);
-		}
+		ReactiveAdapter adapter = getAdapterRegistry().getAdapter(parameter.getParameterType());
+		MethodParameter elementType = adapter != null ? parameter.nested() : parameter;
 
-		if (List.class.isAssignableFrom(parameter.getParameterType())) {
-			MethodParameter elementType = parameter.nested();
-			if (Part.class.isAssignableFrom(elementType.getNestedParameterType())) {
-				return parts.collectList().cast(Object.class);
+		if (Part.class.isAssignableFrom(elementType.getNestedParameterType())) {
+			if (adapter != null) {
+				values = adapter.isMultiValue() ? values : values.take(1);
+				return Mono.just(adapter.fromPublisher(values));
 			}
 			else {
-				return decodePartValues(parts, elementType, bindingContext, exchange, isRequired)
-						.collectList().cast(Object.class);
+				return values.next().cast(Object.class);
 			}
 		}
 
-		ReactiveAdapter adapter = getAdapterRegistry().getAdapter(parameter.getParameterType());
-		if (adapter != null) {
-			// Mono<Part> or Flux<Part>
-			MethodParameter elementType = parameter.nested();
-			if (Part.class.isAssignableFrom(elementType.getNestedParameterType())) {
-				parts = (adapter.isMultiValue() ? parts : parts.take(1));
-				return Mono.just(adapter.fromPublisher(parts));
-			}
-			// We have to decode the content for each part, one at a time
-			if (adapter.isMultiValue()) {
-				return Mono.just(decodePartValues(parts, elementType, bindingContext, exchange, isRequired));
-			}
-		}
-
-		// <T> or Mono<T>
-		return decodePartValues(parts, parameter, bindingContext, exchange, isRequired)
-				.next().cast(Object.class);
+		return values.next().flatMap(part -> {
+			ServerHttpRequest partRequest = new PartServerHttpRequest(exchange.getRequest(), part);
+			ServerWebExchange partExchange = exchange.mutate().request(partRequest).build();
+			return readBody(parameter, isRequired, bindingContext, partExchange);
+		});
 	}
 
 	private String getPartName(MethodParameter methodParam, @Nullable RequestPart requestPart) {
@@ -129,20 +115,6 @@ public class RequestPartMethodArgumentResolver extends AbstractMessageReaderArgu
 	private ServerWebInputException getMissingPartException(String name, MethodParameter param) {
 		String reason = "Required request part '" + name + "' is not present";
 		return new ServerWebInputException(reason, param);
-	}
-
-
-	private Flux<?> decodePartValues(Flux<Part> parts, MethodParameter elementType, BindingContext bindingContext,
-			ServerWebExchange exchange, boolean isRequired) {
-
-		return parts.flatMap(part -> {
-			ServerHttpRequest partRequest = new PartServerHttpRequest(exchange.getRequest(), part);
-			ServerWebExchange partExchange = exchange.mutate().request(partRequest).build();
-			if (logger.isDebugEnabled()) {
-				logger.debug(exchange.getLogPrefix() + "Decoding part '" + part.name() + "'");
-			}
-			return readBody(elementType, isRequired, bindingContext, partExchange);
-		});
 	}
 
 

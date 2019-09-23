@@ -16,7 +16,6 @@
 
 package org.springframework.jdbc.datasource;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -142,7 +141,7 @@ public class WebSphereDataSourceAdapter extends IsolationLevelDataSourceAdapter 
 					getTargetDataSource() + "], using ConnectionSpec [" + connSpec + "]");
 		}
 		// Create Connection through invoking WSDataSource.getConnection(JDBCConnectionSpec)
-		Connection con = (Connection) invokeJdbcMethod(
+		Connection con = (Connection) ReflectionUtils.invokeJdbcMethod(
 				this.wsDataSourceGetConnectionMethod, obtainTargetDataSource(), connSpec);
 		Assert.state(con != null, "No Connection");
 		return con;
@@ -164,40 +163,21 @@ public class WebSphereDataSourceAdapter extends IsolationLevelDataSourceAdapter 
 	protected Object createConnectionSpec(@Nullable Integer isolationLevel, @Nullable Boolean readOnlyFlag,
 			@Nullable String username, @Nullable String password) throws SQLException {
 
-		Object connSpec = invokeJdbcMethod(this.newJdbcConnSpecMethod, null);
+		Object connSpec = ReflectionUtils.invokeJdbcMethod(this.newJdbcConnSpecMethod, null);
 		Assert.state(connSpec != null, "No JDBCConnectionSpec");
 		if (isolationLevel != null) {
-			invokeJdbcMethod(this.setTransactionIsolationMethod, connSpec, isolationLevel);
+			ReflectionUtils.invokeJdbcMethod(this.setTransactionIsolationMethod, connSpec, isolationLevel);
 		}
 		if (readOnlyFlag != null) {
-			invokeJdbcMethod(this.setReadOnlyMethod, connSpec, readOnlyFlag);
+			ReflectionUtils.invokeJdbcMethod(this.setReadOnlyMethod, connSpec, readOnlyFlag);
 		}
 		// If the username is empty, we'll simply let the target DataSource
 		// use its default credentials.
 		if (StringUtils.hasLength(username)) {
-			invokeJdbcMethod(this.setUserNameMethod, connSpec, username);
-			invokeJdbcMethod(this.setPasswordMethod, connSpec, password);
+			ReflectionUtils.invokeJdbcMethod(this.setUserNameMethod, connSpec, username);
+			ReflectionUtils.invokeJdbcMethod(this.setPasswordMethod, connSpec, password);
 		}
 		return connSpec;
-	}
-
-
-	@Nullable
-	private static Object invokeJdbcMethod(Method method, @Nullable Object target, @Nullable Object... args)
-			throws SQLException {
-		try {
-			return method.invoke(target, args);
-		}
-		catch (IllegalAccessException ex) {
-			ReflectionUtils.handleReflectionException(ex);
-		}
-		catch (InvocationTargetException ex) {
-			if (ex.getTargetException() instanceof SQLException) {
-				throw (SQLException) ex.getTargetException();
-			}
-			ReflectionUtils.handleInvocationTargetException(ex);
-		}
-		throw new IllegalStateException("Should never get here");
 	}
 
 }

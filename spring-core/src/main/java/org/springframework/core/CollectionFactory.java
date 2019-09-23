@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Sam Brannen
  * @since 1.1.1
  */
-public final class CollectionFactory {
+public abstract class CollectionFactory {
 
 	private static final Set<Class<?>> approximableCollectionTypes = new HashSet<>();
 
@@ -82,10 +82,6 @@ public final class CollectionFactory {
 		approximableMapTypes.add(LinkedHashMap.class);
 		approximableMapTypes.add(TreeMap.class);
 		approximableMapTypes.add(EnumMap.class);
-	}
-
-
-	private CollectionFactory() {
 	}
 
 
@@ -195,7 +191,7 @@ public final class CollectionFactory {
 				throw new IllegalArgumentException("Unsupported Collection interface: " + collectionType.getName());
 			}
 		}
-		else if (EnumSet.class.isAssignableFrom(collectionType)) {
+		else if (EnumSet.class == collectionType) {
 			Assert.notNull(elementType, "Cannot create EnumSet for unknown element type");
 			// Cast is necessary for compilation in Eclipse 4.4.1.
 			return (Collection<E>) EnumSet.noneOf(asEnumType(elementType));

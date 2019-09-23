@@ -37,8 +37,8 @@ import org.springframework.http.ReactiveHttpInputMessage;
 import org.springframework.lang.Nullable;
 
 /**
- * Reader that supports a stream of {@link ServerSentEvent ServerSentEvents} and also plain
- * {@link Object Objects} which is the same as an {@link ServerSentEvent} with data only.
+ * Reader that supports a stream of {@link ServerSentEvent}s and also plain
+ * {@link Object}s which is the same as an {@link ServerSentEvent} with data only.
  *
  * @author Sebastien Deleuze
  * @author Rossen Stoyanchev
@@ -93,18 +93,19 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 	}
 
 	private boolean isServerSentEvent(ResolvableType elementType) {
-		return ServerSentEvent.class.isAssignableFrom(elementType.toClass());
+		Class<?> rawClass = elementType.getRawClass();
+		return (rawClass != null && ServerSentEvent.class.isAssignableFrom(rawClass));
 	}
 
 
 	@Override
-	public Flux<Object> read(
-			ResolvableType elementType, ReactiveHttpInputMessage message, Map<String, Object> hints) {
+	public Flux<Object> read(ResolvableType elementType, ReactiveHttpInputMessage message,
+			Map<String, Object> hints) {
 
 		boolean shouldWrap = isServerSentEvent(elementType);
 		ResolvableType valueType = (shouldWrap ? elementType.getGeneric() : elementType);
 
-		return stringDecoder.decode(message.getBody(), STRING_TYPE, null, hints)
+		return stringDecoder.decode(message.getBody(), STRING_TYPE, null, Collections.emptyMap())
 				.bufferUntil(line -> line.equals(""))
 				.concatMap(lines -> buildEvent(lines, valueType, shouldWrap, hints));
 	}
@@ -169,13 +170,13 @@ public class ServerSentEventHttpMessageReader implements HttpMessageReader<Objec
 	}
 
 	@Override
-	public Mono<Object> readMono(
-			ResolvableType elementType, ReactiveHttpInputMessage message, Map<String, Object> hints) {
+	public Mono<Object> readMono(ResolvableType elementType, ReactiveHttpInputMessage message,
+			Map<String, Object> hints) {
 
 		// We're ahead of String + "*/*"
 		// Let's see if we can aggregate the output (lest we time out)...
 
-		if (elementType.resolve() == String.class) {
+		if (String.class.equals(elementType.getRawClass())) {
 			Flux<DataBuffer> body = message.getBody();
 			return stringDecoder.decodeToMono(body, elementType, null, null).cast(Object.class);
 		}

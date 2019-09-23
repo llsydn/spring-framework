@@ -19,8 +19,12 @@ package org.springframework.web.servlet.view.json;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -28,8 +32,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.lang.Nullable;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.servlet.View;
 
@@ -52,6 +58,7 @@ import org.springframework.web.servlet.View;
  * @author Sebastien Deleuze
  * @since 3.1.2
  */
+@SuppressWarnings("deprecation")
 public class MappingJackson2JsonView extends AbstractJackson2View {
 
 	/**
@@ -60,6 +67,20 @@ public class MappingJackson2JsonView extends AbstractJackson2View {
 	 */
 	public static final String DEFAULT_CONTENT_TYPE = "application/json";
 
+	/**
+	 * Default content type for JSONP: "application/javascript".
+	 * @deprecated Will be removed as of Spring Framework 5.1, use
+	 * <a href="https://docs.spring.io/spring/docs/5.0.x/spring-framework-reference/web.html#mvc-cors">CORS</a> instead.
+	 */
+	@Deprecated
+	public static final String DEFAULT_JSONP_CONTENT_TYPE = "application/javascript";
+
+	/**
+	 * Pattern for validating jsonp callback parameter values.
+	 */
+	private static final Pattern CALLBACK_PARAM_PATTERN = Pattern.compile("[0-9A-Za-z_\\.]*");
+
+
 	@Nullable
 	private String jsonPrefix;
 
@@ -67,6 +88,9 @@ public class MappingJackson2JsonView extends AbstractJackson2View {
 	private Set<String> modelKeys;
 
 	private boolean extractValueFromSingleKeyModel = false;
+
+	@Nullable
+	private Set<String> jsonpParameterNames = new LinkedHashSet<>();
 
 
 	/**
@@ -146,6 +170,56 @@ public class MappingJackson2JsonView extends AbstractJackson2View {
 	}
 
 	/**
+	 * Set JSONP request parameter names. Each time a request has one of those
+	 * parameters, the resulting JSON will be wrapped into a function named as
+	 * specified by the JSONP request parameter value.
+	 * <p>As of Spring Framework 5.0.7, there is no parameter name configured
+	 * by default.
+	 * @since 4.1
+	 * @see <a href="http://en.wikipedia.org/wiki/JSONP">JSONP Wikipedia article</a>
+	 * @deprecated Will be removed as of Spring Framework 5.1, use
+	 * <a href="https://docs.spring.io/spring/docs/5.0.x/spring-framework-reference/web.html#mvc-cors">CORS</a> instead.
+	 */
+	@Deprecated
+	public void setJsonpParameterNames(Set<String> jsonpParameterNames) {
+		this.jsonpParameterNames = jsonpParameterNames;
+	}
+
+	@Nullable
+	private String getJsonpParameterValue(HttpServletRequest request) {
+		if (this.jsonpParameterNames != null) {
+			for (String name : this.jsonpParameterNames) {
+				String value = request.getParameter(name);
+				if (StringUtils.isEmpty(value)) {
+					continue;
+				}
+				if (!isValidJsonpQueryParam(value)) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("Ignoring invalid jsonp parameter value: " + value);
+					}
+					continue;
+				}
+				return value;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Validate the jsonp query parameter value. The default implementation
+	 * returns true if it consists of digits, letters, or "_" and ".".
+	 * Invalid parameter values are ignored.
+	 * @param value the query param value, never {@code null}
+	 * @since 4.1.8
+	 * @deprecated Will be removed as of Spring Framework 5.1, use
+	 * <a href="https://docs.spring.io/spring/docs/5.0.x/spring-framework-reference/web.html#mvc-cors">CORS</a> instead.
+	 */
+	@Deprecated
+	protected boolean isValidJsonpQueryParam(String value) {
+		return CALLBACK_PARAM_PATTERN.matcher(value).matches();
+	}
+
+	/**
 	 * Filter out undesired attributes from the given model.
 	 * The return value can be either another {@link Map} or a single value object.
 	 * <p>The default implementation removes {@link BindingResult} instances and entries
@@ -168,9 +242,56 @@ public class MappingJackson2JsonView extends AbstractJackson2View {
 	}
 
 	@Override
+	protected Object filterAndWrapModel(Map<String, Object> model, HttpServletRequest request) {
+		Object value = super.filterAndWrapModel(model, request);
+		String jsonpParameterValue = getJsonpParameterValue(request);
+		if (jsonpParameterValue != null) {
+			if (value instanceof MappingJacksonValue) {
+				((MappingJacksonValue) value).setJsonpFunction(jsonpParameterValue);
+			}
+			else {
+				MappingJacksonValue container = new MappingJacksonValue(value);
+				container.setJsonpFunction(jsonpParameterValue);
+				value = container;
+			}
+		}
+		return value;
+	}
+
+	@Override
 	protected void writePrefix(JsonGenerator generator, Object object) throws IOException {
 		if (this.jsonPrefix != null) {
 			generator.writeRaw(this.jsonPrefix);
+		}
+
+		String jsonpFunction = null;
+		if (object instanceof MappingJacksonValue) {
+			jsonpFunction = ((MappingJacksonValue) object).getJsonpFunction();
+		}
+		if (jsonpFunction != null) {
+			generator.writeRaw("/**/");
+			generator.writeRaw(jsonpFunction + "(");
+		}
+	}
+
+	@Override
+	protected void writeSuffix(JsonGenerator generator, Object object) throws IOException {
+		String jsonpFunction = null;
+		if (object instanceof MappingJacksonValue) {
+			jsonpFunction = ((MappingJacksonValue) object).getJsonpFunction();
+		}
+		if (jsonpFunction != null) {
+			generator.writeRaw(");");
+		}
+	}
+
+	@Override
+	protected void setResponseContentType(HttpServletRequest request, HttpServletResponse response) {
+		if (getJsonpParameterValue(request) != null) {
+			response.setContentType(DEFAULT_JSONP_CONTENT_TYPE);
+		}
+		else {
+			super.setResponseContentType(request, response);
 		}
 	}
 

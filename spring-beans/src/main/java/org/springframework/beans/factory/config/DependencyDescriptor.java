@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,7 @@ import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.lang.Nullable;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Descriptor for a specific dependency that is about to be injected.
@@ -76,10 +74,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	private Class<?> containingClass;
 
 	@Nullable
-	private transient volatile ResolvableType resolvableType;
-
-	@Nullable
-	private transient volatile TypeDescriptor typeDescriptor;
+	private volatile ResolvableType resolvableType;
 
 
 	/**
@@ -172,8 +167,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 
 		if (this.field != null) {
 			return !(this.field.getType() == Optional.class || hasNullableAnnotation() ||
-					(KotlinDetector.isKotlinReflectPresent() &&
-							KotlinDetector.isKotlinType(this.field.getDeclaringClass()) &&
+					(KotlinDetector.isKotlinType(this.field.getDeclaringClass()) &&
 							KotlinDelegate.isNullable(this.field)));
 		}
 		else {
@@ -214,28 +208,8 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	 * (qualifiers etc already applied)
 	 * @return a bean instance to proceed with, or {@code null} for none
 	 * @throws BeansException in case of the not-unique scenario being fatal
-	 * @since 5.1
-	 */
-	@Nullable
-	public Object resolveNotUnique(ResolvableType type, Map<String, Object> matchingBeans) throws BeansException {
-		throw new NoUniqueBeanDefinitionException(type, matchingBeans.keySet());
-	}
-
-	/**
-	 * Resolve the specified not-unique scenario: by default,
-	 * throwing a {@link NoUniqueBeanDefinitionException}.
-	 * <p>Subclasses may override this to select one of the instances or
-	 * to opt out with no result at all through returning {@code null}.
-	 * @param type the requested bean type
-	 * @param matchingBeans a map of bean names and corresponding bean
-	 * instances which have been pre-selected for the given type
-	 * (qualifiers etc already applied)
-	 * @return a bean instance to proceed with, or {@code null} for none
-	 * @throws BeansException in case of the not-unique scenario being fatal
 	 * @since 4.3
-	 * @deprecated as of 5.1, in favor of {@link #resolveNotUnique(ResolvableType, Map)}
 	 */
-	@Deprecated
 	@Nullable
 	public Object resolveNotUnique(Class<?> type, Map<String, Object> matchingBeans) throws BeansException {
 		throw new NoUniqueBeanDefinitionException(type, matchingBeans.keySet());
@@ -305,7 +279,7 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 	}
 
 	/**
-	 * Build a {@link ResolvableType} object for the wrapped parameter/field.
+	 * Build a ResolvableType object for the wrapped parameter/field.
 	 * @since 4.0
 	 */
 	public ResolvableType getResolvableType() {
@@ -317,21 +291,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 			this.resolvableType = resolvableType;
 		}
 		return resolvableType;
-	}
-
-	/**
-	 * Build a {@link TypeDescriptor} object for the wrapped parameter/field.
-	 * @since 5.1.4
-	 */
-	public TypeDescriptor getTypeDescriptor() {
-		TypeDescriptor typeDescriptor = this.typeDescriptor;
-		if (typeDescriptor == null) {
-			typeDescriptor = (this.field != null ?
-					new TypeDescriptor(getResolvableType(), getDependencyType(), getAnnotations()) :
-					new TypeDescriptor(obtainMethodParameter()));
-			this.typeDescriptor = typeDescriptor;
-		}
-		return typeDescriptor;
 	}
 
 	/**
@@ -426,11 +385,6 @@ public class DependencyDescriptor extends InjectionPoint implements Serializable
 		DependencyDescriptor otherDesc = (DependencyDescriptor) other;
 		return (this.required == otherDesc.required && this.eager == otherDesc.eager &&
 				this.nestingLevel == otherDesc.nestingLevel && this.containingClass == otherDesc.containingClass);
-	}
-
-	@Override
-	public int hashCode() {
-		return 31 * super.hashCode() + ObjectUtils.nullSafeHashCode(this.containingClass);
 	}
 
 

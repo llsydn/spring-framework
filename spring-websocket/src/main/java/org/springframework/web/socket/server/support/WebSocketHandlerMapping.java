@@ -48,6 +48,16 @@ public class WebSocketHandlerMapping extends SimpleUrlHandlerMapping implements 
 
 
 	@Override
+	public boolean isAutoStartup() {
+		return true;
+	}
+
+	@Override
+	public int getPhase() {
+		return Integer.MAX_VALUE;
+	}
+
+	@Override
 	public void start() {
 		if (!isRunning()) {
 			this.running = true;
@@ -69,6 +79,12 @@ public class WebSocketHandlerMapping extends SimpleUrlHandlerMapping implements 
 				}
 			}
 		}
+	}
+
+	@Override
+	public void stop(Runnable callback) {
+		stop();
+		callback.run();
 	}
 
 	@Override

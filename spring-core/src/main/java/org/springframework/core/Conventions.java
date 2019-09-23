@@ -34,16 +34,12 @@ import org.springframework.util.ClassUtils;
  * @author Rossen Stoyanchev
  * @since 2.0
  */
-public final class Conventions {
+public abstract class Conventions {
 
 	/**
 	 * Suffix added to names when using arrays.
 	 */
 	private static final String PLURAL_SUFFIX = "List";
-
-
-	private Conventions() {
-	}
 
 
 	/**
@@ -212,7 +208,7 @@ public final class Conventions {
 				ReactiveAdapter adapter = reactiveAdapterRegistry.getAdapter(valueClass);
 				if (adapter != null && !adapter.getDescriptor().isNoValue()) {
 					reactiveSuffix = ClassUtils.getShortName(valueClass);
-					valueClass = ResolvableType.forMethodReturnType(method).getGeneric().toClass();
+					valueClass = ResolvableType.forMethodReturnType(method).getGeneric().resolve(Object.class);
 				}
 			}
 		}

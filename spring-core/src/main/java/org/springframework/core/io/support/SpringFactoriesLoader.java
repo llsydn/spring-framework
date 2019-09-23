@@ -19,6 +19,7 @@ package org.springframework.core.io.support;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
@@ -40,12 +41,6 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * Spring Framework内部使用一种工厂加载机制(Factory Loading Mechanism)。这种机制使用SpringFactoriesLoader完成，
- * SpringFactoriesLoader使用loadFactories方法加载并实例化从META-INF目录里的spring.factories文件出来的工厂，
- * 这些spring.factories文件都是从classpath里的jar包里找出来的。
- *
- * spring.factories文件是以Java的Properties格式存在，key是接口或抽象类的全名、value是以逗号 “ , “ 分隔的实现类
- *
  * General purpose factory loading mechanism for internal use within the framework.
  *
  * <p>{@code SpringFactoriesLoader} {@linkplain #loadFactories loads} and instantiates
@@ -65,7 +60,7 @@ import org.springframework.util.StringUtils;
  * @author Sam Brannen
  * @since 3.2
  */
-public final class SpringFactoriesLoader {
+public abstract class SpringFactoriesLoader {
 
 	/**
 	 * The location to look for factories.
@@ -79,10 +74,6 @@ public final class SpringFactoriesLoader {
 	private static final Map<ClassLoader, MultiValueMap<String, String>> cache = new ConcurrentReferenceHashMap<>();
 
 
-	private SpringFactoriesLoader() {
-	}
-
-
 	/**
 	 * Load and instantiate the factory implementations of the given type from
 	 * {@value #FACTORIES_RESOURCE_LOCATION}, using the given class loader.
@@ -91,9 +82,9 @@ public final class SpringFactoriesLoader {
 	 * to obtain all registered factory names.
 	 * @param factoryClass the interface or abstract class representing the factory
 	 * @param classLoader the ClassLoader to use for loading (can be {@code null} to use the default)
+	 * @see #loadFactoryNames
 	 * @throws IllegalArgumentException if any factory implementation class cannot
 	 * be loaded or if an error occurs while instantiating any factory
-	 * @see #loadFactoryNames
 	 */
 	public static <T> List<T> loadFactories(Class<T> factoryClass, @Nullable ClassLoader classLoader) {
 		Assert.notNull(factoryClass, "'factoryClass' must not be null");
@@ -120,11 +111,10 @@ public final class SpringFactoriesLoader {
 	 * @param factoryClass the interface or abstract class representing the factory
 	 * @param classLoader the ClassLoader to use for loading resources; can be
 	 * {@code null} to use the default
-	 * @throws IllegalArgumentException if an error occurs while loading factory names
 	 * @see #loadFactories
+	 * @throws IllegalArgumentException if an error occurs while loading factory names
 	 */
 	public static List<String> loadFactoryNames(Class<?> factoryClass, @Nullable ClassLoader classLoader) {
-		// 解析出properties文件中需要的key值
 		String factoryClassName = factoryClass.getName();
 		return loadSpringFactories(classLoader).getOrDefault(factoryClassName, Collections.emptyList());
 	}
@@ -136,24 +126,18 @@ public final class SpringFactoriesLoader {
 		}
 
 		try {
-			// 常量FACTORIES_RESOURCE_LOCATION的值为META-INF/spring.factories
-			// 使用类加载器找META-INF/spring.factories资源
 			Enumeration<URL> urls = (classLoader != null ?
 					classLoader.getResources(FACTORIES_RESOURCE_LOCATION) :
 					ClassLoader.getSystemResources(FACTORIES_RESOURCE_LOCATION));
 			result = new LinkedMultiValueMap<>();
-			// 遍历找到的资源
 			while (urls.hasMoreElements()) {
 				URL url = urls.nextElement();
 				UrlResource resource = new UrlResource(url);
-				// 使用属性文件加载资源
 				Properties properties = PropertiesLoaderUtils.loadProperties(resource);
 				for (Map.Entry<?, ?> entry : properties.entrySet()) {
-					String factoryClassName = ((String) entry.getKey()).trim();
-					// 找出key为参数factoryClass类对象对应的全名称对应的值
-					for (String factoryName : StringUtils.commaDelimitedListToStringArray((String) entry.getValue())) {
-						result.add(factoryClassName, factoryName.trim());
-					}
+					List<String> factoryClassNames = Arrays.asList(
+							StringUtils.commaDelimitedListToStringArray((String) entry.getValue()));
+					result.addAll((String) entry.getKey(), factoryClassNames);
 				}
 			}
 			cache.put(classLoader, result);

@@ -70,8 +70,8 @@ public class InjectionMetadata {
 			if (!beanDefinition.isExternallyManagedConfigMember(member)) {
 				beanDefinition.registerExternallyManagedConfigMember(member);
 				checkedElements.add(element);
-				if (logger.isTraceEnabled()) {
-					logger.trace("Registered injected element on class [" + this.targetClass.getName() + "]: " + element);
+				if (logger.isDebugEnabled()) {
+					logger.debug("Registered injected element on class [" + this.targetClass.getName() + "]: " + element);
 				}
 			}
 		}
@@ -79,14 +79,17 @@ public class InjectionMetadata {
 	}
 
 	public void inject(Object target, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
+		//拿到需要注入的属性
 		Collection<InjectedElement> checkedElements = this.checkedElements;
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
+			//遍历一个一个注入属性
 			for (InjectedElement element : elementsToIterate) {
-				if (logger.isTraceEnabled()) {
-					logger.trace("Processing injected element of bean '" + beanName + "': " + element);
+				if (logger.isDebugEnabled()) {
+					logger.debug("Processing injected element of bean '" + beanName + "': " + element);
 				}
+				//属性注入
 				element.inject(target, beanName, pvs);
 			}
 		}

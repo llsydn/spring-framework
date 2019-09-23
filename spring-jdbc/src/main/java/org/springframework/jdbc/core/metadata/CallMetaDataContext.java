@@ -172,7 +172,7 @@ public class CallMetaDataContext {
 	}
 
 	/**
-	 * Specify the name of the schema.
+	 * Secify the name of the schema.
 	 */
 	public void setSchemaName(@Nullable String schemaName) {
 		this.schemaName = schemaName;
@@ -292,7 +292,7 @@ public class CallMetaDataContext {
 		}
 		else {
 			if (this.outParameterNames.size() > 1) {
-				logger.info("Accessing single output value when procedure has more than one output parameter");
+				logger.warn("Accessing single output value when procedure has more than one output parameter");
 			}
 			return (!this.outParameterNames.isEmpty() ? this.outParameterNames.get(0) : null);
 		}
@@ -362,7 +362,8 @@ public class CallMetaDataContext {
 		}
 		setOutParameterNames(outParamNames);
 
-		List<SqlParameter> workParams = new ArrayList<>(declaredReturnParams);
+		List<SqlParameter> workParams = new ArrayList<>();
+		workParams.addAll(declaredReturnParams);
 		if (!provider.isProcedureColumnMetaDataUsed()) {
 			workParams.addAll(declaredParams.values());
 			return workParams;
@@ -519,8 +520,8 @@ public class CallMetaDataContext {
 										matchedParameters.put(parameterName,
 												SqlParameterSourceUtils.getTypedValue(parameterSource, sourceName));
 									}
-									else if (logger.isInfoEnabled()) {
-										logger.info("Unable to locate the corresponding parameter value for '" +
+									else if (logger.isWarnEnabled()) {
+										logger.warn("Unable to locate the corresponding parameter value for '" +
 												parameterName + "' within the parameter values provided: " +
 												caseInsensitiveParameterNames.values());
 									}
@@ -586,8 +587,8 @@ public class CallMetaDataContext {
 			for (String parameterName : callParameterNames.keySet()) {
 				String parameterNameToMatch = provider.parameterNameToUse(parameterName);
 				String callParameterName = callParameterNames.get(lowerCase(parameterNameToMatch));
-				if (!matchedParameters.containsKey(callParameterName) && logger.isInfoEnabled()) {
-					logger.info("Unable to locate the corresponding parameter value for '" + parameterName +
+				if (!matchedParameters.containsKey(callParameterName) && logger.isWarnEnabled()) {
+					logger.warn("Unable to locate the corresponding parameter value for '" + parameterName +
 							"' within the parameter values provided: " + inParameters.keySet());
 				}
 			}
@@ -625,7 +626,7 @@ public class CallMetaDataContext {
 		String schemaNameToUse;
 
 		// For Oracle where catalogs are not supported we need to reverse the schema name
-		// and the catalog name since the catalog is used for the package name
+		// and the catalog name since the cataog is used for the package name
 		if (this.metaDataProvider.isSupportsSchemasInProcedureCalls() &&
 				!this.metaDataProvider.isSupportsCatalogsInProcedureCalls()) {
 			schemaNameToUse = this.metaDataProvider.catalogNameToUse(getCatalogName());

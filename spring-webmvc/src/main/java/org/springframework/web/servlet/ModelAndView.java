@@ -46,19 +46,19 @@ import org.springframework.util.CollectionUtils;
  */
 public class ModelAndView {
 
-	/** View instance or view name String. */
+	/** View instance or view name String */
 	@Nullable
 	private Object view;
 
-	/** Model Map. */
+	/** Model Map */
 	@Nullable
 	private ModelMap model;
 
-	/** Optional HTTP status for the response. */
+	/** Optional HTTP status for the response */
 	@Nullable
 	private HttpStatus status;
 
-	/** Indicates whether or not this instance has been cleared with a call to {@link #clear()}. */
+	/** Indicates whether or not this instance has been cleared with a call to {@link #clear()} */
 	private boolean cleared = false;
 
 
@@ -352,11 +352,15 @@ public class ModelAndView {
 	 */
 	@Override
 	public String toString() {
-		return "ModelAndView [view=" + formatView() + "; model=" + this.model + "]";
-	}
-
-	private String formatView() {
-		return isReference() ? "\"" + this.view + "\"" : "[" + this.view + "]";
+		StringBuilder sb = new StringBuilder("ModelAndView: ");
+		if (isReference()) {
+			sb.append("reference to view with name '").append(this.view).append("'");
+		}
+		else {
+			sb.append("materialized View is [").append(this.view).append(']');
+		}
+		sb.append("; model is ").append(this.model);
+		return sb.toString();
 	}
 
 }

@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+
 /**
  * Unit tests for {@link ResourceUrlProvider}.
  *
@@ -137,7 +138,6 @@ public class ResourceUrlProviderTests {
 	}
 
 	@Test // SPR-12592
-	@SuppressWarnings("resource")
 	public void initializeOnce() throws Exception {
 		AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
 		context.setServletContext(new MockServletContext());

@@ -55,28 +55,28 @@ import org.springframework.lang.Nullable;
  */
 public abstract class ClassUtils {
 
-	/** Suffix for array class names: {@code "[]"}. */
+	/** Suffix for array class names: "[]" */
 	public static final String ARRAY_SUFFIX = "[]";
 
-	/** Prefix for internal array class names: {@code "["}. */
+	/** Prefix for internal array class names: "[" */
 	private static final String INTERNAL_ARRAY_PREFIX = "[";
 
-	/** Prefix for internal non-primitive array class names: {@code "[L"}. */
+	/** Prefix for internal non-primitive array class names: "[L" */
 	private static final String NON_PRIMITIVE_ARRAY_PREFIX = "[L";
 
-	/** The package separator character: {@code '.'}. */
+	/** The package separator character: '.' */
 	private static final char PACKAGE_SEPARATOR = '.';
 
-	/** The path separator character: {@code '/'}. */
+	/** The path separator character: '/' */
 	private static final char PATH_SEPARATOR = '/';
 
-	/** The inner class separator character: {@code '$'}. */
+	/** The inner class separator character: '$' */
 	private static final char INNER_CLASS_SEPARATOR = '$';
 
-	/** The CGLIB class separator: {@code "$$"}. */
+	/** The CGLIB class separator: "$$" */
 	public static final String CGLIB_CLASS_SEPARATOR = "$$";
 
-	/** The ".class" file suffix. */
+	/** The ".class" file suffix */
 	public static final String CLASS_FILE_SUFFIX = ".class";
 
 
@@ -272,7 +272,7 @@ public abstract class ClassUtils {
 			clToUse = getDefaultClassLoader();
 		}
 		try {
-			return Class.forName(name, false, clToUse);
+			return (clToUse != null ? clToUse.loadClass(name) : Class.forName(name));
 		}
 		catch (ClassNotFoundException ex) {
 			int lastDotIndex = name.lastIndexOf(PACKAGE_SEPARATOR);
@@ -280,7 +280,7 @@ public abstract class ClassUtils {
 				String innerClassName =
 						name.substring(0, lastDotIndex) + INNER_CLASS_SEPARATOR + name.substring(lastDotIndex + 1);
 				try {
-					return Class.forName(innerClassName, false, clToUse);
+					return (clToUse != null ? clToUse.loadClass(innerClassName) : Class.forName(innerClassName));
 				}
 				catch (ClassNotFoundException ex2) {
 					// Swallow - let original exception get through
@@ -302,10 +302,6 @@ public abstract class ClassUtils {
 	 * @return a class instance for the supplied name
 	 * @throws IllegalArgumentException if the class name was not resolvable
 	 * (that is, the class could not be found or the class file could not be loaded)
-	 * @throws IllegalStateException if the corresponding class is resolvable but
-	 * there was a readability mismatch in the inheritance hierarchy of the class
-	 * (typically a missing dependency declaration in a Jigsaw module definition
-	 * for a superclass or interface implemented by the class to be loaded here)
 	 * @see #forName(String, ClassLoader)
 	 */
 	public static Class<?> resolveClassName(String className, @Nullable ClassLoader classLoader)
@@ -314,15 +310,11 @@ public abstract class ClassUtils {
 		try {
 			return forName(className, classLoader);
 		}
-		catch (IllegalAccessError err) {
-			throw new IllegalStateException("Readability mismatch in inheritance hierarchy of class [" +
-					className + "]: " + err.getMessage(), err);
+		catch (ClassNotFoundException ex) {
+			throw new IllegalArgumentException("Could not find class [" + className + "]", ex);
 		}
 		catch (LinkageError err) {
 			throw new IllegalArgumentException("Unresolvable class definition for class [" + className + "]", err);
-		}
-		catch (ClassNotFoundException ex) {
-			throw new IllegalArgumentException("Could not find class [" + className + "]", ex);
 		}
 	}
 
@@ -333,24 +325,15 @@ public abstract class ClassUtils {
 	 * @param className the name of the class to check
 	 * @param classLoader the class loader to use
 	 * (may be {@code null} which indicates the default class loader)
-	 * @return whether the specified class is present (including all of its
-	 * superclasses and interfaces)
-	 * @throws IllegalStateException if the corresponding class is resolvable but
-	 * there was a readability mismatch in the inheritance hierarchy of the class
-	 * (typically a missing dependency declaration in a Jigsaw module definition
-	 * for a superclass or interface implemented by the class to be checked here)
+	 * @return whether the specified class is present
 	 */
 	public static boolean isPresent(String className, @Nullable ClassLoader classLoader) {
 		try {
 			forName(className, classLoader);
 			return true;
 		}
-		catch (IllegalAccessError err) {
-			throw new IllegalStateException("Readability mismatch in inheritance hierarchy of class [" +
-					className + "]: " + err.getMessage(), err);
-		}
 		catch (Throwable ex) {
-			// Typically ClassNotFoundException or NoClassDefFoundError...
+			// Class or one of its dependencies is not present...
 			return false;
 		}
 	}
@@ -1251,7 +1234,6 @@ public abstract class ClassUtils {
 	 * (may be {@code null} or may not even implement the method)
 	 * @return the specific target method, or the original method if the
 	 * {@code targetClass} does not implement it
-	 * @see #getInterfaceMethodIfPossible
 	 */
 	public static Method getMostSpecificMethod(Method method, @Nullable Class<?> targetClass) {
 		if (targetClass != null && targetClass != method.getDeclaringClass() && isOverridable(method, targetClass)) {
@@ -1272,34 +1254,6 @@ public abstract class ClassUtils {
 			}
 			catch (SecurityException ex) {
 				// Security settings are disallowing reflective access; fall back to 'method' below.
-			}
-		}
-		return method;
-	}
-
-	/**
-	 * Determine a corresponding interface method for the given method handle, if possible.
-	 * <p>This is particularly useful for arriving at a public exported type on Jigsaw
-	 * which can be reflectively invoked without an illegal access warning.
-	 * @param method the method to be invoked, potentially from an implementation class
-	 * @return the corresponding interface method, or the original method if none found
-	 * @since 5.1
-	 * @see #getMostSpecificMethod
-	 */
-	public static Method getInterfaceMethodIfPossible(Method method) {
-		if (Modifier.isPublic(method.getModifiers()) && !method.getDeclaringClass().isInterface()) {
-			Class<?> current = method.getDeclaringClass();
-			while (current != null && current != Object.class) {
-				Class<?>[] ifcs = current.getInterfaces();
-				for (Class<?> ifc : ifcs) {
-					try {
-						return ifc.getMethod(method.getName(), method.getParameterTypes());
-					}
-					catch (NoSuchMethodException ex) {
-						// ignore
-					}
-				}
-				current = current.getSuperclass();
 			}
 		}
 		return method;

@@ -217,15 +217,15 @@ public class JibxMarshaller extends AbstractMarshaller implements InitializingBe
 	public void afterPropertiesSet() throws JiBXException {
 		if (this.targetClass != null) {
 			if (StringUtils.hasLength(this.bindingName)) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Configured for target class [" + this.targetClass +
+				if (logger.isInfoEnabled()) {
+					logger.info("Configured for target class [" + this.targetClass +
 							"] using binding [" + this.bindingName + "]");
 				}
 				this.bindingFactory = BindingDirectory.getFactory(this.bindingName, this.targetClass);
 			}
 			else {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Configured for target class [" + this.targetClass + "]");
+				if (logger.isInfoEnabled()) {
+					logger.info("Configured for target class [" + this.targetClass + "]");
 				}
 				this.bindingFactory = BindingDirectory.getFactory(this.targetClass);
 			}
@@ -234,8 +234,8 @@ public class JibxMarshaller extends AbstractMarshaller implements InitializingBe
 			if (!StringUtils.hasLength(this.bindingName)) {
 				this.bindingName = DEFAULT_BINDING_NAME;
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("Configured for target package [" + this.targetPackage +
+			if (logger.isInfoEnabled()) {
+				logger.info("Configured for target package [" + this.targetPackage +
 						"] using binding [" + this.bindingName + "]");
 			}
 			this.bindingFactory = BindingDirectory.getFactory(this.bindingName, this.targetPackage);

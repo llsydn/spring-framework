@@ -33,10 +33,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.codec.Hints;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRange;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.multipart.Part;
@@ -63,8 +63,7 @@ class DefaultServerRequest implements ServerRequest {
 
 	private static final Function<UnsupportedMediaTypeException, UnsupportedMediaTypeStatusException> ERROR_MAPPER =
 			ex -> (ex.getContentType() != null ?
-					new UnsupportedMediaTypeStatusException(
-							ex.getContentType(), ex.getSupportedMediaTypes(), ex.getBodyType()) :
+					new UnsupportedMediaTypeStatusException(ex.getContentType(), ex.getSupportedMediaTypes()) :
 					new UnsupportedMediaTypeStatusException(ex.getMessage()));
 
 
@@ -94,7 +93,7 @@ class DefaultServerRequest implements ServerRequest {
 
 	@Override
 	public UriBuilder uriBuilder() {
-		return UriComponentsBuilder.fromUri(uri());
+		return UriComponentsBuilder.fromHttpRequest(new ServerRequestAdapter());
 	}
 
 	@Override
@@ -113,27 +112,12 @@ class DefaultServerRequest implements ServerRequest {
 	}
 
 	@Override
-	public Optional<InetSocketAddress> remoteAddress() {
-		return Optional.ofNullable(request().getRemoteAddress());
-	}
-
-	@Override
-	public List<HttpMessageReader<?>> messageReaders() {
-		return this.messageReaders;
-	}
-
-	@Override
 	public <T> T body(BodyExtractor<T, ? super ServerHttpRequest> extractor) {
-		return bodyInternal(extractor, Hints.from(Hints.LOG_PREFIX_HINT, exchange().getLogPrefix()));
+		return body(extractor, Collections.emptyMap());
 	}
 
 	@Override
 	public <T> T body(BodyExtractor<T, ? super ServerHttpRequest> extractor, Map<String, Object> hints) {
-		hints = Hints.merge(hints, Hints.LOG_PREFIX_HINT, exchange().getLogPrefix());
-		return bodyInternal(extractor, hints);
-	}
-
-	private <T> T bodyInternal(BodyExtractor<T, ? super ServerHttpRequest> extractor, Map<String, Object> hints) {
 		return extractor.extract(request(),
 				new BodyExtractor.Context() {
 					@Override
@@ -215,14 +199,13 @@ class DefaultServerRequest implements ServerRequest {
 		return this.exchange.getRequest();
 	}
 
-	@Override
-	public ServerWebExchange exchange() {
+	ServerWebExchange exchange() {
 		return this.exchange;
 	}
 
 	@Override
 	public String toString() {
-		return String.format("HTTP %s %s", method(), path());
+		return String.format("%s %s", method(), path());
 	}
 
 
@@ -282,6 +265,25 @@ class DefaultServerRequest implements ServerRequest {
 		@Override
 		public String toString() {
 			return delegate().toString();
+		}
+	}
+
+
+	private final class ServerRequestAdapter implements HttpRequest {
+
+		@Override
+		public String getMethodValue() {
+			return methodName();
+		}
+
+		@Override
+		public URI getURI() {
+			return uri();
+		}
+
+		@Override
+		public HttpHeaders getHeaders() {
+			return request().getHeaders();
 		}
 	}
 

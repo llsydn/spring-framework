@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.web.context.WebApplicationContext;
 
 /**
- * The main class to import in order to access all available {@link MockMvcBuilder MockMvcBuilders}.
+ * The main class to imports in order to access all available {@link MockMvcBuilder}s.
  *
  * <h3>Eclipse Users</h3>
  * <p>Consider adding this class as a Java editor favorite. To navigate to
@@ -33,11 +33,7 @@ import org.springframework.web.context.WebApplicationContext;
  * @see #webAppContextSetup(WebApplicationContext)
  * @see #standaloneSetup(Object...)
  */
-public final class MockMvcBuilders {
-
-	private MockMvcBuilders() {
-	}
-
+public class MockMvcBuilders {
 
 	/**
 	 * Build a {@link MockMvc} instance using the given, fully initialized

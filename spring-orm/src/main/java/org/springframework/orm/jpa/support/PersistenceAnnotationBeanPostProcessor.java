@@ -335,11 +335,6 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 	@Override
-	public void resetBeanDefinition(String beanName) {
-		this.injectionMetadataCache.remove(beanName);
-	}
-
-	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
 		return null;
 	}
@@ -350,7 +345,9 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 	@Override
-	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
+	public PropertyValues postProcessPropertyValues(
+			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) {
+
 		InjectionMetadata metadata = findPersistenceMetadata(beanName, bean.getClass(), pvs);
 		try {
 			metadata.inject(bean, beanName, pvs);
@@ -359,14 +356,6 @@ public class PersistenceAnnotationBeanPostProcessor
 			throw new BeanCreationException(beanName, "Injection of persistence dependencies failed", ex);
 		}
 		return pvs;
-	}
-
-	@Deprecated
-	@Override
-	public PropertyValues postProcessPropertyValues(
-			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) {
-
-		return postProcessProperties(pvs, bean, beanName);
 	}
 
 	@Override
@@ -468,7 +457,7 @@ public class PersistenceAnnotationBeanPostProcessor
 	protected EntityManagerFactory getPersistenceUnit(@Nullable String unitName) {
 		if (this.persistenceUnits != null) {
 			String unitNameForLookup = (unitName != null ? unitName : "");
-			if (unitNameForLookup.isEmpty()) {
+			if ("".equals(unitNameForLookup)) {
 				unitNameForLookup = this.defaultPersistenceUnitName;
 			}
 			String jndiName = this.persistenceUnits.get(unitNameForLookup);
@@ -501,7 +490,7 @@ public class PersistenceAnnotationBeanPostProcessor
 		Map<String, String> contexts = (extended ? this.extendedPersistenceContexts : this.persistenceContexts);
 		if (contexts != null) {
 			String unitNameForLookup = (unitName != null ? unitName : "");
-			if (unitNameForLookup.isEmpty()) {
+			if ("".equals(unitNameForLookup)) {
 				unitNameForLookup = this.defaultPersistenceUnitName;
 			}
 			String jndiName = contexts.get(unitNameForLookup);
@@ -533,10 +522,10 @@ public class PersistenceAnnotationBeanPostProcessor
 			throws NoSuchBeanDefinitionException {
 
 		String unitNameForLookup = (unitName != null ? unitName : "");
-		if (unitNameForLookup.isEmpty()) {
+		if ("".equals(unitNameForLookup)) {
 			unitNameForLookup = this.defaultPersistenceUnitName;
 		}
-		if (!unitNameForLookup.isEmpty()) {
+		if (!"".equals(unitNameForLookup)) {
 			return findNamedEntityManagerFactory(unitNameForLookup, requestingBeanName);
 		}
 		else {

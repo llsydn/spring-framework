@@ -240,35 +240,17 @@ public class InMemoryWebSessionStore implements WebSessionStore {
 
 		@Override
 		public Mono<Void> save() {
-
-			checkMaxSessionsLimit();
-
-			// Implicitly started session..
-			if (!getAttributes().isEmpty()) {
-				this.state.compareAndSet(State.NEW, State.STARTED);
-			}
-
-			if (isStarted()) {
-				// Save
-				InMemoryWebSessionStore.this.sessions.put(this.getId(), this);
-
-				// Unless it was invalidated
-				if (this.state.get().equals(State.EXPIRED)) {
-					InMemoryWebSessionStore.this.sessions.remove(this.getId());
-					return Mono.error(new IllegalStateException("Session was invalidated"));
-				}
-			}
-
-			return Mono.empty();
-		}
-
-		private void checkMaxSessionsLimit() {
 			if (sessions.size() >= maxSessions) {
 				expiredSessionChecker.removeExpiredSessions(clock.instant());
 				if (sessions.size() >= maxSessions) {
-					throw new IllegalStateException("Max sessions limit reached: " + sessions.size());
+					return Mono.error(new IllegalStateException("Max sessions limit reached: " + sessions.size()));
 				}
 			}
+			if (!getAttributes().isEmpty()) {
+				this.state.compareAndSet(State.NEW, State.STARTED);
+			}
+			InMemoryWebSessionStore.this.sessions.put(this.getId(), this);
+			return Mono.empty();
 		}
 
 		@Override

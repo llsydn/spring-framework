@@ -131,6 +131,10 @@ public class EclipseLinkJpaDialect extends DefaultJpaDialect {
 			}
 			return this.connection;
 		}
+
+		@Override
+		public void releaseConnection(Connection con) {
+		}
 	}
 
 }

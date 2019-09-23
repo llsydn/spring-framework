@@ -634,8 +634,9 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		ConstructorsCollectionResourceInjectionBean bean = (ConstructorsCollectionResourceInjectionBean) bf.getBean("annotatedBean");
 		assertNull(bean.getTestBean3());
 		assertSame(tb, bean.getTestBean4());
-		assertEquals(1, bean.getNestedTestBeans().size());
-		assertSame(ntb2, bean.getNestedTestBeans().get(0));
+		assertEquals(2, bean.getNestedTestBeans().size());
+		assertNull(bean.getNestedTestBeans().get(0));
+		assertSame(ntb2, bean.getNestedTestBeans().get(1));
 
 		Map<String, NestedTestBean> map = bf.getBeansOfType(NestedTestBean.class);
 		assertNull(map.get("nestedTestBean1"));
@@ -715,18 +716,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 	}
 
 	@Test
-	public void testSingleConstructorInjectionWithEmptyVararg() {
-		bf.registerBeanDefinition("annotatedBean", new RootBeanDefinition(SingleConstructorVarargBean.class));
-		TestBean tb = new TestBean();
-		bf.registerSingleton("testBean", tb);
-
-		SingleConstructorVarargBean bean = (SingleConstructorVarargBean) bf.getBean("annotatedBean");
-		assertSame(tb, bean.getTestBean());
-		assertNotNull(bean.getNestedTestBeans());
-		assertTrue(bean.getNestedTestBeans().isEmpty());
-	}
-
-	@Test
 	public void testSingleConstructorInjectionWithMultipleCandidatesAsRequiredCollection() {
 		bf.registerBeanDefinition("annotatedBean", new RootBeanDefinition(SingleConstructorRequiredCollectionBean.class));
 		TestBean tb = new TestBean();
@@ -741,18 +730,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		assertEquals(2, bean.getNestedTestBeans().size());
 		assertSame(ntb2, bean.getNestedTestBeans().get(0));
 		assertSame(ntb1, bean.getNestedTestBeans().get(1));
-	}
-
-	@Test
-	public void testSingleConstructorInjectionWithEmptyCollection() {
-		bf.registerBeanDefinition("annotatedBean", new RootBeanDefinition(SingleConstructorRequiredCollectionBean.class));
-		TestBean tb = new TestBean();
-		bf.registerSingleton("testBean", tb);
-
-		SingleConstructorRequiredCollectionBean bean = (SingleConstructorRequiredCollectionBean) bf.getBean("annotatedBean");
-		assertSame(tb, bean.getTestBean());
-		assertNotNull(bean.getNestedTestBeans());
-		assertTrue(bean.getNestedTestBeans().isEmpty());
 	}
 
 	@Test
@@ -831,12 +808,12 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		bf.registerBeanDefinition("testBean2", tb2);
 
 		MapConstructorInjectionBean bean = (MapConstructorInjectionBean) bf.getBean("annotatedBean");
-		assertEquals(1, bean.getTestBeanMap().size());
+		assertEquals(2, bean.getTestBeanMap().size());
 		assertSame(tb1, bean.getTestBeanMap().get("testBean1"));
 		assertNull(bean.getTestBeanMap().get("testBean2"));
 
 		bean = (MapConstructorInjectionBean) bf.getBean("annotatedBean");
-		assertEquals(1, bean.getTestBeanMap().size());
+		assertEquals(2, bean.getTestBeanMap().size());
 		assertSame(tb1, bean.getTestBeanMap().get("testBean1"));
 		assertNull(bean.getTestBeanMap().get("testBean2"));
 	}
@@ -975,19 +952,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		CustomMapConstructorInjectionBean bean = (CustomMapConstructorInjectionBean) bf.getBean("annotatedBean");
 		assertSame(bf.getBean("myTestBeanMap"), bean.getTestBeanMap());
 		bean = (CustomMapConstructorInjectionBean) bf.getBean("annotatedBean");
-		assertSame(bf.getBean("myTestBeanMap"), bean.getTestBeanMap());
-	}
-
-	@Test
-	public void testConstructorInjectionWithPlainHashMapAsBean() {
-		RootBeanDefinition bd = new RootBeanDefinition(QualifiedMapConstructorInjectionBean.class);
-		bd.setScope(RootBeanDefinition.SCOPE_PROTOTYPE);
-		bf.registerBeanDefinition("annotatedBean", bd);
-		bf.registerBeanDefinition("myTestBeanMap", new RootBeanDefinition(HashMap.class));
-
-		QualifiedMapConstructorInjectionBean bean = (QualifiedMapConstructorInjectionBean) bf.getBean("annotatedBean");
-		assertSame(bf.getBean("myTestBeanMap"), bean.getTestBeanMap());
-		bean = (QualifiedMapConstructorInjectionBean) bf.getBean("annotatedBean");
 		assertSame(bf.getBean("myTestBeanMap"), bean.getTestBeanMap());
 	}
 
@@ -1165,19 +1129,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		assertEquals(bf.getBean("testBean"), bean.getUniqueTestBean());
 		assertEquals(bf.getBean("testBean"), bean.getUniqueTestBeanWithDefault());
 		assertEquals(bf.getBean("testBean"), bean.consumeUniqueTestBean());
-
-		List<?> testBeans = bean.iterateTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
-		testBeans = bean.forEachTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
-		testBeans = bean.streamTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
-		testBeans = bean.sortedTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
 	}
 
 	@Test
@@ -1193,19 +1144,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		assertSame(bf.getBean("testBean"), bean.getUniqueTestBean());
 		assertSame(bf.getBean("testBean"), bean.getUniqueTestBeanWithDefault());
 		assertEquals(bf.getBean("testBean"), bean.consumeUniqueTestBean());
-
-		List<?> testBeans = bean.iterateTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
-		testBeans = bean.forEachTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
-		testBeans = bean.streamTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
-		testBeans = bean.sortedTestBeans();
-		assertEquals(1, testBeans.size());
-		assertTrue(testBeans.contains(bf.getBean("testBean")));
 	}
 
 	@Test
@@ -1226,15 +1164,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		assertEquals(new TestBean("default"), bean.getUniqueTestBeanWithDefault());
 		assertNull(bean.getUniqueTestBean());
 		assertNull(bean.consumeUniqueTestBean());
-
-		List<?> testBeans = bean.iterateTestBeans();
-		assertTrue(testBeans.isEmpty());
-		testBeans = bean.forEachTestBeans();
-		assertTrue(testBeans.isEmpty());
-		testBeans = bean.streamTestBeans();
-		assertTrue(testBeans.isEmpty());
-		testBeans = bean.sortedTestBeans();
-		assertTrue(testBeans.isEmpty());
 	}
 
 	@Test
@@ -1267,34 +1196,15 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		}
 		assertNull(bean.getUniqueTestBean());
 		assertNull(bean.consumeUniqueTestBean());
-
-		List<?> testBeans = bean.iterateTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
-		testBeans = bean.forEachTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
-		testBeans = bean.streamTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
-		testBeans = bean.sortedTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
 	}
 
 	@Test
 	public void testObjectProviderInjectionWithTargetPrimary() {
 		bf.registerBeanDefinition("annotatedBean", new RootBeanDefinition(ObjectProviderInjectionBean.class));
-		RootBeanDefinition tb1 = new RootBeanDefinition(TestBeanFactory.class);
-		tb1.setFactoryMethodName("newTestBean1");
+		RootBeanDefinition tb1 = new RootBeanDefinition(TestBean.class);
 		tb1.setPrimary(true);
 		bf.registerBeanDefinition("testBean1", tb1);
-		RootBeanDefinition tb2 = new RootBeanDefinition(TestBeanFactory.class);
-		tb2.setFactoryMethodName("newTestBean2");
+		RootBeanDefinition tb2 = new RootBeanDefinition(TestBean.class);
 		tb2.setLazyInit(true);
 		bf.registerBeanDefinition("testBean2", tb2);
 
@@ -1305,42 +1215,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		assertSame(bf.getBean("testBean1"), bean.getUniqueTestBean());
 		assertSame(bf.getBean("testBean1"), bean.consumeUniqueTestBean());
 		assertFalse(bf.containsSingleton("testBean2"));
-
-		List<?> testBeans = bean.iterateTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
-		testBeans = bean.forEachTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
-		testBeans = bean.streamTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean1"), testBeans.get(0));
-		assertSame(bf.getBean("testBean2"), testBeans.get(1));
-		testBeans = bean.sortedTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean2"), testBeans.get(0));
-		assertSame(bf.getBean("testBean1"), testBeans.get(1));
-	}
-
-	@Test
-	public void testObjectProviderInjectionWithUnresolvedOrderedStream() {
-		bf.registerBeanDefinition("annotatedBean", new RootBeanDefinition(ObjectProviderInjectionBean.class));
-		RootBeanDefinition tb1 = new RootBeanDefinition(TestBeanFactory.class);
-		tb1.setFactoryMethodName("newTestBean1");
-		tb1.setPrimary(true);
-		bf.registerBeanDefinition("testBean1", tb1);
-		RootBeanDefinition tb2 = new RootBeanDefinition(TestBeanFactory.class);
-		tb2.setFactoryMethodName("newTestBean2");
-		tb2.setLazyInit(true);
-		bf.registerBeanDefinition("testBean2", tb2);
-
-		ObjectProviderInjectionBean bean = (ObjectProviderInjectionBean) bf.getBean("annotatedBean");
-		List<?> testBeans = bean.sortedTestBeans();
-		assertEquals(2, testBeans.size());
-		assertSame(bf.getBean("testBean2"), testBeans.get(0));
-		assertSame(bf.getBean("testBean1"), testBeans.get(1));
 	}
 
 	@Test
@@ -2093,7 +1967,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		GenericInterface1Impl bean1 = (GenericInterface1Impl) bf.getBean("bean1");
 		GenericInterface2Impl bean2 = (GenericInterface2Impl) bf.getBean("bean2");
 		assertSame(bean2, bean1.gi2);
-		assertEquals(ResolvableType.forClass(GenericInterface1Impl.class), bd.getResolvableType());
 	}
 
 	@Test
@@ -2107,7 +1980,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		GenericInterface1Impl bean1 = (GenericInterface1Impl) bf.getBean("bean1");
 		GenericInterface2Impl bean2 = (GenericInterface2Impl) bf.getBean("bean2");
 		assertSame(bean2, bean1.gi2);
-		assertEquals(ResolvableType.forClass(GenericInterface1Impl.class), bd.getResolvableType());
 	}
 
 	@Test
@@ -2154,8 +2026,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		bf.registerBeanDefinition("bean3", new RootBeanDefinition(MultiGenericFieldInjection.class));
 
 		assertEquals("bean1 a bean2 123", bf.getBean("bean3").toString());
-		assertEquals(ResolvableType.forClassWithGenerics(GenericInterface2Bean.class, String.class), bd1.getResolvableType());
-		assertEquals(ResolvableType.forClassWithGenerics(GenericInterface2Bean.class, Integer.class), bd2.getResolvableType());
 	}
 
 	@Test
@@ -2718,21 +2588,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 	}
 
 
-	public static class QualifiedMapConstructorInjectionBean {
-
-		private Map<String, TestBean> testBeanMap;
-
-		@Autowired
-		public QualifiedMapConstructorInjectionBean(@Qualifier("myTestBeanMap") Map<String, TestBean> testBeanMap) {
-			this.testBeanMap = testBeanMap;
-		}
-
-		public Map<String, TestBean> getTestBeanMap() {
-			return this.testBeanMap;
-		}
-	}
-
-
 	public static class SetConstructorInjectionBean {
 
 		private Set<TestBean> testBeanSet;
@@ -2880,28 +2735,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 		public TestBean consumeUniqueTestBean() {
 			this.testBeanProvider.ifUnique(tb -> consumedTestBean = tb);
 			return consumedTestBean;
-		}
-
-		public List<TestBean> iterateTestBeans() {
-			List<TestBean> resolved = new LinkedList<>();
-			for (TestBean tb : this.testBeanProvider) {
-				resolved.add(tb);
-			}
-			return resolved;
-		}
-
-		public List<TestBean> forEachTestBeans() {
-			List<TestBean> resolved = new LinkedList<>();
-			this.testBeanProvider.forEach(resolved::add);
-			return resolved;
-		}
-
-		public List<TestBean> streamTestBeans() {
-			return this.testBeanProvider.stream().collect(Collectors.toList());
-		}
-
-		public List<TestBean> sortedTestBeans() {
-			return this.testBeanProvider.orderedStream().collect(Collectors.toList());
 		}
 	}
 
@@ -3861,20 +3694,6 @@ public class AutowiredAnnotationBeanPostProcessorTests {
 
 		public static SelfInjectingFactoryBean create() {
 			return new SelfInjectingFactoryBean();
-		}
-	}
-
-
-	public static class TestBeanFactory {
-
-		@Order(1)
-		public static TestBean newTestBean1() {
-			return new TestBean();
-		}
-
-		@Order(0)
-		public static TestBean newTestBean2() {
-			return new TestBean();
 		}
 	}
 

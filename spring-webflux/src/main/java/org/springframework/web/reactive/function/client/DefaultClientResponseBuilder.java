@@ -129,14 +129,9 @@ final class DefaultClientResponseBuilder implements ClientResponse.Builder {
 
 	@Override
 	public ClientResponse build() {
-
-		ClientHttpResponse httpResponse =
-				new BuiltClientHttpResponse(this.statusCode, this.headers, this.cookies, this.body);
-
-		// When building ClientResponse manually, the ClientRequest.logPrefix() has to be passed,
-		// e.g. via ClientResponse.Builder, but this (builder) is not used currently.
-
-		return new DefaultClientResponse(httpResponse, this.strategies, "");
+		ClientHttpResponse clientHttpResponse = new BuiltClientHttpResponse(
+				this.statusCode, this.headers, this.cookies, this.body);
+		return new DefaultClientResponse(clientHttpResponse, this.strategies);
 	}
 
 

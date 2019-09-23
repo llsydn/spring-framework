@@ -30,7 +30,7 @@ import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 
 /**
- * Encoder for {@link ByteBuffer ByteBuffers}.
+ * Encoder for {@link ByteBuffer}s.
  *
  * @author Sebastien Deleuze
  * @since 5.0
@@ -44,7 +44,7 @@ public class ByteBufferEncoder extends AbstractEncoder<ByteBuffer> {
 
 	@Override
 	public boolean canEncode(ResolvableType elementType, @Nullable MimeType mimeType) {
-		Class<?> clazz = elementType.toClass();
+		Class<?> clazz = elementType.resolve(Object.class);
 		return super.canEncode(elementType, mimeType) && ByteBuffer.class.isAssignableFrom(clazz);
 	}
 
@@ -53,14 +53,7 @@ public class ByteBufferEncoder extends AbstractEncoder<ByteBuffer> {
 			DataBufferFactory bufferFactory, ResolvableType elementType, @Nullable MimeType mimeType,
 			@Nullable Map<String, Object> hints) {
 
-		return Flux.from(inputStream).map(byteBuffer -> {
-			DataBuffer dataBuffer = bufferFactory.wrap(byteBuffer);
-			if (logger.isDebugEnabled() && !Hints.isLoggingSuppressed(hints)) {
-				String logPrefix = Hints.getLogPrefix(hints);
-				logger.debug(logPrefix + "Writing " + dataBuffer.readableByteCount() + " bytes");
-			}
-			return dataBuffer;
-		});
+		return Flux.from(inputStream).map(bufferFactory::wrap);
 	}
 
 }

@@ -18,7 +18,6 @@ package org.springframework.web.reactive.function.server;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +53,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.UnsupportedMediaTypeStatusException;
 
 import static org.junit.Assert.*;
-import static org.springframework.web.reactive.function.BodyExtractors.*;
+import static org.springframework.web.reactive.function.BodyExtractors.toMono;
 
 /**
  * @author Arjen Poutsma
@@ -66,7 +65,7 @@ public class DefaultServerRequestTests {
 
 
 	@Test
-	public void method() {
+	public void method() throws Exception {
 		HttpMethod method = HttpMethod.HEAD;
 		DefaultServerRequest request = new DefaultServerRequest(
 				MockServerWebExchange.from(MockServerHttpRequest.method(method, "http://example.com")),
@@ -76,7 +75,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void uri() {
+	public void uri() throws Exception {
 		URI uri = URI.create("https://example.com");
 
 		DefaultServerRequest request = new DefaultServerRequest(
@@ -87,7 +86,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void uriBuilder() throws URISyntaxException {
+	public void uriBuilder() throws Exception {
 		URI uri = new URI("http", "localhost", "/path", "a=1", null);
 		DefaultServerRequest request = new DefaultServerRequest(
 				MockServerWebExchange.from(MockServerHttpRequest.method(HttpMethod.GET, uri)),
@@ -103,7 +102,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void attribute() {
+	public void attribute() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(
 				MockServerHttpRequest.method(HttpMethod.GET, "http://example.com"));
 		exchange.getAttributes().put("foo", "bar");
@@ -114,7 +113,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void queryParams() {
+	public void queryParams() throws Exception {
 		DefaultServerRequest request = new DefaultServerRequest(
 				MockServerWebExchange.from(MockServerHttpRequest.method(HttpMethod.GET, "http://example.com?foo=bar")),
 				this.messageReaders);
@@ -123,7 +122,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void emptyQueryParam() {
+	public void emptyQueryParam() throws Exception {
 		DefaultServerRequest request = new DefaultServerRequest(
 				MockServerWebExchange.from(MockServerHttpRequest.method(HttpMethod.GET, "http://example.com?foo")),
 				this.messageReaders);
@@ -132,7 +131,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void absentQueryParam() {
+	public void absentQueryParam() throws Exception {
 		DefaultServerRequest request = new DefaultServerRequest(
 				MockServerWebExchange.from(MockServerHttpRequest.method(HttpMethod.GET, "http://example.com?foo")),
 				this.messageReaders);
@@ -141,7 +140,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void pathVariable() {
+	public void pathVariable() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("http://example.com"));
 		Map<String, String> pathVariables = Collections.singletonMap("foo", "bar");
 		exchange.getAttributes().put(RouterFunctions.URI_TEMPLATE_VARIABLES_ATTRIBUTE, pathVariables);
@@ -153,7 +152,7 @@ public class DefaultServerRequestTests {
 
 
 	@Test(expected = IllegalArgumentException.class)
-	public void pathVariableNotFound() {
+	public void pathVariableNotFound() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("http://example.com"));
 		Map<String, String> pathVariables = Collections.singletonMap("foo", "bar");
 		exchange.getAttributes().put(RouterFunctions.URI_TEMPLATE_VARIABLES_ATTRIBUTE, pathVariables);
@@ -164,7 +163,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void pathVariables() {
+	public void pathVariables() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("http://example.com"));
 		Map<String, String> pathVariables = Collections.singletonMap("foo", "bar");
 		exchange.getAttributes().put(RouterFunctions.URI_TEMPLATE_VARIABLES_ATTRIBUTE, pathVariables);
@@ -175,7 +174,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void header() {
+	public void header() throws Exception {
 		HttpHeaders httpHeaders = new HttpHeaders();
 		List<MediaType> accept =
 				Collections.singletonList(MediaType.APPLICATION_JSON);
@@ -221,7 +220,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void body() {
+	public void body() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo".getBytes(StandardCharsets.UTF_8)));
@@ -241,7 +240,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void bodyToMono() {
+	public void bodyToMono() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo".getBytes(StandardCharsets.UTF_8)));
@@ -260,7 +259,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void bodyToMonoParameterizedTypeReference() {
+	public void bodyToMonoParameterizedTypeReference() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo".getBytes(StandardCharsets.UTF_8)));
@@ -280,7 +279,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void bodyToFlux() {
+	public void bodyToFlux() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo".getBytes(StandardCharsets.UTF_8)));
@@ -299,7 +298,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void bodyToFluxParameterizedTypeReference() {
+	public void bodyToFluxParameterizedTypeReference() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo".getBytes(StandardCharsets.UTF_8)));
@@ -319,7 +318,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void bodyUnacceptable() {
+	public void bodyUnacceptable() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo".getBytes(StandardCharsets.UTF_8)));
@@ -340,7 +339,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void formData() {
+	public void formData() throws Exception {
 		DefaultDataBufferFactory factory = new DefaultDataBufferFactory();
 		DefaultDataBuffer dataBuffer =
 				factory.wrap(ByteBuffer.wrap("foo=bar&baz=qux".getBytes(StandardCharsets.UTF_8)));
@@ -365,7 +364,7 @@ public class DefaultServerRequestTests {
 	}
 
 	@Test
-	public void multipartData() {
+	public void multipartData() throws Exception {
 		String data = "--12345\r\n" +
 				"Content-Disposition: form-data; name=\"foo\"\r\n" +
 				"\r\n" +
@@ -405,5 +404,4 @@ public class DefaultServerRequestTests {
 				})
 				.verifyComplete();
 	}
-
 }

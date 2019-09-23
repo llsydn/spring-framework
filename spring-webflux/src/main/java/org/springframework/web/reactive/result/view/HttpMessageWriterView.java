@@ -16,6 +16,7 @@
 
 package org.springframework.web.reactive.result.view;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,6 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.Encoder;
-import org.springframework.core.codec.Hints;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.EncoderHttpMessageWriter;
 import org.springframework.http.codec.HttpMessageWriter;
@@ -161,8 +161,7 @@ public class HttpMessageWriterView implements View {
 		Publisher<T> input = Mono.justOrEmpty(value);
 		ResolvableType elementType = ResolvableType.forClass(value.getClass());
 		return ((HttpMessageWriter<T>) this.writer).write(
-				input, elementType, contentType, exchange.getResponse(),
-				Hints.from(Hints.LOG_PREFIX_HINT, exchange.getLogPrefix()));
+				input, elementType, contentType, exchange.getResponse(), Collections.emptyMap());
 	}
 
 }

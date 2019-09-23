@@ -74,7 +74,6 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 		return true;
 	}
 
-
 	@Test(expected = IllegalArgumentException.class)
 	public void testNullConfig() {
 		new CglibAopProxy(null);
@@ -123,7 +122,27 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 	}
 
 	@Test
-	public void testProxyCanBeClassNotInterface() {
+	public void testPackageMethodInvocationWithDifferentClassLoader() {
+		ClassLoader child = new ClassLoader(getClass().getClassLoader()) {
+		};
+
+		PackageMethodTestBean bean = new PackageMethodTestBean();
+		bean.value = "foo";
+		mockTargetSource.setTarget(bean);
+
+		AdvisedSupport as = new AdvisedSupport();
+		as.setTargetSource(mockTargetSource);
+		as.addAdvice(new NopInterceptor());
+		AopProxy aop = new CglibAopProxy(as);
+
+		PackageMethodTestBean proxy = (PackageMethodTestBean) aop.getProxy(child);
+		assertTrue(AopUtils.isCglibProxy(proxy));
+		assertNotEquals(proxy.getClass().getClassLoader(), bean.getClass().getClassLoader());
+		assertNull(proxy.getString());  // we're stuck in the proxy instance
+	}
+
+	@Test
+	public void testProxyCanBeClassNotInterface() throws Exception {
 		TestBean raw = new TestBean();
 		raw.setAge(32);
 		mockTargetSource.setTarget(raw);
@@ -152,20 +171,6 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 
 		CglibTestBean proxy = (CglibTestBean) aop.getProxy();
 		assertEquals("The name property has been overwritten by the constructor", "Rob Harrop", proxy.getName());
-	}
-
-	@Test
-	public void testToStringInvocation() {
-		PrivateCglibTestBean bean = new PrivateCglibTestBean();
-		bean.setName("Rob Harrop");
-
-		AdvisedSupport as = new AdvisedSupport();
-		as.setTarget(bean);
-		as.addAdvice(new NopInterceptor());
-		AopProxy aop = new CglibAopProxy(as);
-
-		PrivateCglibTestBean proxy = (PrivateCglibTestBean) aop.getProxy();
-		assertEquals("The name property has been overwritten by the constructor", "Rob Harrop", proxy.toString());
 	}
 
 	@Test
@@ -495,29 +500,6 @@ public class CglibProxyTests extends AbstractAopProxyTests implements Serializab
 			return this.value;
 		}
 	}
-
-
-	private static class PrivateCglibTestBean {
-
-		private String name;
-
-		public PrivateCglibTestBean() {
-			setName("Some Default");
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public String getName() {
-			return this.name;
-		}
-
-		@Override
-		public String toString() {
-			return this.name;
-		}
-	}
 }
 
 
@@ -534,11 +516,6 @@ class CglibTestBean {
 	}
 
 	public String getName() {
-		return this.name;
-	}
-
-	@Override
-	public String toString() {
 		return this.name;
 	}
 }

@@ -204,14 +204,11 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 
 	private int startupDelay = 0;
 
-	private int phase = DEFAULT_PHASE;
+	private int phase = Integer.MAX_VALUE;
 
 	private boolean exposeSchedulerInRepository = false;
 
 	private boolean waitForJobsToCompleteOnShutdown = false;
-
-	@Nullable
-	private String beanName;
 
 	@Nullable
 	private ApplicationContext applicationContext;
@@ -255,13 +252,9 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 	}
 
 	/**
-	 * Set the name of the Scheduler to create via the SchedulerFactory, as an
-	 * alternative to the {@code org.quartz.scheduler.instanceName} property.
-	 * <p>If not specified, the name will be taken from Quartz properties
-	 * ({@code org.quartz.scheduler.instanceName}), or from the declared
-	 * {@code SchedulerFactoryBean} bean name as a fallback.
+	 * Set the name of the Scheduler to create via the SchedulerFactory.
+	 * <p>If not specified, the bean name will be used as default scheduler name.
 	 * @see #setBeanName
-	 * @see StdSchedulerFactory#PROP_SCHED_INSTANCE_NAME
 	 * @see org.quartz.SchedulerFactory#getScheduler()
 	 * @see org.quartz.SchedulerFactory#getScheduler(String)
 	 */
@@ -474,7 +467,9 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 
 	@Override
 	public void setBeanName(String name) {
-		this.beanName = name;
+		if (this.schedulerName == null) {
+			this.schedulerName = name;
+		}
 	}
 
 	@Override
@@ -561,8 +556,8 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 		}
 
 		if (this.configLocation != null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Loading Quartz config from [" + this.configLocation + "]");
+			if (logger.isInfoEnabled()) {
+				logger.info("Loading Quartz config from [" + this.configLocation + "]");
 			}
 			PropertiesLoaderUtils.fillProperties(mergedProps, this.configLocation);
 		}
@@ -571,20 +566,8 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 		if (this.dataSource != null) {
 			mergedProps.setProperty(StdSchedulerFactory.PROP_JOB_STORE_CLASS, LocalDataSourceJobStore.class.getName());
 		}
-
-		// Determine scheduler name across local settings and Quartz properties...
 		if (this.schedulerName != null) {
 			mergedProps.setProperty(StdSchedulerFactory.PROP_SCHED_INSTANCE_NAME, this.schedulerName);
-		}
-		else {
-			String nameProp = mergedProps.getProperty(StdSchedulerFactory.PROP_SCHED_INSTANCE_NAME);
-			if (nameProp != null) {
-				this.schedulerName = nameProp;
-			}
-			else if (this.beanName != null) {
-				mergedProps.setProperty(StdSchedulerFactory.PROP_SCHED_INSTANCE_NAME, this.beanName);
-				this.schedulerName = this.beanName;
-			}
 		}
 
 		schedulerFactory.initialize(mergedProps);
@@ -619,9 +602,6 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 				this.jobFactory = new AdaptableJobFactory();
 			}
 			if (this.jobFactory != null) {
-				if (this.applicationContext != null && this.jobFactory instanceof ApplicationContextAware) {
-					((ApplicationContextAware) this.jobFactory).setApplicationContext(this.applicationContext);
-				}
 				if (this.jobFactory instanceof SchedulerContextAware) {
 					((SchedulerContextAware) this.jobFactory).setSchedulerContext(scheduler.getContext());
 				}
@@ -814,6 +794,12 @@ public class SchedulerFactoryBean extends SchedulerAccessor implements FactoryBe
 				throw new SchedulingException("Could not stop Quartz Scheduler", ex);
 			}
 		}
+	}
+
+	@Override
+	public void stop(Runnable callback) throws SchedulingException {
+		stop();
+		callback.run();
 	}
 
 	@Override

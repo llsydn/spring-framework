@@ -36,8 +36,6 @@ import org.springframework.util.CollectionUtils;
  *
  * @author Stephane Nicoll
  * @since 4.1
- * @param <O> the operation type
- * @param <A> the annotation type
  */
 @SuppressWarnings("serial")
 abstract class AbstractCacheInterceptor<O extends AbstractJCacheOperation<A>, A extends Annotation>

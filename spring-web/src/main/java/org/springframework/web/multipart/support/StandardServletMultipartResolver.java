@@ -79,6 +79,10 @@ public class StandardServletMultipartResolver implements MultipartResolver {
 
 	@Override
 	public boolean isMultipart(HttpServletRequest request) {
+		// Same check as in Commons FileUpload...
+		if (!"post".equalsIgnoreCase(request.getMethod())) {
+			return false;
+		}
 		return StringUtils.startsWithIgnoreCase(request.getContentType(), "multipart/");
 	}
 

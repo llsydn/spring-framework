@@ -33,6 +33,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import reactor.core.publisher.Flux;
 
 import org.springframework.core.io.buffer.DataBuffer;
@@ -59,6 +60,9 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 	static final DataBuffer EOF_BUFFER = new DefaultDataBufferFactory().allocateBuffer(0);
 
 
+	protected final Log logger = LogFactory.getLog(getClass());
+
+
 	private final HttpServletRequest request;
 
 	private final RequestBodyPublisher bodyPublisher;
@@ -69,18 +73,12 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 
 	private final byte[] buffer;
 
+
 	public ServletServerHttpRequest(HttpServletRequest request, AsyncContext asyncContext,
 			String servletPath, DataBufferFactory bufferFactory, int bufferSize)
 			throws IOException, URISyntaxException {
 
-		this(createDefaultHttpHeaders(request), request, asyncContext, servletPath, bufferFactory, bufferSize);
-	}
-
-	public ServletServerHttpRequest(HttpHeaders headers, HttpServletRequest request, AsyncContext asyncContext,
-			String servletPath, DataBufferFactory bufferFactory, int bufferSize)
-			throws IOException, URISyntaxException {
-
-		super(initUri(request), request.getContextPath() + servletPath, initHeaders(headers, request));
+		super(initUri(request), request.getContextPath() + servletPath, initHeaders(request));
 
 		Assert.notNull(bufferFactory, "'bufferFactory' must not be null");
 		Assert.isTrue(bufferSize > 0, "'bufferSize' must be higher than 0");
@@ -97,18 +95,6 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 		this.bodyPublisher.registerReadListener();
 	}
 
-
-	private static HttpHeaders createDefaultHttpHeaders(HttpServletRequest request) {
-		HttpHeaders headers = new HttpHeaders();
-		for (Enumeration<?> names = request.getHeaderNames(); names.hasMoreElements(); ) {
-			String name = (String) names.nextElement();
-			for (Enumeration<?> values = request.getHeaders(name); values.hasMoreElements(); ) {
-				headers.add(name, (String) values.nextElement());
-			}
-		}
-		return headers;
-	}
-
 	private static URI initUri(HttpServletRequest request) throws URISyntaxException {
 		Assert.notNull(request, "'request' must not be null");
 		StringBuffer url = request.getRequestURL();
@@ -119,7 +105,16 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 		return new URI(url.toString());
 	}
 
-	private static HttpHeaders initHeaders(HttpHeaders headers, HttpServletRequest request) {
+	private static HttpHeaders initHeaders(HttpServletRequest request) {
+		HttpHeaders headers = new HttpHeaders();
+		for (Enumeration<?> names = request.getHeaderNames();
+			 names.hasMoreElements(); ) {
+			String name = (String) names.nextElement();
+			for (Enumeration<?> values = request.getHeaders(name);
+				 values.hasMoreElements(); ) {
+				headers.add(name, (String) values.nextElement());
+			}
+		}
 		MediaType contentType = headers.getContentType();
 		if (contentType == null) {
 			String requestContentType = request.getContentType();
@@ -208,7 +203,9 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 	@Nullable
 	DataBuffer readFromInputStream() throws IOException {
 		int read = this.request.getInputStream().read(this.buffer);
-		logBytesRead(read);
+		if (logger.isTraceEnabled()) {
+			logger.trace("InputStream read returned " + read + (read != -1 ? " bytes" : ""));
+		}
 
 		if (read > 0) {
 			DataBuffer dataBuffer = this.bufferFactory.allocateBuffer(read);
@@ -223,13 +220,6 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 		return null;
 	}
 
-	protected final void logBytesRead(int read) {
-		Log rsReadLogger = AbstractListenerReadPublisher.rsReadLogger;
-		if (rsReadLogger.isTraceEnabled()) {
-			rsReadLogger.trace(getLogPrefix() + "Read " + read + (read != -1 ? " bytes" : ""));
-		}
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T getNativeRequest() {
@@ -240,8 +230,7 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 	private final class RequestAsyncListener implements AsyncListener {
 
 		@Override
-		public void onStartAsync(AsyncEvent event) {
-		}
+		public void onStartAsync(AsyncEvent event) {}
 
 		@Override
 		public void onTimeout(AsyncEvent event) {
@@ -267,7 +256,6 @@ class ServletServerHttpRequest extends AbstractServerHttpRequest {
 		private final ServletInputStream inputStream;
 
 		public RequestBodyPublisher(ServletInputStream inputStream) {
-			super(ServletServerHttpRequest.this.getLogPrefix());
 			this.inputStream = inputStream;
 		}
 

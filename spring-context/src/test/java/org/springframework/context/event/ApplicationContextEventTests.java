@@ -64,8 +64,6 @@ public class ApplicationContextEventTests extends AbstractApplicationEventListen
 	@Test
 	public void multicastSimpleEvent() {
 		multicastEvent(true, ApplicationListener.class,
-				new ContextRefreshedEvent(new StaticApplicationContext()), null);
-		multicastEvent(true, ApplicationListener.class,
 				new ContextClosedEvent(new StaticApplicationContext()), null);
 	}
 

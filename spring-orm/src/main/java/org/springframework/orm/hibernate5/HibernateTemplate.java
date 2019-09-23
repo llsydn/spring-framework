@@ -45,7 +45,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.lang.Nullable;
-import org.springframework.transaction.support.ResourceHolderSupport;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
@@ -1118,8 +1117,8 @@ public class HibernateTemplate implements HibernateOperations, InitializingBean 
 			criteria.setMaxResults(getMaxResults());
 		}
 
-		ResourceHolderSupport sessionHolder =
-				(ResourceHolderSupport) TransactionSynchronizationManager.getResource(obtainSessionFactory());
+		SessionHolder sessionHolder =
+				(SessionHolder) TransactionSynchronizationManager.getResource(obtainSessionFactory());
 		if (sessionHolder != null && sessionHolder.hasTimeout()) {
 			criteria.setTimeout(sessionHolder.getTimeToLiveInSeconds());
 		}
@@ -1147,8 +1146,8 @@ public class HibernateTemplate implements HibernateOperations, InitializingBean 
 			queryObject.setMaxResults(getMaxResults());
 		}
 
-		ResourceHolderSupport sessionHolder =
-				(ResourceHolderSupport) TransactionSynchronizationManager.getResource(obtainSessionFactory());
+		SessionHolder sessionHolder =
+				(SessionHolder) TransactionSynchronizationManager.getResource(obtainSessionFactory());
 		if (sessionHolder != null && sessionHolder.hasTimeout()) {
 			queryObject.setTimeout(sessionHolder.getTimeToLiveInSeconds());
 		}

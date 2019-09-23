@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class LiveBeansViewTests {
 	}
 
 	@Test
-	public void registerUnregisterSeveralContexts() throws MalformedObjectNameException {
+	public void registerUnregisterServeralContexts() throws MalformedObjectNameException {
 		this.environment.setProperty(LiveBeansView.MBEAN_DOMAIN_PROPERTY_NAME, this.name.getMethodName());
 		ConfigurableApplicationContext context = createApplicationContext("app");
 		ConfigurableApplicationContext childContext = createApplicationContext("child");
@@ -80,7 +80,7 @@ public class LiveBeansViewTests {
 	}
 
 	@Test
-	public void registerUnregisterSeveralContextsDifferentOrder() throws MalformedObjectNameException {
+	public void registerUnregisterServeralContextsDifferentOrder() throws MalformedObjectNameException {
 		this.environment.setProperty(LiveBeansView.MBEAN_DOMAIN_PROPERTY_NAME, this.name.getMethodName());
 		ConfigurableApplicationContext context = createApplicationContext("app");
 		ConfigurableApplicationContext childContext = createApplicationContext("child");

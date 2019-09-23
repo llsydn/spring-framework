@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.web.util;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -34,43 +35,43 @@ public class UriUtilsTests {
 
 
 	@Test
-	public void encodeScheme() {
+	public void encodeScheme() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar+-.", UriUtils.encodeScheme("foobar+-.", CHARSET));
 		assertEquals("Invalid encoded result", "foo%20bar", UriUtils.encodeScheme("foo bar", CHARSET));
 	}
 
 	@Test
-	public void encodeUserInfo() {
+	public void encodeUserInfo() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar:", UriUtils.encodeUserInfo("foobar:", CHARSET));
 		assertEquals("Invalid encoded result", "foo%20bar", UriUtils.encodeUserInfo("foo bar", CHARSET));
 	}
 
 	@Test
-	public void encodeHost() {
+	public void encodeHost() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar", UriUtils.encodeHost("foobar", CHARSET));
 		assertEquals("Invalid encoded result", "foo%20bar", UriUtils.encodeHost("foo bar", CHARSET));
 	}
 
 	@Test
-	public void encodePort() {
+	public void encodePort() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "80", UriUtils.encodePort("80", CHARSET));
 	}
 
 	@Test
-	public void encodePath() {
+	public void encodePath() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "/foo/bar", UriUtils.encodePath("/foo/bar", CHARSET));
 		assertEquals("Invalid encoded result", "/foo%20bar", UriUtils.encodePath("/foo bar", CHARSET));
 		assertEquals("Invalid encoded result", "/Z%C3%BCrich", UriUtils.encodePath("/Z\u00fcrich", CHARSET));
 	}
 
 	@Test
-	public void encodePathSegment() {
+	public void encodePathSegment() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar", UriUtils.encodePathSegment("foobar", CHARSET));
 		assertEquals("Invalid encoded result", "%2Ffoo%2Fbar", UriUtils.encodePathSegment("/foo/bar", CHARSET));
 	}
 
 	@Test
-	public void encodeQuery() {
+	public void encodeQuery() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar", UriUtils.encodeQuery("foobar", CHARSET));
 		assertEquals("Invalid encoded result", "foo%20bar", UriUtils.encodeQuery("foo bar", CHARSET));
 		assertEquals("Invalid encoded result", "foobar/+", UriUtils.encodeQuery("foobar/+", CHARSET));
@@ -78,28 +79,21 @@ public class UriUtilsTests {
 	}
 
 	@Test
-	public void encodeQueryParam() {
+	public void encodeQueryParam() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar", UriUtils.encodeQueryParam("foobar", CHARSET));
 		assertEquals("Invalid encoded result", "foo%20bar", UriUtils.encodeQueryParam("foo bar", CHARSET));
 		assertEquals("Invalid encoded result", "foo%26bar", UriUtils.encodeQueryParam("foo&bar", CHARSET));
 	}
 
 	@Test
-	public void encodeFragment() {
+	public void encodeFragment() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded result", "foobar", UriUtils.encodeFragment("foobar", CHARSET));
 		assertEquals("Invalid encoded result", "foo%20bar", UriUtils.encodeFragment("foo bar", CHARSET));
 		assertEquals("Invalid encoded result", "foobar/", UriUtils.encodeFragment("foobar/", CHARSET));
 	}
 
 	@Test
-	public void encode() {
-		assertEquals("Invalid encoded result", "foo", UriUtils.encode("foo", CHARSET));
-		assertEquals("Invalid encoded result", "http%3A%2F%2Fexample.com%2Ffoo%20bar",
-				UriUtils.encode("http://example.com/foo bar", CHARSET));
-	}
-
-	@Test
-	public void decode() {
+	public void decode() throws UnsupportedEncodingException {
 		assertEquals("Invalid encoded URI", "", UriUtils.decode("", CHARSET));
 		assertEquals("Invalid encoded URI", "foobar", UriUtils.decode("foobar", CHARSET));
 		assertEquals("Invalid encoded URI", "foo bar", UriUtils.decode("foo%20bar", CHARSET));
@@ -110,7 +104,7 @@ public class UriUtilsTests {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void decodeInvalidSequence() {
+	public void decodeInvalidSequence() throws UnsupportedEncodingException {
 		UriUtils.decode("foo%2", CHARSET);
 	}
 

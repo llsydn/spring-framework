@@ -149,19 +149,6 @@ public class RequestMappingMessageConversionIntegrationTests extends AbstractReq
 		assertEquals(expected, responseEntity.getBody());
 	}
 
-	@Test // SPR-17506
-	public void personResponseBodyWithEmptyMono() throws Exception {
-		ResponseEntity<Person> responseEntity = performGet("/person-response/mono-empty", JSON, Person.class);
-		assertEquals(0, responseEntity.getHeaders().getContentLength());
-		assertNull(responseEntity.getBody());
-
-		// As we're on the same connection, the 2nd request proves server response handling
-		// did complete after the 1st request..
-		responseEntity = performGet("/person-response/mono-empty", JSON, Person.class);
-		assertEquals(0, responseEntity.getHeaders().getContentLength());
-		assertNull(responseEntity.getBody());
-	}
-
 	@Test
 	public void personResponseBodyWithMonoDeclaredAsObject() throws Exception {
 		Person expected = new Person("Robert");
@@ -508,11 +495,6 @@ public class RequestMappingMessageConversionIntegrationTests extends AbstractReq
 			return Mono.just(new Person("Robert"));
 		}
 
-		@GetMapping("/mono-empty")
-		public Mono<Person> getMonoEmpty() {
-			return Mono.empty();
-		}
-
 		@GetMapping("/mono-declared-as-object")
 		public Object getMonoDeclaredAsObject() {
 			return Mono.just(new Person("Robert"));
@@ -656,7 +638,6 @@ public class RequestMappingMessageConversionIntegrationTests extends AbstractReq
 		}
 
 		@PostMapping("/rxjava2-single")
-		@SuppressWarnings("deprecation")
 		public io.reactivex.Completable createWithRxJava2Single(@RequestBody io.reactivex.Single<Person> single) {
 			return single.map(persons::add).toCompletable();
 		}
@@ -672,7 +653,6 @@ public class RequestMappingMessageConversionIntegrationTests extends AbstractReq
 		}
 
 		@PostMapping("/rxjava2-observable")
-		@SuppressWarnings("deprecation")
 		public io.reactivex.Completable createWithRxJava2Observable(
 				@RequestBody io.reactivex.Observable<Person> observable) {
 
@@ -680,7 +660,6 @@ public class RequestMappingMessageConversionIntegrationTests extends AbstractReq
 		}
 
 		@PostMapping("/flowable")
-		@SuppressWarnings("deprecation")
 		public io.reactivex.Completable createWithFlowable(@RequestBody Flowable<Person> flowable) {
 			return flowable.toList().doOnSuccess(persons::addAll).toCompletable();
 		}

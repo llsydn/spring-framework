@@ -21,12 +21,12 @@ import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.Operators;
 
-import org.springframework.core.log.LogDelegateFactory;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -43,19 +43,10 @@ import org.springframework.util.Assert;
  * @author Violeta Georgieva
  * @author Rossen Stoyanchev
  * @since 5.0
- * @param <T> the type of element signaled
  */
 public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 
-	/**
-	 * Special logger for debugging Reactive Streams signals.
-	 * @see LogDelegateFactory#getHiddenLog(Class)
-	 * @see AbstractListenerWriteProcessor#rsWriteLogger
-	 * @see AbstractListenerWriteFlushProcessor#rsWriteFlushLogger
-	 * @see WriteResultPublisher#rsWriteResultLogger
-	 */
-	protected static Log rsReadLogger = LogDelegateFactory.getHiddenLog(AbstractListenerReadPublisher.class);
-
+	protected final Log logger = LogFactory.getLog(getClass());
 
 	private final AtomicReference<State> state = new AtomicReference<>(State.UNSUBSCRIBED);
 
@@ -72,30 +63,6 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 
 	@Nullable
 	private volatile Throwable errorBeforeDemand;
-
-	private final String logPrefix;
-
-
-	public AbstractListenerReadPublisher() {
-		this("");
-	}
-
-	/**
-	 * Create an instance with the given log prefix.
-	 * @since 5.1
-	 */
-	public AbstractListenerReadPublisher(String logPrefix) {
-		this.logPrefix = logPrefix;
-	}
-
-
-	/**
-	 * Return the configured log message prefix.
-	 * @since 5.1
-	 */
-	public String getLogPrefix() {
-		return this.logPrefix;
-	}
 
 
 	// Publisher implementation...
@@ -114,7 +81,7 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 	 * container.
 	 */
 	public final void onDataAvailable() {
-		rsReadLogger.trace(getLogPrefix() + "onDataAvailable");
+		this.logger.trace("I/O event onDataAvailable");
 		this.state.get().onDataAvailable(this);
 	}
 
@@ -123,7 +90,7 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 	 * all data has been read.
 	 */
 	public void onAllDataRead() {
-		rsReadLogger.trace(getLogPrefix() + "onAllDataRead");
+		this.logger.trace("I/O event onAllDataRead");
 		this.state.get().onAllDataRead(this);
 	}
 
@@ -131,8 +98,8 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 	 * Sub-classes can call this to delegate container error notifications.
 	 */
 	public final void onError(Throwable ex) {
-		if (rsReadLogger.isTraceEnabled()) {
-			rsReadLogger.trace(getLogPrefix() + "Connection error: " + ex);
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace("I/O event onError: " + ex);
 		}
 		this.state.get().onError(this, ex);
 	}
@@ -167,7 +134,7 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 	 * Invoked after an I/O read error from the underlying server or after a
 	 * cancellation signal from the downstream consumer to allow sub-classes
 	 * to discard any current cached data they might have.
-	 * @since 5.0.11
+	 * @since 5.1.2
 	 */
 	protected abstract void discardData();
 
@@ -190,14 +157,14 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 				}
 				Subscriber<? super T> subscriber = this.subscriber;
 				Assert.state(subscriber != null, "No subscriber");
-				if (rsReadLogger.isTraceEnabled()) {
-					rsReadLogger.trace(getLogPrefix() + "Publishing data read");
+				if (logger.isTraceEnabled()) {
+					logger.trace("Data item read, publishing..");
 				}
 				subscriber.onNext(data);
 			}
 			else {
-				if (rsReadLogger.isTraceEnabled()) {
-					rsReadLogger.trace(getLogPrefix() + "No more data to read");
+				if (logger.isTraceEnabled()) {
+					logger.trace("No more data to read");
 				}
 				return true;
 			}
@@ -207,8 +174,8 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 
 	private boolean changeState(State oldState, State newState) {
 		boolean result = this.state.compareAndSet(oldState, newState);
-		if (result && rsReadLogger.isTraceEnabled()) {
-			rsReadLogger.trace(getLogPrefix() + oldState + " -> " + newState);
+		if (result && logger.isTraceEnabled()) {
+			logger.trace(oldState + " -> " + newState);
 		}
 		return result;
 	}
@@ -237,16 +204,16 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 
 		@Override
 		public final void request(long n) {
-			if (rsReadLogger.isTraceEnabled()) {
-				rsReadLogger.trace(getLogPrefix() + n + " requested");
+			if (logger.isTraceEnabled()) {
+				logger.trace("Signal request(" + n + ")");
 			}
 			state.get().request(AbstractListenerReadPublisher.this, n);
 		}
 
 		@Override
 		public final void cancel() {
-			if (rsReadLogger.isTraceEnabled()) {
-				rsReadLogger.trace(getLogPrefix() + "Cancellation");
+			if (logger.isTraceEnabled()) {
+				logger.trace("Signal cancel()");
 			}
 			state.get().cancel(AbstractListenerReadPublisher.this);
 		}
@@ -284,15 +251,14 @@ public abstract class AbstractListenerReadPublisher<T> implements Publisher<T> {
 					subscriber.onSubscribe(subscription);
 					publisher.changeState(SUBSCRIBING, NO_DEMAND);
 					// Now safe to check "beforeDemand" flags, they won't change once in NO_DEMAND
-					String logPrefix = publisher.getLogPrefix();
 					if (publisher.completionBeforeDemand) {
-						rsReadLogger.trace(logPrefix + "Completed before demand");
+						publisher.logger.trace("Completed before demand");
 						publisher.state.get().onAllDataRead(publisher);
 					}
 					Throwable ex = publisher.errorBeforeDemand;
 					if (ex != null) {
-						if (rsReadLogger.isTraceEnabled()) {
-							rsReadLogger.trace(logPrefix + "Completed with error before demand: " + ex);
+						if (publisher.logger.isTraceEnabled()) {
+							publisher.logger.trace("Completed with error before demand: " + ex);
 						}
 						publisher.state.get().onError(publisher, ex);
 					}

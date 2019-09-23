@@ -68,6 +68,21 @@ public interface Encoder<T> {
 			ResolvableType elementType, @Nullable MimeType mimeType, @Nullable Map<String, Object> hints);
 
 	/**
+	 * Return the length for the given item, if known.
+	 * @param t the item to check
+	 * @return the length in bytes, or {@code null} if not known.
+	 * @since 5.0.5
+	 * @deprecated this method was added so {@code EncoderHttpMessageWriter}
+	 * can set the content-length header. However after further improvements as
+	 * of 5.0.7, it is no longer needed, and not used.
+	 */
+	@Nullable
+	@Deprecated
+	default Long getContentLength(T t, @Nullable MimeType mimeType) {
+		return null;
+	}
+
+	/**
 	 * Return the list of mime types this encoder supports.
 	 */
 	List<MimeType> getEncodableMimeTypes();

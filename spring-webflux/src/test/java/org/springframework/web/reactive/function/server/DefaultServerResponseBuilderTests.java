@@ -62,9 +62,8 @@ public class DefaultServerResponseBuilderTests {
 		}
 	};
 
-
 	@Test
-	public void from() {
+	public void from() throws Exception {
 		ServerResponse other = ServerResponse.ok().header("foo", "bar").build().block();
 		Mono<ServerResponse> result = ServerResponse.from(other).build();
 		StepVerifier.create(result)
@@ -75,7 +74,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void status() {
+	public void status() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.status(HttpStatus.CREATED).build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.CREATED.equals(response.statusCode()))
@@ -84,7 +83,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void ok() {
+	public void ok() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.ok().build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.OK.equals(response.statusCode()))
@@ -94,7 +93,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void created() {
+	public void created() throws Exception {
 		URI location = URI.create("http://example.com");
 		Mono<ServerResponse> result = ServerResponse.created(location).build();
 		StepVerifier.create(result)
@@ -105,7 +104,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void accepted() {
+	public void accepted() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.accepted().build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.ACCEPTED.equals(response.statusCode()))
@@ -115,7 +114,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void noContent() {
+	public void noContent() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.noContent().build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.NO_CONTENT.equals(response.statusCode()))
@@ -125,7 +124,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void seeOther() {
+	public void seeOther() throws Exception {
 		URI location = URI.create("http://example.com");
 		Mono<ServerResponse> result = ServerResponse.seeOther(location).build();
 		StepVerifier.create(result)
@@ -136,7 +135,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void temporaryRedirect() {
+	public void temporaryRedirect() throws Exception {
 		URI location = URI.create("http://example.com");
 		Mono<ServerResponse> result = ServerResponse.temporaryRedirect(location).build();
 		StepVerifier.create(result)
@@ -147,7 +146,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void permanentRedirect() {
+	public void permanentRedirect() throws Exception {
 		URI location = URI.create("http://example.com");
 		Mono<ServerResponse> result = ServerResponse.permanentRedirect(location).build();
 		StepVerifier.create(result)
@@ -158,7 +157,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void badRequest() {
+	public void badRequest() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.badRequest().build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.BAD_REQUEST.equals(response.statusCode()))
@@ -168,7 +167,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void notFound() {
+	public void notFound() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.notFound().build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.NOT_FOUND.equals(response.statusCode()))
@@ -178,7 +177,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void unprocessableEntity() {
+	public void unprocessableEntity() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.unprocessableEntity().build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> HttpStatus.UNPROCESSABLE_ENTITY.equals(response.statusCode()))
@@ -188,7 +187,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void allow() {
+	public void allow() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.ok().allow(HttpMethod.GET).build();
 		Set<HttpMethod> expected = EnumSet.of(HttpMethod.GET);
 		StepVerifier.create(result)
@@ -199,7 +198,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void contentLength() {
+	public void contentLength() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.ok().contentLength(42).build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> Long.valueOf(42).equals(response.headers().getContentLength()))
@@ -209,7 +208,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void contentType() {
+	public void contentType() throws Exception {
 		Mono<ServerResponse>
 				result = ServerResponse.ok().contentType(MediaType.APPLICATION_JSON).build();
 		StepVerifier.create(result)
@@ -219,7 +218,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void eTag() {
+	public void eTag() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.ok().eTag("foo").build();
 		StepVerifier.create(result)
 				.expectNextMatches(response -> "\"foo\"".equals(response.headers().getETag()))
@@ -229,7 +228,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void lastModified() {
+	public void lastModified() throws Exception {
 		ZonedDateTime now = ZonedDateTime.now();
 		Mono<ServerResponse> result = ServerResponse.ok().lastModified(now).build();
 		Long expected = now.toInstant().toEpochMilli() / 1000;
@@ -240,7 +239,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void cacheControlTag() {
+	public void cacheControlTag() throws Exception {
 		Mono<ServerResponse>
 				result = ServerResponse.ok().cacheControl(CacheControl.noCache()).build();
 		StepVerifier.create(result)
@@ -250,7 +249,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void varyBy() {
+	public void varyBy() throws Exception {
 		Mono<ServerResponse> result = ServerResponse.ok().varyBy("foo").build();
 		List<String> expected = Collections.singletonList("foo");
 		StepVerifier.create(result)
@@ -261,7 +260,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void statusCode() {
+	public void statusCode() throws Exception {
 		HttpStatus statusCode = HttpStatus.ACCEPTED;
 		Mono<ServerResponse> result = ServerResponse.status(statusCode).build();
 		StepVerifier.create(result)
@@ -272,7 +271,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void headers() {
+	public void headers() throws Exception {
 		HttpHeaders newHeaders = new HttpHeaders();
 		newHeaders.set("foo", "bar");
 		Mono<ServerResponse> result =
@@ -285,7 +284,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void cookies() {
+	public void cookies() throws Exception {
 		MultiValueMap<String, ResponseCookie> newCookies = new LinkedMultiValueMap<>();
 		newCookies.add("name", ResponseCookie.from("name", "value").build());
 		Mono<ServerResponse> result =
@@ -297,7 +296,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void build() {
+	public void build() throws Exception {
 		ResponseCookie cookie = ResponseCookie.from("name", "value").build();
 		Mono<ServerResponse>
 				result = ServerResponse.status(HttpStatus.CREATED)
@@ -317,7 +316,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test
-	public void buildVoidPublisher() {
+	public void buildVoidPublisher() throws Exception {
 		Mono<Void> mono = Mono.empty();
 		Mono<ServerResponse> result = ServerResponse.ok().build(mono);
 
@@ -331,7 +330,7 @@ public class DefaultServerResponseBuilderTests {
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void bodyObjectPublisher() {
+	public void bodyObjectPublisher() throws Exception {
 		Mono<Void> mono = Mono.empty();
 
 		ServerResponse.ok().syncBody(mono);
@@ -383,5 +382,6 @@ public class DefaultServerResponseBuilderTests {
 				.expectError(IllegalStateException.class)
 				.verify();
 	}
+
 
 }

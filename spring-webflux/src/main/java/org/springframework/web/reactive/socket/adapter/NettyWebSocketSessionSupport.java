@@ -35,19 +35,18 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 
 /**
  * Base class for Netty-based {@link WebSocketSession} adapters that provides
- * convenience methods to convert Netty {@link WebSocketFrame WebSocketFrames} to and from
- * {@link WebSocketMessage WebSocketMessages}.
+ * convenience methods to convert Netty {@link WebSocketFrame}s to and from
+ * {@link WebSocketMessage}s.
  *
  * @author Rossen Stoyanchev
  * @since 5.0
- * @param <T> the native delegate type
  */
 public abstract class NettyWebSocketSessionSupport<T> extends AbstractWebSocketSession<T> {
 
 	/**
-	 * The default max size for inbound WebSocket frames.
+	 * The default max size for aggregating inbound WebSocket frames.
 	 */
-	public static final int DEFAULT_FRAME_MAX_SIZE = 64 * 1024;
+	protected static final int DEFAULT_FRAME_MAX_SIZE = 64 * 1024;
 
 
 	private static final Map<Class<?>, WebSocketMessage.Type> messageTypes;

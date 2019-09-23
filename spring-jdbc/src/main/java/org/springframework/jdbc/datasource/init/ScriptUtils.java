@@ -343,27 +343,14 @@ public abstract class ScriptUtils {
 	 */
 	public static boolean containsSqlScriptDelimiters(String script, String delim) {
 		boolean inLiteral = false;
-		boolean inEscape = false;
-
 		for (int i = 0; i < script.length(); i++) {
-			char c = script.charAt(i);
-			if (inEscape) {
-				inEscape = false;
-				continue;
-			}
-			// MySQL style escapes
-			if (c == '\\') {
-				inEscape = true;
-				continue;
-			}
-			if (c == '\'') {
+			if (script.charAt(i) == '\'') {
 				inLiteral = !inLiteral;
 			}
 			if (!inLiteral && script.startsWith(delim, i)) {
 				return true;
 			}
 		}
-
 		return false;
 	}
 
@@ -453,8 +440,8 @@ public abstract class ScriptUtils {
 			String blockCommentStartDelimiter, String blockCommentEndDelimiter) throws ScriptException {
 
 		try {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Executing SQL script from " + resource);
+			if (logger.isInfoEnabled()) {
+				logger.info("Executing SQL script from " + resource);
 			}
 			long startTime = System.currentTimeMillis();
 
@@ -514,13 +501,13 @@ public abstract class ScriptUtils {
 					stmt.close();
 				}
 				catch (Throwable ex) {
-					logger.trace("Could not close JDBC Statement", ex);
+					logger.debug("Could not close JDBC Statement", ex);
 				}
 			}
 
 			long elapsedTime = System.currentTimeMillis() - startTime;
-			if (logger.isDebugEnabled()) {
-				logger.debug("Executed SQL script from " + resource + " in " + elapsedTime + " ms.");
+			if (logger.isInfoEnabled()) {
+				logger.info("Executed SQL script from " + resource + " in " + elapsedTime + " ms.");
 			}
 		}
 		catch (Exception ex) {

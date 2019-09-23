@@ -28,6 +28,8 @@ import org.springframework.lang.Nullable;
 /**
  * SockJS transport types.
  *
+ * <p>JSONP support will be removed as of Spring Framework 5.1, use others transports instead.
+ *
  * @author Rossen Stoyanchev
  * @author Sebastien Deleuze
  * @since 4.0
@@ -39,6 +41,12 @@ public enum TransportType {
 	XHR("xhr", HttpMethod.POST, "cors", "jsessionid", "no_cache"),
 
 	XHR_SEND("xhr_send", HttpMethod.POST, "cors", "jsessionid", "no_cache"),
+
+	@Deprecated
+	JSONP("jsonp", HttpMethod.GET, "jsessionid", "no_cache"),
+
+	@Deprecated
+	JSONP_SEND("jsonp_send", HttpMethod.POST, "jsessionid", "no_cache"),
 
 	XHR_STREAMING("xhr_streaming", HttpMethod.POST, "cors", "jsessionid", "no_cache"),
 

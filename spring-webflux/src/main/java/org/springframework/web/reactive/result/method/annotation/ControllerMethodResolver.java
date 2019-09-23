@@ -34,8 +34,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.ReactiveAdapterRegistry;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAwareOrderComparator;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -72,14 +72,14 @@ class ControllerMethodResolver {
 	 * MethodFilter that matches {@link InitBinder @InitBinder} methods.
 	 */
 	private static final MethodFilter INIT_BINDER_METHODS = method ->
-			AnnotatedElementUtils.hasAnnotation(method, InitBinder.class);
+			(AnnotationUtils.findAnnotation(method, InitBinder.class) != null);
 
 	/**
 	 * MethodFilter that matches {@link ModelAttribute @ModelAttribute} methods.
 	 */
 	private static final MethodFilter MODEL_ATTRIBUTE_METHODS = method ->
-			(!AnnotatedElementUtils.hasAnnotation(method, RequestMapping.class) &&
-					AnnotatedElementUtils.hasAnnotation(method, ModelAttribute.class));
+			(AnnotationUtils.findAnnotation(method, RequestMapping.class) == null &&
+					AnnotationUtils.findAnnotation(method, ModelAttribute.class) != null);
 
 
 	private static Log logger = LogFactory.getLog(ControllerMethodResolver.class);
@@ -217,6 +217,10 @@ class ControllerMethodResolver {
 	}
 
 	private void initControllerAdviceCaches(ApplicationContext applicationContext) {
+		if (logger.isInfoEnabled()) {
+			logger.info("Looking for @ControllerAdvice: " + applicationContext);
+		}
+
 		List<ControllerAdviceBean> beans = ControllerAdviceBean.findAnnotatedBeans(applicationContext);
 		AnnotationAwareOrderComparator.sort(beans);
 
@@ -226,28 +230,24 @@ class ControllerMethodResolver {
 				Set<Method> attrMethods = MethodIntrospector.selectMethods(beanType, MODEL_ATTRIBUTE_METHODS);
 				if (!attrMethods.isEmpty()) {
 					this.modelAttributeAdviceCache.put(bean, attrMethods);
+					if (logger.isInfoEnabled()) {
+						logger.info("Detected @ModelAttribute methods in " + bean);
+					}
 				}
 				Set<Method> binderMethods = MethodIntrospector.selectMethods(beanType, INIT_BINDER_METHODS);
 				if (!binderMethods.isEmpty()) {
 					this.initBinderAdviceCache.put(bean, binderMethods);
+					if (logger.isInfoEnabled()) {
+						logger.info("Detected @InitBinder methods in " + bean);
+					}
 				}
 				ExceptionHandlerMethodResolver resolver = new ExceptionHandlerMethodResolver(beanType);
 				if (resolver.hasExceptionMappings()) {
 					this.exceptionHandlerAdviceCache.put(bean, resolver);
+					if (logger.isInfoEnabled()) {
+						logger.info("Detected @ExceptionHandler methods in " + bean);
+					}
 				}
-			}
-		}
-
-		if (logger.isDebugEnabled()) {
-			int modelSize = this.modelAttributeAdviceCache.size();
-			int binderSize = this.initBinderAdviceCache.size();
-			int handlerSize = this.exceptionHandlerAdviceCache.size();
-			if (modelSize == 0 && binderSize == 0 && handlerSize == 0) {
-				logger.debug("ControllerAdvice beans: none");
-			}
-			else {
-				logger.debug("ControllerAdvice beans: " + modelSize + " @ModelAttribute, " + binderSize +
-						" @InitBinder, " + handlerSize + " @ExceptionHandler");
 			}
 		}
 	}

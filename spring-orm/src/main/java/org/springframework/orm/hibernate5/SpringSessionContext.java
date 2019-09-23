@@ -29,7 +29,6 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 
 import org.springframework.lang.Nullable;
-import org.springframework.orm.jpa.EntityManagerHolder;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
@@ -87,7 +86,6 @@ public class SpringSessionContext implements CurrentSessionContext {
 			return (Session) value;
 		}
 		else if (value instanceof SessionHolder) {
-			// HibernateTransactionManager
 			SessionHolder sessionHolder = (SessionHolder) value;
 			Session session = sessionHolder.getSession();
 			if (!sessionHolder.isSynchronizedWithTransaction() &&
@@ -105,10 +103,6 @@ public class SpringSessionContext implements CurrentSessionContext {
 				}
 			}
 			return session;
-		}
-		else if (value instanceof EntityManagerHolder) {
-			// JpaTransactionManager
-			return ((EntityManagerHolder) value).getEntityManager().unwrap(Session.class);
 		}
 
 		if (this.transactionManager != null && this.jtaSessionContext != null) {

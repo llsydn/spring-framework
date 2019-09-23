@@ -56,6 +56,7 @@ public class AnnotationCacheOperationSourceTests extends AbstractJCacheTests {
 		source.setExceptionCacheResolver(defaultExceptionCacheResolver);
 		source.setKeyGenerator(defaultKeyGenerator);
 		source.setBeanFactory(beanFactory);
+		source.afterPropertiesSet();
 	}
 
 

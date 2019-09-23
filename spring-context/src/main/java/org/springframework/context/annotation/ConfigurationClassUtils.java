@@ -39,7 +39,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
- * Utilities for identifying {@link Configuration} classes.
+ * Utilities for identifying @{@link Configuration} classes.
  *
  * @author Chris Beams
  * @author Juergen Hoeller
@@ -78,28 +78,25 @@ abstract class ConfigurationClassUtils {
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
 	 */
-	public static boolean checkConfigurationClassCandidate(
-			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
-
+	public static boolean checkConfigurationClassCandidate(BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
 		String className = beanDef.getBeanClassName();
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;
 		}
 
 		AnnotationMetadata metadata;
-		// 判断bd是否为AnnotatedBeanDefinition（注解的bd，加了注解）
 		if (beanDef instanceof AnnotatedBeanDefinition &&
 				className.equals(((AnnotatedBeanDefinition) beanDef).getMetadata().getClassName())) {
-			// 如果BeanDefinition是AnnotatedBeanDefinition的实例，并且classname和BeanDefinition中的元数据的类名相同
-			// 则直接从BeanDefinition中获得Metadata
 			// Can reuse the pre-parsed metadata from the given BeanDefinition...
+			//如果BeanDefinition 是 AnnotatedBeanDefinition的实例,并且className 和 BeanDefinition中 的元数据 的类名相同
+			// 则直接从BeanDefinition 获得Metadata
 			metadata = ((AnnotatedBeanDefinition) beanDef).getMetadata();
 		}
 		else if (beanDef instanceof AbstractBeanDefinition && ((AbstractBeanDefinition) beanDef).hasBeanClass()) {
 			// Check already loaded Class if present...
 			// since we possibly can't even load the class file for this Class.
-			// 如果BeanDefinition是AbstractBeanDefinition的实例，并且beanDef有beanClass属性存在
-			// 则实列化StandardAnnotationMetadata（元数据）
+			//如果BeanDefinition 是 AbstractBeanDefinition的实例,并且beanDef 有 beanClass 属性存在
+			//则实例化StandardAnnotationMetadata
 			Class<?> beanClass = ((AbstractBeanDefinition) beanDef).getBeanClass();
 			metadata = new StandardAnnotationMetadata(beanClass, true);
 		}
@@ -110,25 +107,25 @@ abstract class ConfigurationClassUtils {
 			}
 			catch (IOException ex) {
 				if (logger.isDebugEnabled()) {
-					logger.debug("Could not find class file for introspecting configuration annotations: " +
-							className, ex);
+					logger.debug("Could not find class file for introspecting configuration annotations: " + className, ex);
 				}
 				return false;
 			}
 		}
-		// 判断当前这个BeanDefinition中存在的类是不是加了@Configuration注解（元数据 判断）
+
+		//判断当前这个bd中存在的类是不是加了@Configruation注解
+		//如果存在则spring认为他是一个全注解的类
 		if (isFullConfigurationCandidate(metadata)) {
-			// 如果存在Configuration注解，则为BeanDefinition，设置configurationClass属性为full
+			//如果存在Configuration 注解,则为BeanDefinition 设置configurationClass属性为full
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
-		// 判断是否加了以下注解，摘录isLiteConfigurationCandidate源码
-		// （@Component，@ComponentScan，@Import，@ImportResource等注解）
-		// candidateIndicators.add(Component.class.getName());
-		// candidateIndicators.add(ComponentScan.class.getName());
-		// candidateIndicators.add(Import.class.getName());
-		// candidateIndicators.add(ImportResource.class.getName());
+		//判断是否加了以下注解，摘录isLiteConfigurationCandidate的源码
+		//     candidateIndicators.add(Component.class.getName());
+		//	   candidateIndicators.add(ComponentScan.class.getName());
+		//	   candidateIndicators.add(Import.class.getName());
+		//	   candidateIndicators.add(ImportResource.class.getName());
+		//如果不存在Configuration注解，spring则认为是一个部分注解类
 		else if (isLiteConfigurationCandidate(metadata)) {
-			// 如果存在@Component，@ComponentScan，@Import，@ImportResource等注解，则为BeanDefinition，设置configurationClass属性为lite
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}
 		else {
@@ -218,8 +215,8 @@ abstract class ConfigurationClassUtils {
 	/**
 	 * Determine the order for the given configuration class metadata.
 	 * @param metadata the metadata of the annotated class
-	 * @return the {@code @Order} annotation value on the configuration class,
-	 * or {@code Ordered.LOWEST_PRECEDENCE} if none declared
+	 * @return the {@link @Order} annotation value on the configuration class,
+	 * or {@link Ordered#LOWEST_PRECEDENCE} if none declared
 	 * @since 5.0
 	 */
 	@Nullable
@@ -232,7 +229,7 @@ abstract class ConfigurationClassUtils {
 	 * Determine the order for the given configuration class bean definition,
 	 * as set by {@link #checkConfigurationClassCandidate}.
 	 * @param beanDef the bean definition to check
-	 * @return the {@link Order @Order} annotation value on the configuration class,
+	 * @return the {@link @Order} annotation value on the configuration class,
 	 * or {@link Ordered#LOWEST_PRECEDENCE} if none declared
 	 * @since 4.2
 	 */

@@ -99,7 +99,7 @@ public class ThreadPoolTaskScheduler extends ExecutorConfigurationSupport
 			((ScheduledThreadPoolExecutor) this.scheduledExecutor).setRemoveOnCancelPolicy(removeOnCancelPolicy);
 		}
 		else if (removeOnCancelPolicy && this.scheduledExecutor != null) {
-			logger.debug("Could not apply remove-on-cancel policy - not a ScheduledThreadPoolExecutor");
+			logger.info("Could not apply remove-on-cancel policy - not a ScheduledThreadPoolExecutor");
 		}
 	}
 
@@ -122,7 +122,7 @@ public class ThreadPoolTaskScheduler extends ExecutorConfigurationSupport
 				((ScheduledThreadPoolExecutor) this.scheduledExecutor).setRemoveOnCancelPolicy(true);
 			}
 			else {
-				logger.debug("Could not apply remove-on-cancel policy - not a ScheduledThreadPoolExecutor");
+				logger.info("Could not apply remove-on-cancel policy - not a ScheduledThreadPoolExecutor");
 			}
 		}
 
@@ -296,6 +296,11 @@ public class ThreadPoolTaskScheduler extends ExecutorConfigurationSupport
 		if (listenableFuture != null) {
 			listenableFuture.cancel(true);
 		}
+	}
+
+	@Override
+	public boolean prefersShortLivedTasks() {
+		return true;
 	}
 
 

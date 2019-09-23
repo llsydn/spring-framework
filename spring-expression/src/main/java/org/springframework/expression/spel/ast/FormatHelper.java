@@ -27,7 +27,7 @@ import org.springframework.util.ClassUtils;
  *
  * @author Andy Clement
  */
-abstract class FormatHelper {
+public class FormatHelper {
 
 	/**
 	 * Produce a readable representation for a given method name with specified arguments.

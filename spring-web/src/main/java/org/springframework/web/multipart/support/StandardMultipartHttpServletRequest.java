@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -159,7 +158,8 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 
 		// Servlet 3.0 getParameterMap() not guaranteed to include multipart form items
 		// (e.g. on WebLogic 12) -> need to merge them here to be on the safe side
-		Map<String, String[]> paramMap = new LinkedHashMap<>(super.getParameterMap());
+		Map<String, String[]> paramMap = new LinkedHashMap<>();
+		paramMap.putAll(super.getParameterMap());
 		for (String paramName : this.multipartParameterNames) {
 			if (!paramMap.containsKey(paramName)) {
 				paramMap.put(paramName, getParameterValues(paramName));
@@ -262,11 +262,6 @@ public class StandardMultipartHttpServletRequest extends AbstractMultipartHttpSe
 				// we can manually copy it to the requested location as a fallback.
 				FileCopyUtils.copy(this.part.getInputStream(), Files.newOutputStream(dest.toPath()));
 			}
-		}
-
-		@Override
-		public void transferTo(Path dest) throws IOException, IllegalStateException {
-			FileCopyUtils.copy(this.part.getInputStream(), Files.newOutputStream(dest));
 		}
 	}
 

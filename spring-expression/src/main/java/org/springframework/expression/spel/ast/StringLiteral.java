@@ -19,7 +19,6 @@ package org.springframework.expression.spel.ast;
 import org.springframework.asm.MethodVisitor;
 import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.CodeFlow;
-import org.springframework.util.StringUtils;
 
 /**
  * Expression language AST node that represents a string literal.
@@ -35,12 +34,8 @@ public class StringLiteral extends Literal {
 
 	public StringLiteral(String payload, int pos, String value) {
 		super(payload, pos);
-
-		String valueWithinQuotes = value.substring(1, value.length() - 1);
-		valueWithinQuotes = StringUtils.replace(valueWithinQuotes, "''", "'");
-		valueWithinQuotes = StringUtils.replace(valueWithinQuotes, "\"\"", "\"");
-
-		this.value = new TypedValue(valueWithinQuotes);
+		value = value.substring(1, value.length() - 1);
+		this.value = new TypedValue(value.replaceAll("''", "'").replaceAll("\"\"", "\""));
 		this.exitTypeDescriptor = "Ljava/lang/String";
 	}
 
@@ -54,12 +49,12 @@ public class StringLiteral extends Literal {
 	public String toString() {
 		return "'" + getLiteralValue().getValue() + "'";
 	}
-
+	
 	@Override
 	public boolean isCompilable() {
 		return true;
 	}
-
+	
 	@Override
 	public void generateCode(MethodVisitor mv, CodeFlow cf) {
 		mv.visitLdcInsn(this.value.getValue());

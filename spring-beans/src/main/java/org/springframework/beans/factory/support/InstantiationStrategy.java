@@ -62,7 +62,7 @@ public interface InstantiationStrategy {
 	 * @throws BeansException if the instantiation attempt failed
 	 */
 	Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner,
-			Constructor<?> ctor, Object... args) throws BeansException;
+			Constructor<?> ctor, @Nullable Object... args) throws BeansException;
 
 	/**
 	 * Return an instance of the bean with the given name in this factory,
@@ -80,7 +80,7 @@ public interface InstantiationStrategy {
 	 * @throws BeansException if the instantiation attempt failed
 	 */
 	Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner,
-			@Nullable Object factoryBean, Method factoryMethod, Object... args)
+			@Nullable Object factoryBean, Method factoryMethod, @Nullable Object... args)
 			throws BeansException;
 
 }

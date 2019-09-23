@@ -27,9 +27,9 @@ package org.springframework.test.web.servlet;
  * <h3>Example Using Status and Content Result Matchers</h3>
  *
  * <pre class="code">
- * import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
- * import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
- * import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
+ * imports static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+ * imports static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+ * imports static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
  *
  * // ...
  *
@@ -55,19 +55,5 @@ public interface ResultMatcher {
 	 * @throws Exception if a failure occurs
 	 */
 	void match(MvcResult result) throws Exception;
-
-
-	/**
-	 * Static method for matching with an array of result matchers.
-	 * @param matchers the matchers
-	 * @since 5.1
-	 */
-	static ResultMatcher matchAll(ResultMatcher... matchers) {
-		return result -> {
-			for (ResultMatcher matcher : matchers) {
-			matcher.match(result);
-			}
-		};
-	}
 
 }

@@ -62,8 +62,8 @@ public interface ExecutorChannelInterceptor extends ChannelInterceptor {
 	 * @param handler the target handler that handled the message
 	 * @param ex any exception that may been raised by the handler
 	 */
-	default void afterMessageHandled(Message<?> message, MessageChannel channel, MessageHandler handler,
-			@Nullable Exception ex) {
+	default void afterMessageHandled(
+			Message<?> message, MessageChannel channel, MessageHandler handler, @Nullable Exception ex) {
 	}
 
 }

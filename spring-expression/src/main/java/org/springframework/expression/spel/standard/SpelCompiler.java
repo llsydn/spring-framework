@@ -36,7 +36,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * A SpelCompiler will take a regular parsed expression and create (and load) a class
@@ -65,7 +64,7 @@ import org.springframework.util.StringUtils;
  * @author Andy Clement
  * @since 4.1
  */
-public final class SpelCompiler implements Opcodes {
+public class SpelCompiler implements Opcodes {
 
 	private static final Log logger = LogFactory.getLog(SpelCompiler.class);
 
@@ -182,7 +181,7 @@ public final class SpelCompiler implements Opcodes {
 		byte[] data = cw.toByteArray();
 		// TODO need to make this conditionally occur based on a debug flag
 		// dump(expressionToCompile.toStringAST(), clazzName, data);
-		return loadClass(StringUtils.replace(className, "/", "."), data);
+		return loadClass(className.replaceAll("/", "."), data);
 	}
 
 	/**

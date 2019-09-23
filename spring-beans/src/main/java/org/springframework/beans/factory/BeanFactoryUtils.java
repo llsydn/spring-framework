@@ -22,7 +22,6 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.BeansException;
 import org.springframework.core.ResolvableType;
@@ -52,13 +51,6 @@ public abstract class BeanFactoryUtils {
 	 */
 	public static final String GENERATED_BEAN_NAME_SEPARATOR = "#";
 
-	/**
-	 * Cache from name with factory bean prefix to stripped name without dereference.
-	 * @since 5.1
-	 * @see BeanFactory#FACTORY_BEAN_PREFIX
-	 */
-	private static final Map<String, String> transformedBeanNameCache = new ConcurrentHashMap<>();
-
 
 	/**
 	 * Return whether the given name is a factory dereference
@@ -80,16 +72,11 @@ public abstract class BeanFactoryUtils {
 	 */
 	public static String transformedBeanName(String name) {
 		Assert.notNull(name, "'name' must not be null");
-		if (!name.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
-			return name;
+		String beanName = name;
+		while (beanName.startsWith(BeanFactory.FACTORY_BEAN_PREFIX)) {
+			beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
 		}
-		return transformedBeanNameCache.computeIfAbsent(name, beanName -> {
-			do {
-				beanName = beanName.substring(BeanFactory.FACTORY_BEAN_PREFIX.length());
-			}
-			while (beanName.startsWith(BeanFactory.FACTORY_BEAN_PREFIX));
-			return beanName;
-		});
+		return beanName;
 	}
 
 	/**
@@ -294,9 +281,9 @@ public abstract class BeanFactoryUtils {
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {
 				Map<String, T> parentResult = beansOfTypeIncludingAncestors(
 						(ListableBeanFactory) hbf.getParentBeanFactory(), type);
-				parentResult.forEach((beanName, beanInstance) -> {
+				parentResult.forEach((beanName, beanType) -> {
 					if (!result.containsKey(beanName) && !hbf.containsLocalBean(beanName)) {
-						result.put(beanName, beanInstance);
+						result.put(beanName, beanType);
 					}
 				});
 			}
@@ -343,9 +330,9 @@ public abstract class BeanFactoryUtils {
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {
 				Map<String, T> parentResult = beansOfTypeIncludingAncestors(
 						(ListableBeanFactory) hbf.getParentBeanFactory(), type, includeNonSingletons, allowEagerInit);
-				parentResult.forEach((beanName, beanInstance) -> {
+				parentResult.forEach((beanName, beanType) -> {
 					if (!result.containsKey(beanName) && !hbf.containsLocalBean(beanName)) {
-						result.put(beanName, beanInstance);
+						result.put(beanName, beanType);
 					}
 				});
 			}

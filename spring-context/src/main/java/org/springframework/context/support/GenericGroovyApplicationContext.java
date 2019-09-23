@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ import org.springframework.lang.Nullable;
  * script, the context can be used with an inline bean definition closure as follows:
  *
  * <pre class="code">
- * import org.hibernate.SessionFactory
- * import org.apache.commons.dbcp.BasicDataSource
+ * imports org.hibernate.SessionFactory
+ * imports org.apache.commons.dbcp.BasicDataSource
  *
  * def context = new GenericGroovyApplicationContext()
  * context.reader.beans {
@@ -69,8 +69,8 @@ import org.springframework.lang.Nullable;
  * from an external resource (e.g. an "applicationContext.groovy" file):
  *
  * <pre class="code">
- * import org.hibernate.SessionFactory
- * import org.apache.commons.dbcp.BasicDataSource
+ * imports org.hibernate.SessionFactory
+ * imports org.apache.commons.dbcp.BasicDataSource
  *
  * beans {
  *     dataSource(BasicDataSource) {
@@ -122,7 +122,7 @@ public class GenericGroovyApplicationContext extends GenericApplicationContext i
 
 	private final BeanWrapper contextWrapper = new BeanWrapperImpl(this);
 
-	private MetaClass metaClass = GroovySystem.getMetaClassRegistry().getMetaClass(getClass());
+    private MetaClass metaClass = GroovySystem.getMetaClassRegistry().getMetaClass(getClass());
 
 
 	/**
@@ -229,7 +229,7 @@ public class GenericGroovyApplicationContext extends GenericApplicationContext i
 		this.metaClass = metaClass;
 	}
 
-	public MetaClass getMetaClass() {
+    public MetaClass getMetaClass() {
 		return this.metaClass;
 	}
 
@@ -247,7 +247,7 @@ public class GenericGroovyApplicationContext extends GenericApplicationContext i
 	}
 
 	@Nullable
-	public Object getProperty(String property) {
+    public Object getProperty(String property) {
 		if (containsBean(property)) {
 			return getBean(property);
 		}

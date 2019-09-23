@@ -253,7 +253,6 @@ public class TableMetaDataContext {
 					for (Map.Entry<String, ?> entry : inParameters.entrySet()) {
 						if (column.equalsIgnoreCase(entry.getKey())) {
 							value = entry.getValue();
-							break;
 						}
 					}
 				}
@@ -294,8 +293,8 @@ public class TableMetaDataContext {
 		insertStatement.append(") VALUES(");
 		if (columnCount < 1) {
 			if (this.generatedKeyColumnsUsed) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Unable to locate non-key columns for table '" +
+				if (logger.isInfoEnabled()) {
+					logger.info("Unable to locate non-key columns for table '" +
 							getTableName() + "' so an empty insert statement is generated");
 				}
 			}

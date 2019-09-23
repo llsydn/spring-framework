@@ -25,6 +25,7 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -45,30 +46,6 @@ import org.springframework.lang.Nullable;
  * @since 1.2.2
  */
 public abstract class ReflectionUtils {
-
-	/**
-	 * Pre-built MethodFilter that matches all non-bridge methods.
-	 * @since 3.0
-	 * @deprecated as of 5.0.11, in favor of a custom {@link MethodFilter}
-	 */
-	@Deprecated
-	public static final MethodFilter NON_BRIDGED_METHODS =
-			(method -> !method.isBridge());
-
-	/**
-	 * Pre-built MethodFilter that matches all non-bridge non-synthetic methods
-	 * which are not declared on {@code java.lang.Object}.
-	 * @since 3.0.5
-	 */
-	public static final MethodFilter USER_DECLARED_METHODS =
-			(method -> (!method.isBridge() && !method.isSynthetic() && method.getDeclaringClass() != Object.class));
-
-	/**
-	 * Pre-built FieldFilter that matches all non-static, non-final fields.
-	 */
-	public static final FieldFilter COPYABLE_FIELDS =
-			field -> !(Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers()));
-
 
 	/**
 	 * Naming prefix for CGLIB-renamed methods.
@@ -259,9 +236,7 @@ public abstract class ReflectionUtils {
 	 * @return the invocation result, if any
 	 * @throws SQLException the JDBC API SQLException to rethrow (if any)
 	 * @see #invokeJdbcMethod(java.lang.reflect.Method, Object, Object[])
-	 * @deprecated as of 5.0.11, in favor of custom SQLException handling
 	 */
-	@Deprecated
 	@Nullable
 	public static Object invokeJdbcMethod(Method method, @Nullable Object target) throws SQLException {
 		return invokeJdbcMethod(method, target, new Object[0]);
@@ -276,9 +251,7 @@ public abstract class ReflectionUtils {
 	 * @return the invocation result, if any
 	 * @throws SQLException the JDBC API SQLException to rethrow (if any)
 	 * @see #invokeMethod(java.lang.reflect.Method, Object, Object[])
-	 * @deprecated as of 5.0.11, in favor of custom SQLException handling
 	 */
-	@Deprecated
 	@Nullable
 	public static Object invokeJdbcMethod(Method method, @Nullable Object target, @Nullable Object... args)
 			throws SQLException {
@@ -538,8 +511,8 @@ public abstract class ReflectionUtils {
 	 * on Java 8 based interfaces that the given class implements).
 	 * @param clazz the class to introspect
 	 * @param mc the callback to invoke for each method
-	 * @throws IllegalStateException if introspection fails
 	 * @since 4.2
+	 * @throws IllegalStateException if introspection fails
 	 * @see #doWithMethods
 	 */
 	public static void doWithLocalMethods(Class<?> clazz, MethodCallback mc) {
@@ -696,7 +669,7 @@ public abstract class ReflectionUtils {
 			for (Method ifcMethod : ifc.getMethods()) {
 				if (!Modifier.isAbstract(ifcMethod.getModifiers())) {
 					if (result == null) {
-						result = new ArrayList<>();
+						result = new LinkedList<>();
 					}
 					result.add(ifcMethod);
 				}
@@ -709,8 +682,8 @@ public abstract class ReflectionUtils {
 	 * Invoke the given callback on all locally declared fields in the given class.
 	 * @param clazz the target class to analyze
 	 * @param fc the callback to invoke for each field
-	 * @throws IllegalStateException if introspection fails
 	 * @since 4.2
+	 * @throws IllegalStateException if introspection fails
 	 * @see #doWithFields
 	 */
 	public static void doWithLocalFields(Class<?> clazz, FieldCallback fc) {
@@ -872,5 +845,27 @@ public abstract class ReflectionUtils {
 		 */
 		boolean matches(Field field);
 	}
+
+
+	/**
+	 * Pre-built FieldFilter that matches all non-static, non-final fields.
+	 */
+	public static final FieldFilter COPYABLE_FIELDS =
+			field -> !(Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers()));
+
+
+	/**
+	 * Pre-built MethodFilter that matches all non-bridge methods.
+	 */
+	public static final MethodFilter NON_BRIDGED_METHODS =
+			(method -> !method.isBridge());
+
+
+	/**
+	 * Pre-built MethodFilter that matches all non-bridge non-synthetic methods
+	 * which are not declared on {@code java.lang.Object}.
+	 */
+	public static final MethodFilter USER_DECLARED_METHODS =
+			(method -> (!method.isBridge() && !method.isSynthetic() && method.getDeclaringClass() != Object.class));
 
 }

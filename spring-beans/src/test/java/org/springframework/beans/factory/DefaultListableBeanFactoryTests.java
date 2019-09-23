@@ -27,17 +27,14 @@ import java.security.PrivilegedAction;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import javax.annotation.Priority;
 import javax.security.auth.Subject;
 
@@ -71,7 +68,6 @@ import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
-import org.springframework.beans.factory.support.BeanDefinitionOverrideException;
 import org.springframework.beans.factory.support.ChildBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.ManagedList;
@@ -98,7 +94,6 @@ import org.springframework.tests.sample.beans.NestedTestBean;
 import org.springframework.tests.sample.beans.SideEffectBean;
 import org.springframework.tests.sample.beans.TestBean;
 import org.springframework.tests.sample.beans.factory.DummyFactory;
-import org.springframework.util.SerializationTestUtils;
 import org.springframework.util.StopWatch;
 import org.springframework.util.StringValueResolver;
 
@@ -846,17 +841,14 @@ public class DefaultListableBeanFactoryTests {
 	public void testBeanDefinitionOverridingNotAllowed() {
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
 		lbf.setAllowBeanDefinitionOverriding(false);
-		BeanDefinition oldDef = new RootBeanDefinition(TestBean.class);
-		BeanDefinition newDef = new RootBeanDefinition(NestedTestBean.class);
-		lbf.registerBeanDefinition("test", oldDef);
+		lbf.registerBeanDefinition("test", new RootBeanDefinition(TestBean.class));
 		try {
-			lbf.registerBeanDefinition("test", newDef);
-			fail("Should have thrown BeanDefinitionOverrideException");
+			lbf.registerBeanDefinition("test", new RootBeanDefinition(NestedTestBean.class));
+			fail("Should have thrown BeanDefinitionStoreException");
 		}
-		catch (BeanDefinitionOverrideException ex) {
+		catch (BeanDefinitionStoreException ex) {
 			assertEquals("test", ex.getBeanName());
-			assertSame(newDef, ex.getBeanDefinition());
-			assertSame(oldDef, ex.getExistingDefinition());
+			// expected
 		}
 	}
 
@@ -1563,42 +1555,10 @@ public class DefaultListableBeanFactoryTests {
 		}
 	}
 
-	@Test
+	@Test(expected = NoSuchBeanDefinitionException.class)
 	public void testGetBeanByTypeInstanceWithNoneFound() {
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
-
-		try {
-			lbf.getBean(ConstructorDependency.class);
-			fail("Should have thrown NoSuchBeanDefinitionException");
-		}
-		catch (NoSuchBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			lbf.getBean(ConstructorDependency.class, 42);
-			fail("Should have thrown NoSuchBeanDefinitionException");
-		}
-		catch (NoSuchBeanDefinitionException ex) {
-			// expected
-		}
-
-		ObjectProvider<ConstructorDependency> provider = lbf.getBeanProvider(ConstructorDependency.class);
-		try {
-			provider.getObject();
-			fail("Should have thrown NoSuchBeanDefinitionException");
-		}
-		catch (NoSuchBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			provider.getObject(42);
-			fail("Should have thrown NoSuchBeanDefinitionException");
-		}
-		catch (NoSuchBeanDefinitionException ex) {
-			// expected
-		}
-		assertNull(provider.getIfAvailable());
-		assertNull(provider.getIfUnique());
+		lbf.getBean(ConstructorDependency.class, 42);
 	}
 
 	@Test
@@ -1608,26 +1568,9 @@ public class DefaultListableBeanFactoryTests {
 		parent.registerBeanDefinition("bd1", bd1);
 		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory(parent);
 
-		ConstructorDependency bean = lbf.getBean(ConstructorDependency.class);
-		assertThat(bean.beanName, equalTo("bd1"));
-		assertThat(bean.spouseAge, equalTo(99));
-		bean = lbf.getBean(ConstructorDependency.class, 42);
+		ConstructorDependency bean = lbf.getBean(ConstructorDependency.class, 42);
 		assertThat(bean.beanName, equalTo("bd1"));
 		assertThat(bean.spouseAge, equalTo(42));
-
-		ObjectProvider<ConstructorDependency> provider = lbf.getBeanProvider(ConstructorDependency.class);
-		bean = provider.getObject();
-		assertThat(bean.beanName, equalTo("bd1"));
-		assertThat(bean.spouseAge, equalTo(99));
-		bean = provider.getObject(42);
-		assertThat(bean.beanName, equalTo("bd1"));
-		assertThat(bean.spouseAge, equalTo(42));
-		bean = provider.getIfAvailable();
-		assertThat(bean.beanName, equalTo("bd1"));
-		assertThat(bean.spouseAge, equalTo(99));
-		bean = provider.getIfUnique();
-		assertThat(bean.beanName, equalTo("bd1"));
-		assertThat(bean.spouseAge, equalTo(99));
 	}
 
 	@Test
@@ -1640,63 +1583,8 @@ public class DefaultListableBeanFactoryTests {
 		lbf.registerBeanDefinition("bd1", bd1);
 		lbf.registerBeanDefinition("bd2", bd2);
 
-		try {
-			lbf.getBean(ConstructorDependency.class);
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			lbf.getBean(ConstructorDependency.class, 42);
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-
-		ObjectProvider<ConstructorDependency> provider = lbf.getBeanProvider(ConstructorDependency.class);
-		try {
-			provider.getObject();
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			provider.getObject(42);
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			provider.getIfAvailable();
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-		assertNull(provider.getIfUnique());
-
-		Set<Object> resolved = new HashSet<>();
-		for (ConstructorDependency instance : provider) {
-			resolved.add(instance);
-		}
-		assertEquals(2, resolved.size());
-		assertTrue(resolved.contains(lbf.getBean("bd1")));
-		assertTrue(resolved.contains(lbf.getBean("bd2")));
-
-		resolved = new HashSet<>();
-		provider.forEach(resolved::add);
-		assertEquals(2, resolved.size());
-		assertTrue(resolved.contains(lbf.getBean("bd1")));
-		assertTrue(resolved.contains(lbf.getBean("bd2")));
-
-		resolved = provider.stream().collect(Collectors.toSet());
-		assertEquals(2, resolved.size());
-		assertTrue(resolved.contains(lbf.getBean("bd1")));
-		assertTrue(resolved.contains(lbf.getBean("bd2")));
+		thrown.expect(NoUniqueBeanDefinitionException.class);
+		lbf.getBean(ConstructorDependency.class, 42);
 	}
 
 	@Test
@@ -1708,45 +1596,9 @@ public class DefaultListableBeanFactoryTests {
 		lbf.registerBeanDefinition("bd1", bd1);
 		lbf.registerBeanDefinition("bd2", bd2);
 
-		ConstructorDependency bean = lbf.getBean(ConstructorDependency.class);
-		assertThat(bean.beanName, equalTo("bd2"));
-		assertThat(bean.spouseAge, equalTo(43));
-		bean = lbf.getBean(ConstructorDependency.class, 42);
+		ConstructorDependency bean = lbf.getBean(ConstructorDependency.class, 42);
 		assertThat(bean.beanName, equalTo("bd2"));
 		assertThat(bean.spouseAge, equalTo(42));
-
-		ObjectProvider<ConstructorDependency> provider = lbf.getBeanProvider(ConstructorDependency.class);
-		bean = provider.getObject();
-		assertThat(bean.beanName, equalTo("bd2"));
-		assertThat(bean.spouseAge, equalTo(43));
-		bean = provider.getObject(42);
-		assertThat(bean.beanName, equalTo("bd2"));
-		assertThat(bean.spouseAge, equalTo(42));
-		bean = provider.getIfAvailable();
-		assertThat(bean.beanName, equalTo("bd2"));
-		assertThat(bean.spouseAge, equalTo(43));
-		bean = provider.getIfUnique();
-		assertThat(bean.beanName, equalTo("bd2"));
-		assertThat(bean.spouseAge, equalTo(43));
-
-		Set<Object> resolved = new HashSet<>();
-		for (ConstructorDependency instance : provider) {
-			resolved.add(instance);
-		}
-		assertEquals(2, resolved.size());
-		assertTrue(resolved.contains(lbf.getBean("bd1")));
-		assertTrue(resolved.contains(lbf.getBean("bd2")));
-
-		resolved = new HashSet<>();
-		provider.forEach(resolved::add);
-		assertEquals(2, resolved.size());
-		assertTrue(resolved.contains(lbf.getBean("bd1")));
-		assertTrue(resolved.contains(lbf.getBean("bd2")));
-
-		resolved = provider.stream().collect(Collectors.toSet());
-		assertEquals(2, resolved.size());
-		assertTrue(resolved.contains(lbf.getBean("bd1")));
-		assertTrue(resolved.contains(lbf.getBean("bd2")));
 	}
 
 	@Test
@@ -1785,31 +1637,6 @@ public class DefaultListableBeanFactoryTests {
 		catch (NoSuchBeanDefinitionException ex) {
 			// expected
 		}
-	}
-
-	@Test
-	public void testBeanProviderSerialization() throws Exception {
-		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
-		lbf.setSerializationId("test");
-
-		ObjectProvider<ConstructorDependency> provider = lbf.getBeanProvider(ConstructorDependency.class);
-		ObjectProvider deserialized = (ObjectProvider) SerializationTestUtils.serializeAndDeserialize(provider);
-		try {
-			deserialized.getObject();
-			fail("Should have thrown NoSuchBeanDefinitionException");
-		}
-		catch (NoSuchBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			deserialized.getObject(42);
-			fail("Should have thrown NoSuchBeanDefinitionException");
-		}
-		catch (NoSuchBeanDefinitionException ex) {
-			// expected
-		}
-		assertNull(deserialized.getIfAvailable());
-		assertNull(deserialized.getIfUnique());
 	}
 
 	@Test
@@ -2440,7 +2267,6 @@ public class DefaultListableBeanFactoryTests {
 		RootBeanDefinition rbd = new RootBeanDefinition(TestBean.class);
 		rbd.setScope(RootBeanDefinition.SCOPE_PROTOTYPE);
 		lbf.registerBeanDefinition("test", rbd);
-		lbf.freezeConfiguration();
 		StopWatch sw = new StopWatch();
 		sw.start("prototype");
 		for (int i = 0; i < 100000; i++) {
@@ -2461,7 +2287,6 @@ public class DefaultListableBeanFactoryTests {
 		rbd.setDependencyCheck(RootBeanDefinition.DEPENDENCY_CHECK_OBJECTS);
 		lbf.registerBeanDefinition("test", rbd);
 		lbf.addBeanPostProcessor(new LifecycleBean.PostProcessor());
-		lbf.freezeConfiguration();
 		StopWatch sw = new StopWatch();
 		sw.start("prototype");
 		for (int i = 0; i < 100000; i++) {
@@ -2471,6 +2296,29 @@ public class DefaultListableBeanFactoryTests {
 		// System.out.println(sw.getTotalTimeMillis());
 		assertTrue("Prototype creation took too long: " + sw.getTotalTimeMillis(), sw.getTotalTimeMillis() < 3000);
 	}
+
+	/**
+	 * @Test
+	 * public void testPrototypeCreationIsFastEnough2() {
+	 * if (factoryLog.isTraceEnabled() || factoryLog.isDebugEnabled()) {
+	 * // Skip this test: Trace logging blows the time limit.
+	 * return;
+	 * }
+	 * DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
+	 * Method setBeanNameMethod = TestBean.class.getMethod("setBeanName", String.class);
+	 * Method setBeanFactoryMethod = TestBean.class.getMethod("setBeanFactory", BeanFactory.class);
+	 * StopWatch sw = new StopWatch();
+	 * sw.start("prototype");
+	 * for (int i = 0; i < 100000; i++) {
+	 * TestBean tb = TestBean.class.newInstance();
+	 * setBeanNameMethod.invoke(tb, "test");
+	 * setBeanFactoryMethod.invoke(tb, lbf);
+	 * }
+	 * sw.stop();
+	 * // System.out.println(sw.getTotalTimeMillis());
+	 * assertTrue("Prototype creation took too long: " + sw.getTotalTimeMillis(), sw.getTotalTimeMillis() < 500);
+	 * }
+	 */
 
 	@Test
 	@Ignore  // TODO re-enable when ConstructorResolver TODO sorted out
@@ -2483,7 +2331,6 @@ public class DefaultListableBeanFactoryTests {
 		rbd.getConstructorArgumentValues().addGenericArgumentValue("juergen");
 		rbd.getConstructorArgumentValues().addGenericArgumentValue("99");
 		lbf.registerBeanDefinition("test", rbd);
-		lbf.freezeConfiguration();
 		StopWatch sw = new StopWatch();
 		sw.start("prototype");
 		for (int i = 0; i < 100000; i++) {
@@ -2506,7 +2353,6 @@ public class DefaultListableBeanFactoryTests {
 		rbd.getConstructorArgumentValues().addGenericArgumentValue(new RuntimeBeanReference("spouse"));
 		lbf.registerBeanDefinition("test", rbd);
 		lbf.registerBeanDefinition("spouse", new RootBeanDefinition(TestBean.class));
-		lbf.freezeConfiguration();
 		TestBean spouse = (TestBean) lbf.getBean("spouse");
 		StopWatch sw = new StopWatch();
 		sw.start("prototype");
@@ -2529,7 +2375,6 @@ public class DefaultListableBeanFactoryTests {
 		rbd.getPropertyValues().add("name", "juergen");
 		rbd.getPropertyValues().add("age", "99");
 		lbf.registerBeanDefinition("test", rbd);
-		lbf.freezeConfiguration();
 		StopWatch sw = new StopWatch();
 		sw.start("prototype");
 		for (int i = 0; i < 100000; i++) {
@@ -2552,7 +2397,6 @@ public class DefaultListableBeanFactoryTests {
 		rbd.getPropertyValues().add("spouse", new RuntimeBeanReference("spouse"));
 		lbf.registerBeanDefinition("test", rbd);
 		lbf.registerBeanDefinition("spouse", new RootBeanDefinition(TestBean.class));
-		lbf.freezeConfiguration();
 		TestBean spouse = (TestBean) lbf.getBean("spouse");
 		StopWatch sw = new StopWatch();
 		sw.start("prototype");
@@ -2563,40 +2407,6 @@ public class DefaultListableBeanFactoryTests {
 		sw.stop();
 		// System.out.println(sw.getTotalTimeMillis());
 		assertTrue("Prototype creation took too long: " + sw.getTotalTimeMillis(), sw.getTotalTimeMillis() < 4000);
-	}
-
-	@Test
-	public void testSingletonLookupByNameIsFastEnough() {
-		Assume.group(TestGroup.PERFORMANCE);
-		Assume.notLogging(factoryLog);
-		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
-		lbf.registerBeanDefinition("test", new RootBeanDefinition(TestBean.class));
-		lbf.freezeConfiguration();
-		StopWatch sw = new StopWatch();
-		sw.start("singleton");
-		for (int i = 0; i < 1000000; i++) {
-			lbf.getBean("test");
-		}
-		sw.stop();
-		// System.out.println(sw.getTotalTimeMillis());
-		assertTrue("Singleton lookup took too long: " + sw.getTotalTimeMillis(), sw.getTotalTimeMillis() < 1000);
-	}
-
-	@Test
-	public void testSingletonLookupByTypeIsFastEnough() {
-		Assume.group(TestGroup.PERFORMANCE);
-		Assume.notLogging(factoryLog);
-		DefaultListableBeanFactory lbf = new DefaultListableBeanFactory();
-		lbf.registerBeanDefinition("test", new RootBeanDefinition(TestBean.class));
-		lbf.freezeConfiguration();
-		StopWatch sw = new StopWatch();
-		sw.start("singleton");
-		for (int i = 0; i < 1000000; i++) {
-			lbf.getBean(TestBean.class);
-		}
-		sw.stop();
-		// System.out.println(sw.getTotalTimeMillis());
-		assertTrue("Singleton lookup took too long: " + sw.getTotalTimeMillis(), sw.getTotalTimeMillis() < 1000);
 	}
 
 	@Test
@@ -3045,21 +2855,6 @@ public class DefaultListableBeanFactoryTests {
 		@Override
 		public void setBeanName(String name) {
 			this.beanName = name;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			ConstructorDependency that = (ConstructorDependency) o;
-			return spouseAge == that.spouseAge &&
-					Objects.equals(spouse, that.spouse) &&
-					Objects.equals(beanName, that.beanName);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(spouse, spouseAge, beanName);
 		}
 	}
 

@@ -86,14 +86,7 @@ class ClientDefaultCodecsImpl extends BaseDefaultCodecs implements ClientCodecCo
 
 	@Override
 	protected void extendTypedWriters(List<HttpMessageWriter<?>> typedWriters) {
-
-		FormHttpMessageWriter formWriter = new FormHttpMessageWriter();
-		formWriter.setEnableLoggingRequestDetails(isEnableLoggingRequestDetails());
-
-		MultipartHttpMessageWriter multipartWriter = new MultipartHttpMessageWriter(getPartWriters(), formWriter);
-		multipartWriter.setEnableLoggingRequestDetails(isEnableLoggingRequestDetails());
-
-		typedWriters.add(multipartWriter);
+		typedWriters.add(new MultipartHttpMessageWriter(getPartWriters(), new FormHttpMessageWriter()));
 	}
 
 	private List<HttpMessageWriter<?>> getPartWriters() {

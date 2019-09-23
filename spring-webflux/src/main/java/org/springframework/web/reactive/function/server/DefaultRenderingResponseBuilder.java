@@ -192,8 +192,10 @@ final class DefaultRenderingResponseBuilder implements RenderingResponse.Builder
 			return Flux.fromStream(viewResolverStream)
 					.concatMap(viewResolver -> viewResolver.resolveViewName(name(), locale))
 					.next()
-					.switchIfEmpty(Mono.error(() ->
-							new IllegalArgumentException("Could not resolve view with name '" + name() + "'")))
+					.switchIfEmpty(Mono.defer(() -> {
+						String error = "Could not resolve view with name '" + name() + "'";
+						return Mono.error(new IllegalArgumentException(error));
+					}))
 					.flatMap(view -> {
 						List<MediaType> mediaTypes = view.getSupportedMediaTypes();
 						return view.render(model(),

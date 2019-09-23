@@ -92,7 +92,7 @@ public class DefaultUriBuilderFactory implements UriBuilderFactory {
 	@Nullable
 	private final UriComponentsBuilder baseUri;
 
-	private EncodingMode encodingMode = EncodingMode.TEMPLATE_AND_VALUES;
+	private EncodingMode encodingMode = EncodingMode.URI_COMPONENT;
 
 	private final Map<String, Object> defaultUriVariables = new HashMap<>();
 
@@ -228,14 +228,16 @@ public class DefaultUriBuilderFactory implements UriBuilderFactory {
 		}
 
 		private UriComponentsBuilder initUriComponentsBuilder(String uriTemplate) {
-			UriComponentsBuilder result;
+
 			if (StringUtils.isEmpty(uriTemplate)) {
-				result = baseUri != null ? baseUri.cloneBuilder() : UriComponentsBuilder.newInstance();
+				return baseUri != null ? baseUri.cloneBuilder() : UriComponentsBuilder.newInstance();
 			}
-			else if (baseUri != null) {
-				UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(uriTemplate);
-				UriComponents uri = builder.build();
-				result = uri.getHost() == null ? baseUri.cloneBuilder().uriComponents(uri) : builder;
+
+			UriComponentsBuilder result;
+			if (baseUri != null) {
+				UriComponentsBuilder uricBuilder = UriComponentsBuilder.fromUriString(uriTemplate);
+				UriComponents uric = uricBuilder.build();
+				result = uric.getHost() == null ? baseUri.cloneBuilder().uriComponents(uric) : uricBuilder;
 			}
 			else {
 				result = UriComponentsBuilder.fromUriString(uriTemplate);

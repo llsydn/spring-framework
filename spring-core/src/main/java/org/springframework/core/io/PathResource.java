@@ -35,24 +35,17 @@ import java.nio.file.StandardOpenOption;
 import org.springframework.util.Assert;
 
 /**
- * {@link Resource} implementation for {@link java.nio.file.Path} handles,
- * performing all operations and transformations via the {@code Path} API.
- * Supports resolution as a {@link File} and also as a {@link URL}.
+ * {@link Resource} implementation for {@code java.nio.file.Path} handles.
+ * Supports resolution as File, and also as URL.
  * Implements the extended {@link WritableResource} interface.
- *
- * <p>Note: As of 5.1, {@link java.nio.file.Path} support is also available
- * in {@link FileSystemResource#FileSystemResource(Path) FileSystemResource},
- * applying Spring's standard String-based path transformations but
- * performing all operations via the {@link java.nio.file.Files} API.
  *
  * @author Philippe Marschall
  * @author Juergen Hoeller
  * @since 4.0
  * @see java.nio.file.Path
  * @see java.nio.file.Files
- * @deprecated as of 5.1.1, in favor of {@link FileSystemResource#FileSystemResource(Path)}
+ * @see FileSystemResource
  */
-@Deprecated
 public class PathResource extends AbstractResource implements WritableResource {
 
 	private final Path path;

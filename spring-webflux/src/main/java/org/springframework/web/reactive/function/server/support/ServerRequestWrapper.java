@@ -35,7 +35,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRange;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.http.server.PathContainer;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -43,7 +42,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyExtractor;
 import org.springframework.web.reactive.function.server.ServerRequest;
-import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
 import org.springframework.web.util.UriBuilder;
 
@@ -116,16 +114,6 @@ public class ServerRequestWrapper implements ServerRequest {
 	@Override
 	public MultiValueMap<String, HttpCookie> cookies() {
 		return this.delegate.cookies();
-	}
-
-	@Override
-	public Optional<InetSocketAddress> remoteAddress() {
-		return this.delegate.remoteAddress();
-	}
-
-	@Override
-	public List<HttpMessageReader<?>> messageReaders() {
-		return this.delegate.messageReaders();
 	}
 
 	@Override
@@ -208,10 +196,6 @@ public class ServerRequestWrapper implements ServerRequest {
 		return this.delegate.multipartData();
 	}
 
-	@Override
-	public ServerWebExchange exchange() {
-		return this.delegate.exchange();
-	}
 
 	/**
 	 * Implementation of the {@code Headers} interface that can be subclassed

@@ -33,7 +33,7 @@ import org.springframework.web.reactive.function.BodyExtractor;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.client.ClientResponse;
 
-import static java.util.Collections.*;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -53,12 +53,12 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void response() {
+	public void response() throws Exception {
 		assertSame(mockResponse, wrapper.response());
 	}
 
 	@Test
-	public void statusCode() {
+	public void statusCode() throws Exception {
 		HttpStatus status = HttpStatus.BAD_REQUEST;
 		when(mockResponse.statusCode()).thenReturn(status);
 
@@ -66,15 +66,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void rawStatusCode() {
-		int status = 999;
-		when(mockResponse.rawStatusCode()).thenReturn(status);
-
-		assertEquals(status, wrapper.rawStatusCode());
-	}
-
-	@Test
-	public void headers() {
+	public void headers() throws Exception {
 		ClientResponse.Headers headers = mock(ClientResponse.Headers.class);
 		when(mockResponse.headers()).thenReturn(headers);
 
@@ -82,8 +74,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
-	public void cookies() {
+	public void cookies() throws Exception {
 		MultiValueMap<String, ResponseCookie> cookies = mock(MultiValueMap.class);
 		when(mockResponse.cookies()).thenReturn(cookies);
 
@@ -91,7 +82,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void bodyExtractor() {
+	public void bodyExtractor() throws Exception {
 		Mono<String> result = Mono.just("foo");
 		BodyExtractor<Mono<String>, ReactiveHttpInputMessage> extractor = BodyExtractors.toMono(String.class);
 		when(mockResponse.body(extractor)).thenReturn(result);
@@ -100,7 +91,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void bodyToMonoClass() {
+	public void bodyToMonoClass() throws Exception {
 		Mono<String> result = Mono.just("foo");
 		when(mockResponse.bodyToMono(String.class)).thenReturn(result);
 
@@ -108,7 +99,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void bodyToMonoParameterizedTypeReference() {
+	public void bodyToMonoParameterizedTypeReference() throws Exception {
 		Mono<String> result = Mono.just("foo");
 		ParameterizedTypeReference<String> reference = new ParameterizedTypeReference<String>() {};
 		when(mockResponse.bodyToMono(reference)).thenReturn(result);
@@ -117,7 +108,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void bodyToFluxClass() {
+	public void bodyToFluxClass() throws Exception {
 		Flux<String> result = Flux.just("foo");
 		when(mockResponse.bodyToFlux(String.class)).thenReturn(result);
 
@@ -125,7 +116,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void bodyToFluxParameterizedTypeReference() {
+	public void bodyToFluxParameterizedTypeReference() throws Exception {
 		Flux<String> result = Flux.just("foo");
 		ParameterizedTypeReference<String> reference = new ParameterizedTypeReference<String>() {};
 		when(mockResponse.bodyToFlux(reference)).thenReturn(result);
@@ -134,7 +125,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void toEntityClass() {
+	public void toEntityClass() throws Exception {
 		Mono<ResponseEntity<String>> result = Mono.just(new ResponseEntity<>("foo", HttpStatus.OK));
 		when(mockResponse.toEntity(String.class)).thenReturn(result);
 
@@ -142,7 +133,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void toEntityParameterizedTypeReference() {
+	public void toEntityParameterizedTypeReference() throws Exception {
 		Mono<ResponseEntity<String>> result = Mono.just(new ResponseEntity<>("foo", HttpStatus.OK));
 		ParameterizedTypeReference<String> reference = new ParameterizedTypeReference<String>() {};
 		when(mockResponse.toEntity(reference)).thenReturn(result);
@@ -151,7 +142,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void toEntityListClass() {
+	public void toEntityListClass() throws Exception {
 		Mono<ResponseEntity<List<String>>> result = Mono.just(new ResponseEntity<>(singletonList("foo"), HttpStatus.OK));
 		when(mockResponse.toEntityList(String.class)).thenReturn(result);
 
@@ -159,7 +150,7 @@ public class ClientResponseWrapperTests {
 	}
 
 	@Test
-	public void toEntityListParameterizedTypeReference() {
+	public void toEntityListParameterizedTypeReference() throws Exception {
 		Mono<ResponseEntity<List<String>>> result = Mono.just(new ResponseEntity<>(singletonList("foo"), HttpStatus.OK));
 		ParameterizedTypeReference<String> reference = new ParameterizedTypeReference<String>() {};
 		when(mockResponse.toEntityList(reference)).thenReturn(result);

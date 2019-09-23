@@ -78,11 +78,6 @@ public class ClientResponseWrapper implements ClientResponse {
 	}
 
 	@Override
-	public int rawStatusCode() {
-		return this.delegate.rawStatusCode();
-	}
-
-	@Override
 	public Headers headers() {
 		return this.delegate.headers();
 	}

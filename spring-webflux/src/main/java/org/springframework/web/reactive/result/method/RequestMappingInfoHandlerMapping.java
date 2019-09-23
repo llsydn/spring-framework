@@ -303,8 +303,7 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 
 
 			/**
-			 * Create a new {@link PartialMatch} instance.
-			 * @param info the RequestMappingInfo that matches the URL path
+			 * @param info RequestMappingInfo that matches the URL path
 			 * @param exchange the current exchange
 			 */
 			public PartialMatch(RequestMappingInfo info, ServerWebExchange exchange) {
@@ -366,7 +365,6 @@ public abstract class RequestMappingInfoHandlerMapping extends AbstractHandlerMe
 				if (result.contains(HttpMethod.GET)) {
 					result.add(HttpMethod.HEAD);
 				}
-				result.add(HttpMethod.OPTIONS);
 				return result;
 			}
 		}

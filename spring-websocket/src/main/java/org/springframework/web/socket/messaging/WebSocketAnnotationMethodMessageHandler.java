@@ -58,8 +58,8 @@ public class WebSocketAnnotationMethodMessageHandler extends SimpAnnotationMetho
 		if (context == null) {
 			return;
 		}
-		if (logger.isTraceEnabled()) {
-			logger.trace("Looking for @MessageExceptionHandler mappings: " + context);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Looking for @MessageExceptionHandler mappings: " + context);
 		}
 		List<ControllerAdviceBean> beans = ControllerAdviceBean.findAnnotatedBeans(context);
 		AnnotationAwareOrderComparator.sort(beans);
@@ -76,8 +76,8 @@ public class WebSocketAnnotationMethodMessageHandler extends SimpAnnotationMetho
 				AnnotationExceptionHandlerMethodResolver resolver = new AnnotationExceptionHandlerMethodResolver(type);
 				if (resolver.hasExceptionMappings()) {
 					registerExceptionHandlerAdvice(bean, resolver);
-					if (logger.isTraceEnabled()) {
-						logger.trace("Detected @MessageExceptionHandler methods in " + bean);
+					if (logger.isInfoEnabled()) {
+						logger.info("Detected @MessageExceptionHandler methods in " + bean);
 					}
 				}
 			}
@@ -88,7 +88,7 @@ public class WebSocketAnnotationMethodMessageHandler extends SimpAnnotationMetho
 	/**
 	 * Adapt ControllerAdviceBean to MessagingAdviceBean.
 	 */
-	private static final class MessagingControllerAdviceBean implements MessagingAdviceBean {
+	private static class MessagingControllerAdviceBean implements MessagingAdviceBean {
 
 		private final ControllerAdviceBean adviceBean;
 

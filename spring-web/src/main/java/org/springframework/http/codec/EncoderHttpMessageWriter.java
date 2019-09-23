@@ -16,21 +16,20 @@
 
 package org.springframework.http.codec;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.codec.AbstractEncoder;
 import org.springframework.core.codec.Encoder;
-import org.springframework.core.codec.Hints;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpLogging;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -50,7 +49,6 @@ import org.springframework.util.Assert;
  * @author Rossen Stoyanchev
  * @author Brian Clozel
  * @since 5.0
- * @param <T> the type of objects in the input stream
  */
 public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 
@@ -70,16 +68,6 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 		this.encoder = encoder;
 		this.mediaTypes = MediaType.asMediaTypes(encoder.getEncodableMimeTypes());
 		this.defaultMediaType = initDefaultMediaType(this.mediaTypes);
-		initLogger(encoder);
-	}
-
-	private void initLogger(Encoder<T> encoder) {
-		if (encoder instanceof AbstractEncoder &&
-				encoder.getClass().getPackage().getName().startsWith("org.springframework.core.codec")) {
-
-			Log logger = HttpLogging.forLog(((AbstractEncoder) encoder).getLogger());
-			((AbstractEncoder) encoder).setLogger(logger);
-		}
 	}
 
 	@Nullable
@@ -118,15 +106,14 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 
 		if (inputStream instanceof Mono) {
 			HttpHeaders headers = message.getHeaders();
-			return Mono.from(body)
-					.switchIfEmpty(Mono.defer(() -> {
-						headers.setContentLength(0);
-						return message.setComplete().then(Mono.empty());
-					}))
-					.flatMap(buffer -> {
-						headers.setContentLength(buffer.readableByteCount());
-						return message.writeWith(Mono.just(buffer));
-					});
+			if (headers.getContentLength() < 0 && !headers.containsKey(HttpHeaders.TRANSFER_ENCODING)) {
+				return Mono.from(body)
+						.defaultIfEmpty(message.bufferFactory().wrap(new byte[0]))
+						.flatMap(buffer -> {
+							headers.setContentLength(buffer.readableByteCount());
+							return message.writeWith(Mono.just(buffer));
+						});
+			}
 		}
 
 		return (isStreamingMediaType(contentType) ?
@@ -163,8 +150,7 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 	private boolean isStreamingMediaType(@Nullable MediaType contentType) {
 		return (contentType != null && this.encoder instanceof HttpMessageEncoder &&
 				((HttpMessageEncoder<?>) this.encoder).getStreamingMediaTypes().stream()
-						.anyMatch(streamingMediaType -> contentType.isCompatibleWith(streamingMediaType) &&
-								contentType.getParameters().entrySet().containsAll(streamingMediaType.getParameters().keySet())));
+						.anyMatch(contentType::isCompatibleWith));
 	}
 
 
@@ -175,8 +161,9 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 			ResolvableType elementType, @Nullable MediaType mediaType, ServerHttpRequest request,
 			ServerHttpResponse response, Map<String, Object> hints) {
 
-		Map<String, Object> allHints = Hints.merge(hints,
-				getWriteHints(actualType, elementType, mediaType, request, response));
+		Map<String, Object> allHints = new HashMap<>();
+		allHints.putAll(getWriteHints(actualType, elementType, mediaType, request, response));
+		allHints.putAll(hints);
 
 		return write(inputStream, elementType, mediaType, response, allHints);
 	}
@@ -190,10 +177,10 @@ public class EncoderHttpMessageWriter<T> implements HttpMessageWriter<T> {
 			@Nullable MediaType mediaType, ServerHttpRequest request, ServerHttpResponse response) {
 
 		if (this.encoder instanceof HttpMessageEncoder) {
-			HttpMessageEncoder<?> encoder = (HttpMessageEncoder<?>) this.encoder;
-			return encoder.getEncodeHints(streamType, elementType, mediaType, request, response);
+			HttpMessageEncoder<?> httpEncoder = (HttpMessageEncoder<?>) this.encoder;
+			return httpEncoder.getEncodeHints(streamType, elementType, mediaType, request, response);
 		}
-		return Hints.none();
+		return Collections.emptyMap();
 	}
 
 }

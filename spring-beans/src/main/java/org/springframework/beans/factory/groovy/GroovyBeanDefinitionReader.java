@@ -70,8 +70,8 @@ import org.springframework.util.StringUtils;
  *
  * <h3>Example Syntax</h3>
  * <pre class="code">
- * import org.hibernate.SessionFactory
- * import org.apache.commons.dbcp.BasicDataSource
+ * imports org.hibernate.SessionFactory
+ * imports org.apache.commons.dbcp.BasicDataSource
  *
  * def reader = new GroovyBeanDefinitionReader(myApplicationContext)
  * reader.beans {
@@ -98,8 +98,8 @@ import org.springframework.util.StringUtils;
  * the following.
  *
  * <pre class="code">
- * import org.hibernate.SessionFactory
- * import org.apache.commons.dbcp.BasicDataSource
+ * imports org.hibernate.SessionFactory
+ * imports org.apache.commons.dbcp.BasicDataSource
  *
  * beans {
  *     dataSource(BasicDataSource) {
@@ -236,10 +236,6 @@ public class GroovyBeanDefinitionReader extends AbstractBeanDefinitionReader imp
 			return this.standardXmlBeanDefinitionReader.loadBeanDefinitions(encodedResource);
 		}
 
-		if (logger.isTraceEnabled()) {
-			logger.trace("Loading Groovy bean definitions from " + encodedResource);
-		}
-
 		Closure beans = new Closure(this) {
 			@Override
 			public Object call(Object[] args) {
@@ -269,12 +265,7 @@ public class GroovyBeanDefinitionReader extends AbstractBeanDefinitionReader imp
 			throw new BeanDefinitionParsingException(new Problem("Error evaluating Groovy script: " + ex.getMessage(),
 					new Location(encodedResource.getResource()), null, ex));
 		}
-
-		int count = getRegistry().getBeanDefinitionCount() - countBefore;
-		if (logger.isDebugEnabled()) {
-			logger.debug("Loaded " + count + " bean definitions from " + encodedResource);
-		}
-		return count;
+		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}
 
 

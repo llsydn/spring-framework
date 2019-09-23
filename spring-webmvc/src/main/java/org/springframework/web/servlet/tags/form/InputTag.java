@@ -246,6 +246,9 @@ public class InputTag extends AbstractHtmlInputElementTag {
 
 	public static final String AUTOCOMPLETE_ATTRIBUTE = "autocomplete";
 
+	@Deprecated
+	public static final String READONLY_ATTRIBUTE = "readonly";
+
 
 	@Nullable
 	private String size;

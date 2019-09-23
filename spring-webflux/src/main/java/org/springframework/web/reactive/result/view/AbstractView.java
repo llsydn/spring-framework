@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.ReactiveAdapter;
@@ -45,13 +44,13 @@ import org.springframework.web.server.ServerWebExchange;
  * @author Rossen Stoyanchev
  * @since 5.0
  */
-public abstract class AbstractView implements View, BeanNameAware, ApplicationContextAware {
+public abstract class AbstractView implements View, ApplicationContextAware {
 
-	/** Well-known name for the RequestDataValueProcessor in the bean factory. */
+	/** Well-known name for the RequestDataValueProcessor in the bean factory */
 	public static final String REQUEST_DATA_VALUE_PROCESSOR_BEAN_NAME = "requestDataValueProcessor";
 
 
-	/** Logger that is available to subclasses. */
+	/** Logger that is available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	private static final Object NO_VALUE = new Object();
@@ -65,9 +64,6 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 
 	@Nullable
 	private String requestContextAttribute;
-
-	@Nullable
-	private String beanName;
 
 	@Nullable
 	private ApplicationContext applicationContext;
@@ -135,24 +131,6 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 		return this.requestContextAttribute;
 	}
 
-	/**
-	 * Set the view's name. Helpful for traceability.
-	 * <p>Framework code must call this when constructing views.
-	 */
-	@Override
-	public void setBeanName(@Nullable String beanName) {
-		this.beanName = beanName;
-	}
-
-	/**
-	 * Return the view's name. Should never be {@code null}, if the view was
-	 * correctly configured.
-	 */
-	@Nullable
-	public String getBeanName() {
-		return this.beanName;
-	}
-
 	@Override
 	public void setApplicationContext(@Nullable ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
@@ -188,9 +166,8 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	public Mono<Void> render(@Nullable Map<String, ?> model, @Nullable MediaType contentType,
 			ServerWebExchange exchange) {
 
-		if (logger.isDebugEnabled()) {
-			logger.debug(exchange.getLogPrefix() + "View " + formatViewName() +
-					", model " + (model != null ? model : Collections.emptyMap()));
+		if (logger.isTraceEnabled()) {
+			logger.trace("Rendering view with model " + model);
 		}
 
 		if (contentType != null) {
@@ -320,12 +297,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 
 	@Override
 	public String toString() {
-		return getClass().getName() + ": " + formatViewName();
-	}
-
-	protected String formatViewName() {
-		return (getBeanName() != null ?
-				"name '" + getBeanName() + "'" : "[" + getClass().getSimpleName() + "]");
+		return getClass().getName();
 	}
 
 }

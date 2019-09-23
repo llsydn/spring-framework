@@ -16,8 +16,6 @@
 
 package org.springframework.cache.jcache.config;
 
-import java.util.function.Supplier;
-
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.cache.annotation.AbstractCachingConfiguration;
 import org.springframework.cache.annotation.CachingConfigurer;
@@ -34,7 +32,6 @@ import org.springframework.lang.Nullable;
  * structure for enabling JSR-107 annotation-driven cache management capability.
  *
  * @author Stephane Nicoll
- * @author Juergen Hoeller
  * @since 4.1
  * @see JCacheConfigurer
  */
@@ -42,22 +39,34 @@ import org.springframework.lang.Nullable;
 public class AbstractJCacheConfiguration extends AbstractCachingConfiguration {
 
 	@Nullable
-	protected Supplier<CacheResolver> exceptionCacheResolver;
+	protected CacheResolver exceptionCacheResolver;
 
 
 	@Override
 	protected void useCachingConfigurer(CachingConfigurer config) {
 		super.useCachingConfigurer(config);
 		if (config instanceof JCacheConfigurer) {
-			this.exceptionCacheResolver = ((JCacheConfigurer) config)::exceptionCacheResolver;
+			this.exceptionCacheResolver = ((JCacheConfigurer) config).exceptionCacheResolver();
 		}
 	}
 
 	@Bean(name = "jCacheOperationSource")
 	@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 	public JCacheOperationSource cacheOperationSource() {
-		return new DefaultJCacheOperationSource(
-				this.cacheManager, this.cacheResolver, this.exceptionCacheResolver, this.keyGenerator);
+		DefaultJCacheOperationSource source = new DefaultJCacheOperationSource();
+		if (this.cacheManager != null) {
+			source.setCacheManager(this.cacheManager);
+		}
+		if (this.keyGenerator != null) {
+			source.setKeyGenerator(this.keyGenerator);
+		}
+		if (this.cacheResolver != null) {
+			source.setCacheResolver(this.cacheResolver);
+		}
+		if (this.exceptionCacheResolver != null) {
+			source.setExceptionCacheResolver(this.exceptionCacheResolver);
+		}
+		return source;
 	}
 
 }

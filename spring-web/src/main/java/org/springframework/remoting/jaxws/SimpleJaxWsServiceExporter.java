@@ -36,6 +36,7 @@ import javax.xml.ws.WebServiceProvider;
  * @since 2.5
  * @see javax.jws.WebService
  * @see javax.xml.ws.Endpoint#publish(String)
+ * @see SimpleHttpServerJaxWsServiceExporter
  */
 public class SimpleJaxWsServiceExporter extends AbstractJaxWsServiceExporter {
 

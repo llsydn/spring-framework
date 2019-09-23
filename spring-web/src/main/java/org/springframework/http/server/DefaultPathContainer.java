@@ -85,7 +85,7 @@ final class DefaultPathContainer implements PathContainer {
 
 	@Override
 	public String toString() {
-		return value();
+		return "[path='" + this.path + "\']";
 	}
 
 

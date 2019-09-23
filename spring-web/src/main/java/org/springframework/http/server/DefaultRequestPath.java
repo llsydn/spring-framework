@@ -148,7 +148,9 @@ class DefaultRequestPath implements RequestPath {
 
 	@Override
 	public String toString() {
-		return this.fullPath.toString();
+		return "DefaultRequestPath[fullPath='" + this.fullPath + "', " +
+				"contextPath='" + this.contextPath.value() + "', " +
+				"pathWithinApplication='" + this.pathWithinApplication.value() + "']";
 	}
 
 }

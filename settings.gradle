@@ -25,10 +25,9 @@ include "spring-framework-bom"
 include "buildSrc"
 rootProject.children.find{ it.name == "buildSrc" }.name = "spring-build-src"
 
-rootProject.name = "spring"
+rootProject.name = "spring-framework-5.0.x"
 rootProject.children.each {project ->
 	project.buildFileName = "${project.name}.gradle"
 }
-include 'spring-llsydn'
-include 'spring-cglib'
-
+include 'lubanIoc'
+include 'spring-cglib1'

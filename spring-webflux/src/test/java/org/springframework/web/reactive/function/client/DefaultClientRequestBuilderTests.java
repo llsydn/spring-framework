@@ -17,7 +17,6 @@
 package org.springframework.web.reactive.function.client;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,10 +35,13 @@ import org.springframework.http.codec.HttpMessageWriter;
 import org.springframework.mock.http.client.reactive.test.MockClientHttpRequest;
 import org.springframework.web.reactive.function.BodyInserter;
 
-import static java.nio.charset.StandardCharsets.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
-import static org.springframework.http.HttpMethod.*;
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.OPTIONS;
+import static org.springframework.http.HttpMethod.POST;
 
 /**
  * @author Arjen Poutsma
@@ -47,7 +49,7 @@ import static org.springframework.http.HttpMethod.*;
 public class DefaultClientRequestBuilderTests {
 
 	@Test
-	public void from() throws URISyntaxException {
+	public void from() throws Exception {
 		ClientRequest other = ClientRequest.create(GET, URI.create("http://example.com"))
 				.header("foo", "bar")
 				.cookie("baz", "qux").build();
@@ -64,7 +66,7 @@ public class DefaultClientRequestBuilderTests {
 	}
 
 	@Test
-	public void method() throws URISyntaxException {
+	public void method() throws Exception {
 		URI url = new URI("http://example.com");
 		ClientRequest.Builder builder = ClientRequest.create(DELETE, url);
 		assertEquals(DELETE, builder.build().method());
@@ -74,7 +76,7 @@ public class DefaultClientRequestBuilderTests {
 	}
 
 	@Test
-	public void url() throws URISyntaxException {
+	public void url() throws Exception {
 		URI url1 = new URI("http://example.com/foo");
 		URI url2 = new URI("http://example.com/bar");
 		ClientRequest.Builder builder = ClientRequest.create(DELETE, url1);

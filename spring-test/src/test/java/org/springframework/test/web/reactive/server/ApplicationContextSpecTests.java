@@ -22,12 +22,17 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mock.web.server.MockWebSession;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.reactive.config.EnableWebFlux;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.WebSession;
+import org.springframework.web.server.session.InMemoryWebSessionStore;
 import org.springframework.web.server.session.WebSessionManager;
+
+import static org.junit.Assert.*;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 
 /**
  * Unit tests with {@link ApplicationContextSpec}.
@@ -42,11 +47,16 @@ public class ApplicationContextSpecTests {
 		ApplicationContextSpec spec = new ApplicationContextSpec(context);
 		WebTestClient testClient = spec.configureClient().build();
 
+		WebSessionManager sessionManager = context.getBean("webSessionManager", WebSessionManager.class);
+		WebSession session = sessionManager.getSession(null).block();
+		assertNotNull(session);
+		String expected = ObjectUtils.getIdentityHexString(session);
+
 		for (int i=0; i < 2; i++) {
-			testClient.get().uri("/sessionClassName")
+			testClient.get().uri("/sessionIdentityHex")
 					.exchange()
 					.expectStatus().isOk()
-					.expectBody(String.class).isEqualTo("MockWebSession");
+					.expectBody(String.class).isEqualTo(expected);
 		}
 	}
 
@@ -57,18 +67,16 @@ public class ApplicationContextSpecTests {
 
 		@Bean
 		public RouterFunction<?> handler() {
-			return RouterFunctions.route()
-					.GET("/sessionClassName", request ->
-							request.session().flatMap(session -> {
-								String className = session.getClass().getSimpleName();
-								return ServerResponse.ok().syncBody(className);
-							}))
-					.build();
+			return RouterFunctions.route(GET("/sessionIdentityHex"),
+					request -> request.session().flatMap(session -> {
+						String value = ObjectUtils.getIdentityHexString(session);
+						return ServerResponse.ok().syncBody(value);
+					}));
 		}
 
 		@Bean
 		public WebSessionManager webSessionManager() {
-			MockWebSession session = new MockWebSession();
+			WebSession session = new InMemoryWebSessionStore().createWebSession().block();
 			return exchange -> Mono.just(session);
 		}
 	}

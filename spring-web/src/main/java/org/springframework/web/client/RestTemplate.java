@@ -25,14 +25,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -60,7 +57,6 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.util.DefaultUriBuilderFactory;
-import org.springframework.web.util.DefaultUriBuilderFactory.EncodingMode;
 import org.springframework.web.util.UriTemplateHandler;
 
 /**
@@ -91,60 +87,59 @@ import org.springframework.web.util.UriTemplateHandler;
  */
 public class RestTemplate extends InterceptingHttpAccessor implements RestOperations {
 
-	private static boolean romePresent;
+	private static boolean romePresent =
+			ClassUtils.isPresent("com.rometools.rome.feed.WireFeed",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean jaxb2Present;
+	private static final boolean jaxb2Present =
+			ClassUtils.isPresent("javax.xml.bind.Binder",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean jackson2Present;
+	private static final boolean jackson2Present =
+			ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper",
+					RestTemplate.class.getClassLoader()) &&
+			ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean jackson2XmlPresent;
+	private static final boolean jackson2XmlPresent =
+			ClassUtils.isPresent("com.fasterxml.jackson.dataformat.xml.XmlMapper",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean jackson2SmilePresent;
+	private static final boolean jackson2SmilePresent =
+			ClassUtils.isPresent("com.fasterxml.jackson.dataformat.smile.SmileFactory",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean jackson2CborPresent;
+	private static final boolean jackson2CborPresent =
+			ClassUtils.isPresent("com.fasterxml.jackson.dataformat.cbor.CBORFactory",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean gsonPresent;
+	private static final boolean gsonPresent =
+			ClassUtils.isPresent("com.google.gson.Gson",
+					RestTemplate.class.getClassLoader());
 
-	private static final boolean jsonbPresent;
-
-	static {
-		ClassLoader classLoader = RestTemplate.class.getClassLoader();
-		romePresent = ClassUtils.isPresent("com.rometools.rome.feed.WireFeed", classLoader);
-		jaxb2Present = ClassUtils.isPresent("javax.xml.bind.Binder", classLoader);
-		jackson2Present =
-				ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader) &&
-						ClassUtils.isPresent("com.fasterxml.jackson.core.JsonGenerator", classLoader);
-		jackson2XmlPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.xml.XmlMapper", classLoader);
-		jackson2SmilePresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.smile.SmileFactory", classLoader);
-		jackson2CborPresent = ClassUtils.isPresent("com.fasterxml.jackson.dataformat.cbor.CBORFactory", classLoader);
-		gsonPresent = ClassUtils.isPresent("com.google.gson.Gson", classLoader);
-		jsonbPresent = ClassUtils.isPresent("javax.json.bind.Jsonb", classLoader);
-	}
+	private static final boolean jsonbPresent =
+			ClassUtils.isPresent("javax.json.bind.Jsonb",
+					RestTemplate.class.getClassLoader());
 
 
 	private final List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
 
 	private ResponseErrorHandler errorHandler = new DefaultResponseErrorHandler();
 
-	private UriTemplateHandler uriTemplateHandler;
+	private UriTemplateHandler uriTemplateHandler = new DefaultUriBuilderFactory();
 
 	private final ResponseExtractor<HttpHeaders> headersExtractor = new HeadersExtractor();
 
 
 	/**
 	 * Create a new instance of the {@link RestTemplate} using default settings.
-	 * Default {@link HttpMessageConverter HttpMessageConverters} are initialized.
+	 * Default {@link HttpMessageConverter}s are initialized.
 	 */
 	public RestTemplate() {
 		this.messageConverters.add(new ByteArrayHttpMessageConverter());
 		this.messageConverters.add(new StringHttpMessageConverter());
 		this.messageConverters.add(new ResourceHttpMessageConverter(false));
-		try {
-			this.messageConverters.add(new SourceHttpMessageConverter<>());
-		}
-		catch (Error err) {
-			// Ignore when no TransformerFactory implementation is available
-		}
+		this.messageConverters.add(new SourceHttpMessageConverter<>());
 		this.messageConverters.add(new AllEncompassingFormHttpMessageConverter());
 
 		if (romePresent) {
@@ -175,8 +170,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		if (jackson2CborPresent) {
 			this.messageConverters.add(new MappingJackson2CborHttpMessageConverter());
 		}
-
-		this.uriTemplateHandler = initUriTemplateHandler();
 	}
 
 	/**
@@ -199,13 +192,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	public RestTemplate(List<HttpMessageConverter<?>> messageConverters) {
 		Assert.notEmpty(messageConverters, "At least one HttpMessageConverter required");
 		this.messageConverters.addAll(messageConverters);
-		this.uriTemplateHandler = initUriTemplateHandler();
-	}
-
-	private static DefaultUriBuilderFactory initUriTemplateHandler() {
-		DefaultUriBuilderFactory uriFactory = new DefaultUriBuilderFactory();
-		uriFactory.setEncodingMode(EncodingMode.URI_COMPONENT);  // for backwards compatibility..
-		return uriFactory;
 	}
 
 
@@ -274,11 +260,11 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	}
 
 	/**
-	 * Configure a strategy for expanding URI templates.
-	 * <p>By default, {@link DefaultUriBuilderFactory} is used and for
-	 * backwards compatibility, the encoding mode is set to
-	 * {@link EncodingMode#URI_COMPONENT URI_COMPONENT}. As of 5.0.8, prefer
-	 * using {@link EncodingMode#TEMPLATE_AND_VALUES TEMPLATE_AND_VALUES}.
+	 * Customize how URI templates are expanded into URI instances.
+	 * <p>By default {@link DefaultUriBuilderFactory} with default settings is
+	 * used. You can supply a {@code DefaultUriBuilderFactory} configured
+	 * differently, or an entirely different implementation, for example that
+	 * plugs in a 3rd party URI template library.
 	 * <p><strong>Note:</strong> in 5.0 the switch from
 	 * {@link org.springframework.web.util.DefaultUriTemplateHandler
 	 * DefaultUriTemplateHandler} (deprecated in 4.3), as the default to use, to
@@ -649,17 +635,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 
 	// General execution
 
-	/**
-	 * {@inheritDoc}
-	 * <p>To provide a {@code RequestCallback} or {@code ResponseExtractor} only,
-	 * but not both, consider using:
-	 * <ul>
-	 * <li>{@link #acceptHeaderRequestCallback(Class)}
-	 * <li>{@link #httpEntityCallback(Object)}
-	 * <li>{@link #httpEntityCallback(Object, Type)}
-	 * <li>{@link #responseEntityExtractor(Type)}
-	 * </ul>
-	 */
 	@Override
 	@Nullable
 	public <T> T execute(String url, HttpMethod method, @Nullable RequestCallback requestCallback,
@@ -669,17 +644,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		return doExecute(expanded, method, requestCallback, responseExtractor);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * <p>To provide a {@code RequestCallback} or {@code ResponseExtractor} only,
-	 * but not both, consider using:
-	 * <ul>
-	 * <li>{@link #acceptHeaderRequestCallback(Class)}
-	 * <li>{@link #httpEntityCallback(Object)}
-	 * <li>{@link #httpEntityCallback(Object, Type)}
-	 * <li>{@link #responseEntityExtractor(Type)}
-	 * </ul>
-	 */
 	@Override
 	@Nullable
 	public <T> T execute(String url, HttpMethod method, @Nullable RequestCallback requestCallback,
@@ -690,17 +654,6 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		return doExecute(expanded, method, requestCallback, responseExtractor);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * <p>To provide a {@code RequestCallback} or {@code ResponseExtractor} only,
-	 * but not both, consider using:
-	 * <ul>
-	 * <li>{@link #acceptHeaderRequestCallback(Class)}
-	 * <li>{@link #httpEntityCallback(Object)}
-	 * <li>{@link #httpEntityCallback(Object, Type)}
-	 * <li>{@link #responseEntityExtractor(Type)}
-	 * </ul>
-	 */
 	@Override
 	@Nullable
 	public <T> T execute(URI url, HttpMethod method, @Nullable RequestCallback requestCallback,
@@ -765,9 +718,9 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		boolean hasError = errorHandler.hasError(response);
 		if (logger.isDebugEnabled()) {
 			try {
-				int code = response.getRawStatusCode();
-				HttpStatus status = HttpStatus.resolve(code);
-				logger.debug("Response " + (status != null ? status : code));
+				logger.debug(method.name() + " request for \"" + url + "\" resulted in " +
+						response.getRawStatusCode() + " (" + response.getStatusText() + ")" +
+						(hasError ? "; invoking error handler" : ""));
 			}
 			catch (IOException ex) {
 				// ignore
@@ -783,7 +736,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	 * header based on the given response type, cross-checked against the
 	 * configured message converters.
 	 */
-	public <T> RequestCallback acceptHeaderRequestCallback(Class<T> responseType) {
+	protected <T> RequestCallback acceptHeaderRequestCallback(Class<T> responseType) {
 		return new AcceptHeaderRequestCallback(responseType);
 	}
 
@@ -791,7 +744,7 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	 * Return a {@code RequestCallback} implementation that writes the given
 	 * object to the request stream.
 	 */
-	public <T> RequestCallback httpEntityCallback(@Nullable Object requestBody) {
+	protected <T> RequestCallback httpEntityCallback(@Nullable Object requestBody) {
 		return new HttpEntityRequestCallback(requestBody);
 	}
 
@@ -803,14 +756,14 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 	 * <li>Writes the given object to the request stream.
 	 * </ol>
 	 */
-	public <T> RequestCallback httpEntityCallback(@Nullable Object requestBody, Type responseType) {
+	protected <T> RequestCallback httpEntityCallback(@Nullable Object requestBody, Type responseType) {
 		return new HttpEntityRequestCallback(requestBody, responseType);
 	}
 
 	/**
 	 * Return a {@code ResponseExtractor} that prepares a {@link ResponseEntity}.
 	 */
-	public <T> ResponseExtractor<ResponseEntity<T>> responseEntityExtractor(Type responseType) {
+	protected <T> ResponseExtractor<ResponseEntity<T>> responseEntityExtractor(Type responseType) {
 		return new ResponseEntityResponseExtractor<>(responseType);
 	}
 
@@ -842,40 +795,45 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 		@Override
 		public void doWithRequest(ClientHttpRequest request) throws IOException {
 			if (this.responseType != null) {
-				List<MediaType> allSupportedMediaTypes = getMessageConverters().stream()
-						.filter(converter -> canReadResponse(this.responseType, converter))
-						.flatMap(this::getSupportedMediaTypes)
-						.distinct()
-						.sorted(MediaType.SPECIFICITY_COMPARATOR)
-						.collect(Collectors.toList());
-				if (logger.isDebugEnabled()) {
-					logger.debug("Accept=" + allSupportedMediaTypes);
+				Class<?> responseClass = null;
+				if (this.responseType instanceof Class) {
+					responseClass = (Class<?>) this.responseType;
 				}
-				request.getHeaders().setAccept(allSupportedMediaTypes);
-			}
-		}
-
-		private boolean canReadResponse(Type responseType, HttpMessageConverter<?> converter) {
-			Class<?> responseClass = (responseType instanceof Class ? (Class<?>) responseType : null);
-			if (responseClass != null) {
-				return converter.canRead(responseClass, null);
-			}
-			else if (converter instanceof GenericHttpMessageConverter) {
-				GenericHttpMessageConverter<?> genericConverter = (GenericHttpMessageConverter<?>) converter;
-				return genericConverter.canRead(responseType, null, null);
-			}
-			return false;
-		}
-
-		private Stream<MediaType> getSupportedMediaTypes(HttpMessageConverter<?> messageConverter) {
-			return messageConverter.getSupportedMediaTypes()
-					.stream()
-					.map(mediaType -> {
-						if (mediaType.getCharset() != null) {
-							return new MediaType(mediaType.getType(), mediaType.getSubtype());
+				List<MediaType> allSupportedMediaTypes = new ArrayList<>();
+				for (HttpMessageConverter<?> converter : getMessageConverters()) {
+					if (responseClass != null) {
+						if (converter.canRead(responseClass, null)) {
+							allSupportedMediaTypes.addAll(getSupportedMediaTypes(converter));
 						}
-						return mediaType;
-					});
+					}
+					else if (converter instanceof GenericHttpMessageConverter) {
+						GenericHttpMessageConverter<?> genericConverter = (GenericHttpMessageConverter<?>) converter;
+						if (genericConverter.canRead(this.responseType, null, null)) {
+							allSupportedMediaTypes.addAll(getSupportedMediaTypes(converter));
+						}
+					}
+				}
+				if (!allSupportedMediaTypes.isEmpty()) {
+					MediaType.sortBySpecificity(allSupportedMediaTypes);
+					if (logger.isDebugEnabled()) {
+						logger.debug("Setting request Accept header to " + allSupportedMediaTypes);
+					}
+					request.getHeaders().setAccept(allSupportedMediaTypes);
+				}
+			}
+		}
+
+		private List<MediaType> getSupportedMediaTypes(HttpMessageConverter<?> messageConverter) {
+			List<MediaType> supportedMediaTypes = messageConverter.getSupportedMediaTypes();
+			List<MediaType> result = new ArrayList<>(supportedMediaTypes.size());
+			for (MediaType supportedMediaType : supportedMediaTypes) {
+				if (supportedMediaType.getCharset() != null) {
+					supportedMediaType =
+							new MediaType(supportedMediaType.getType(), supportedMediaType.getSubtype());
+				}
+				result.add(supportedMediaType);
+			}
+			return result;
 		}
 	}
 
@@ -934,7 +892,16 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 							if (!requestHeaders.isEmpty()) {
 								requestHeaders.forEach((key, values) -> httpHeaders.put(key, new LinkedList<>(values)));
 							}
-							logBody(requestBody, requestContentType, genericConverter);
+							if (logger.isDebugEnabled()) {
+								if (requestContentType != null) {
+									logger.debug("Writing [" + requestBody + "] as \"" + requestContentType +
+											"\" using [" + messageConverter + "]");
+								}
+								else {
+									logger.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
+								}
+
+							}
 							genericConverter.write(requestBody, requestBodyType, requestContentType, httpRequest);
 							return;
 						}
@@ -943,29 +910,27 @@ public class RestTemplate extends InterceptingHttpAccessor implements RestOperat
 						if (!requestHeaders.isEmpty()) {
 							requestHeaders.forEach((key, values) -> httpHeaders.put(key, new LinkedList<>(values)));
 						}
-						logBody(requestBody, requestContentType, messageConverter);
+						if (logger.isDebugEnabled()) {
+							if (requestContentType != null) {
+								logger.debug("Writing [" + requestBody + "] as \"" + requestContentType +
+										"\" using [" + messageConverter + "]");
+							}
+							else {
+								logger.debug("Writing [" + requestBody + "] using [" + messageConverter + "]");
+							}
+
+						}
 						((HttpMessageConverter<Object>) messageConverter).write(
 								requestBody, requestContentType, httpRequest);
 						return;
 					}
 				}
-				String message = "No HttpMessageConverter for [" + requestBodyClass.getName() + "]";
+				String message = "Could not write request: no suitable HttpMessageConverter found for request type [" +
+						requestBodyClass.getName() + "]";
 				if (requestContentType != null) {
 					message += " and content type [" + requestContentType + "]";
 				}
 				throw new RestClientException(message);
-			}
-		}
-
-		private void logBody(Object body, @Nullable MediaType mediaType, HttpMessageConverter<?> converter) {
-			if (logger.isDebugEnabled()) {
-				if (mediaType != null) {
-					logger.debug("Writing [" + body + "] as \"" + mediaType + "\"");
-				}
-				else {
-					String classname = converter.getClass().getName();
-					logger.debug("Writing [" + body + "] with " + classname);
-				}
 			}
 		}
 	}

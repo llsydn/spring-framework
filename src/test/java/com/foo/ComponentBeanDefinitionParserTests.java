@@ -66,7 +66,7 @@ public class ComponentBeanDefinitionParserTests {
 	}
 
 	@Test
-	public void testBionicSecondLevelChildren() throws Exception {
+	public void testBionicSecondLevenChildren() throws Exception {
 		Component cp = getBionicFamily();
 		List<Component> components = cp.getComponents().get(0).getComponents();
 		assertThat(2, equalTo(components.size()));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,11 +58,12 @@ import org.springframework.util.ReflectionUtils;
  * {@code web.xml} as follows:
  *
  * <pre class="code">
- * &lt;absolute-ordering&gt;
- *   &lt;name>some_web_fragment&lt;/name&gt;
- *   &lt;name>spring_web&lt;/name&gt;
- * &lt;/absolute-ordering&gt;
- * </pre>
+ * {@code
+ * <absolute-ordering>
+ *   <name>some_web_fragment</name>
+ *   <name>spring_web</name>
+ * </absolute-ordering>
+ * }</pre>
  *
  * <h2>Relationship to Spring's {@code WebApplicationInitializer}</h2>
  * Spring's {@code WebApplicationInitializer} SPI consists of just one method:
@@ -108,16 +109,8 @@ import org.springframework.util.ReflectionUtils;
  * @see #onStartup(Set, ServletContext)
  * @see WebApplicationInitializer
  */
-@HandlesTypes(WebApplicationInitializer.class) // 感兴趣的类，这个注解可以拿到所有实现了WebApplicationInitializer接口的实现类
+@HandlesTypes(WebApplicationInitializer.class)
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
-
-	/**
-	 * ServletContainerInitializer是servlet3.0的特性，
-	 * 容器在启动应用的时候，会扫描当前应用每一个jar包里面的META-INF/services/javax.servlet.ServletContainerInitializer，
-	 *
-	 * SpringServletContainerInitializer 实现了 ServletContainerInitializer接口，在容器启动的时候会执行
-	 * SpringServletContainerInitializer类中onStartup的方法
-	 */
 
 	/**
 	 * Delegate the {@code ServletContext} to any {@link WebApplicationInitializer}
@@ -148,9 +141,6 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 	@Override
 	public void onStartup(@Nullable Set<Class<?>> webAppInitializerClasses, ServletContext servletContext)
 			throws ServletException {
-		/**
-		 * Set<Class<?>> webAppInitializerClasses 这个注入的类集合和 前面的 @HandlesTypes(WebApplicationInitializer.class) 注解有关
-		 */
 
 		List<WebApplicationInitializer> initializers = new LinkedList<>();
 

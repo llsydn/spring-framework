@@ -307,21 +307,6 @@ public class QuartzSupportTests {
 		}
 	}
 
-	@Test  // SPR-16884
-	public void multipleSchedulersWithQuartzProperties() throws Exception {
-		ClassPathXmlApplicationContext ctx = context("multipleSchedulersWithQuartzProperties.xml");
-		try {
-			Scheduler scheduler1 = (Scheduler) ctx.getBean("scheduler1");
-			Scheduler scheduler2 = (Scheduler) ctx.getBean("scheduler2");
-			assertNotSame(scheduler1, scheduler2);
-			assertEquals("quartz1", scheduler1.getSchedulerName());
-			assertEquals("quartz2", scheduler2.getSchedulerName());
-		}
-		finally {
-			ctx.close();
-		}
-	}
-
 	@Test
 	public void twoAnonymousMethodInvokingJobDetailFactoryBeans() throws Exception {
 		Assume.group(TestGroup.PERFORMANCE);

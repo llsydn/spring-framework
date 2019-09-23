@@ -148,13 +148,16 @@ public interface BeanFactory {
 	 * <p>Translates aliases back to the corresponding canonical bean name.
 	 * Will ask the parent factory if the bean cannot be found in this factory instance.
 	 * @param name the name of the bean to retrieve
-	 * @param requiredType type the bean must match; can be an interface or superclass
+	 * @param requiredType type the bean must match. Can be an interface or superclass
+	 * of the actual class, or {@code null} for any match. For example, if the value
+	 * is {@code Object.class}, this method will succeed whatever the class of the
+	 * returned instance.
 	 * @return an instance of the bean
 	 * @throws NoSuchBeanDefinitionException if there is no such bean definition
 	 * @throws BeanNotOfRequiredTypeException if the bean is not of the required type
 	 * @throws BeansException if the bean could not be created
 	 */
-	<T> T getBean(String name, Class<T> requiredType) throws BeansException;
+	<T> T getBean(String name, @Nullable Class<T> requiredType) throws BeansException;
 
 	/**
 	 * Return an instance, which may be shared or independent, of the specified bean.
@@ -208,31 +211,6 @@ public interface BeanFactory {
 	 */
 	<T> T getBean(Class<T> requiredType, Object... args) throws BeansException;
 
-	/**
-	 * Return an provider for the specified bean, allowing for lazy on-demand retrieval
-	 * of instances, including availability and uniqueness options.
-	 * @param requiredType type the bean must match; can be an interface or superclass
-	 * @return a corresponding provider handle
-	 * @since 5.1
-	 * @see #getBeanProvider(ResolvableType)
-	 */
-	<T> ObjectProvider<T> getBeanProvider(Class<T> requiredType);
-
-	/**
-	 * Return an provider for the specified bean, allowing for lazy on-demand retrieval
-	 * of instances, including availability and uniqueness options.
-	 * @param requiredType type the bean must match; can be a generic type declaration.
-	 * Note that collection types are not supported here, in contrast to reflective
-	 * injection points. For programmatically retrieving a list of beans matching a
-	 * specific type, specify the actual bean type as an argument here and subsequently
-	 * use {@link ObjectProvider#orderedStream()} or its lazy streaming/iteration options.
-	 * @return a corresponding provider handle
-	 * @since 5.1
-	 * @see ObjectProvider#iterator()
-	 * @see ObjectProvider#stream()
-	 * @see ObjectProvider#orderedStream()
-	 */
-	<T> ObjectProvider<T> getBeanProvider(ResolvableType requiredType);
 
 	/**
 	 * Does this bean factory contain a bean definition or externally registered singleton
@@ -318,7 +296,7 @@ public interface BeanFactory {
 	 * @see #getBean
 	 * @see #getType
 	 */
-	boolean isTypeMatch(String name, Class<?> typeToMatch) throws NoSuchBeanDefinitionException;
+	boolean isTypeMatch(String name, @Nullable Class<?> typeToMatch) throws NoSuchBeanDefinitionException;
 
 	/**
 	 * Determine the type of the bean with the given name. More specifically,

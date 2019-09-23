@@ -78,7 +78,7 @@ import org.springframework.web.socket.sockjs.support.SockJsHttpRequestHandler;
  * <p>Registers a Spring MVC {@link org.springframework.web.servlet.HandlerMapping}
  * with order 1 to map HTTP WebSocket handshake requests from STOMP/WebSocket clients.
  *
- * <p>Registers the following {@link org.springframework.messaging.MessageChannel MessageChannels}:
+ * <p>Registers the following {@link org.springframework.messaging.MessageChannel}s:
  * <ul>
  * <li>"clientInboundChannel" for receiving messages from clients (e.g. WebSocket clients)
  * <li>"clientOutboundChannel" for sending messages to clients (e.g. WebSocket clients)
@@ -111,15 +111,11 @@ class MessageBrokerBeanDefinitionParser implements BeanDefinitionParser {
 
 	private static final int DEFAULT_MAPPING_ORDER = 1;
 
-	private static final boolean jackson2Present;
+	private static final boolean jackson2Present = ClassUtils.isPresent(
+			"com.fasterxml.jackson.databind.ObjectMapper", MessageBrokerBeanDefinitionParser.class.getClassLoader());
 
-	private static final boolean javaxValidationPresent;
-
-	static {
-		ClassLoader classLoader = MessageBrokerBeanDefinitionParser.class.getClassLoader();
-		jackson2Present = ClassUtils.isPresent("com.fasterxml.jackson.databind.ObjectMapper", classLoader);
-		javaxValidationPresent = ClassUtils.isPresent("javax.validation.Validator", classLoader);
-	}
+	private static final boolean javaxValidationPresent =
+			ClassUtils.isPresent("javax.validation.Validator", MessageBrokerBeanDefinitionParser.class.getClassLoader());
 
 
 	@Override
@@ -311,9 +307,6 @@ class MessageBrokerBeanDefinitionParser implements BeanDefinitionParser {
 			if (transportElem.hasAttribute("send-buffer-size")) {
 				handlerDef.getPropertyValues().add("sendBufferSizeLimit", transportElem.getAttribute("send-buffer-size"));
 			}
-			if (transportElem.hasAttribute("time-to-first-message")) {
-				handlerDef.getPropertyValues().add("timeToFirstMessage", transportElem.getAttribute("time-to-first-message"));
-			}
 			Element factoriesElement = DomUtils.getChildElementByTagName(transportElem, "decorator-factories");
 			if (factoriesElement != null) {
 				ManagedList<Object> factories = extractBeanSubElements(factoriesElement, context);
@@ -446,11 +439,6 @@ class MessageBrokerBeanDefinitionParser implements BeanDefinitionParser {
 		else {
 			// Should not happen
 			throw new IllegalStateException("Neither <simple-broker> nor <stomp-broker-relay> elements found.");
-		}
-
-		if (brokerElement.hasAttribute("preserve-publish-order")) {
-			String preservePublishOrder = brokerElement.getAttribute("preserve-publish-order");
-			brokerDef.getPropertyValues().add("preservePublishOrder", preservePublishOrder);
 		}
 
 		registerBeanDef(brokerDef, context, source);
@@ -673,13 +661,12 @@ class MessageBrokerBeanDefinitionParser implements BeanDefinitionParser {
 	}
 
 
-	private static final class DecoratingFactoryBean implements FactoryBean<WebSocketHandler> {
+	private static class DecoratingFactoryBean implements FactoryBean<WebSocketHandler> {
 
 		private final WebSocketHandler handler;
 
 		private final List<WebSocketHandlerDecoratorFactory> factories;
 
-		@SuppressWarnings("unused")
 		public DecoratingFactoryBean(WebSocketHandler handler, List<WebSocketHandlerDecoratorFactory> factories) {
 			this.handler = handler;
 			this.factories = factories;

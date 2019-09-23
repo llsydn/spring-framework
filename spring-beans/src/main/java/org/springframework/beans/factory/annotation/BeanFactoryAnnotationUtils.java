@@ -17,8 +17,6 @@
 package org.springframework.beans.factory.annotation;
 
 import java.lang.reflect.Method;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.function.Predicate;
 
 import org.springframework.beans.BeansException;
@@ -46,31 +44,6 @@ import org.springframework.util.Assert;
  * @see BeanFactoryUtils
  */
 public abstract class BeanFactoryAnnotationUtils {
-
-	/**
-	 * Retrieve all bean of type {@code T} from the given {@code BeanFactory} declaring a
-	 * qualifier (e.g. via {@code <qualifier>} or {@code @Qualifier}) matching the given
-	 * qualifier, or having a bean name matching the given qualifier.
-	 * @param beanFactory the factory to get the target beans from (also searching ancestors)
-	 * @param beanType the type of beans to retrieve
-	 * @param qualifier the qualifier for selecting among all type matches
-	 * @return the matching beans of type {@code T}
-	 * @throws BeansException if any of the matching beans could not be created
-	 * @since 5.1.1
-	 * @see BeanFactoryUtils#beansOfTypeIncludingAncestors(ListableBeanFactory, Class)
-	 */
-	public static <T> Map<String, T> qualifiedBeansOfType(
-			ListableBeanFactory beanFactory, Class<T> beanType, String qualifier) throws BeansException {
-
-		String[] candidateBeans = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory, beanType);
-		Map<String, T> result = new LinkedHashMap<>(4);
-		for (String beanName : candidateBeans) {
-			if (isQualifierMatch(qualifier::equals, beanName, beanFactory)) {
-				result.put(beanName, beanFactory.getBean(beanName, beanType));
-			}
-		}
-		return result;
-	}
 
 	/**
 	 * Obtain a bean of type {@code T} from the given {@code BeanFactory} declaring a
@@ -162,7 +135,6 @@ public abstract class BeanFactoryAnnotationUtils {
 				}
 			}
 			try {
-				Class<?> beanType = beanFactory.getType(beanName);
 				if (beanFactory instanceof ConfigurableBeanFactory) {
 					BeanDefinition bd = ((ConfigurableBeanFactory) beanFactory).getMergedBeanDefinition(beanName);
 					// Explicit qualifier metadata on bean definition? (typically in XML definition)
@@ -188,6 +160,7 @@ public abstract class BeanFactoryAnnotationUtils {
 					}
 				}
 				// Corresponding qualifier on bean implementation class? (for custom user types)
+				Class<?> beanType = beanFactory.getType(beanName);
 				if (beanType != null) {
 					Qualifier targetAnnotation = AnnotationUtils.getAnnotation(beanType, Qualifier.class);
 					if (targetAnnotation != null) {

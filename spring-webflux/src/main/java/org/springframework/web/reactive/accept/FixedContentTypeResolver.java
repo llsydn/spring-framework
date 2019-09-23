@@ -19,6 +19,9 @@ package org.springframework.web.reactive.accept;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
 import org.springframework.web.server.ServerWebExchange;
@@ -32,6 +35,9 @@ import org.springframework.web.server.ServerWebExchange;
  * @since 5.0
  */
 public class FixedContentTypeResolver implements RequestedContentTypeResolver {
+
+	private static final Log logger = LogFactory.getLog(FixedContentTypeResolver.class);
+
 
 	private final List<MediaType> contentTypes;
 
@@ -65,6 +71,9 @@ public class FixedContentTypeResolver implements RequestedContentTypeResolver {
 
 	@Override
 	public List<MediaType> resolveMediaTypes(ServerWebExchange exchange) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Requested media types: " + this.contentTypes);
+		}
 		return this.contentTypes;
 	}
 

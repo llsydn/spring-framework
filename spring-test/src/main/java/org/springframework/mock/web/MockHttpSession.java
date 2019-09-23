@@ -42,15 +42,11 @@ import org.springframework.util.StringUtils;
  * @author Rod Johnson
  * @author Mark Fisher
  * @author Sam Brannen
- * @author Vedran Pavic
  * @since 1.0.2
  */
 @SuppressWarnings("deprecation")
 public class MockHttpSession implements HttpSession {
 
-	/**
-	 * The session cookie name.
-	 */
 	public static final String SESSION_COOKIE_NAME = "JSESSION";
 
 
@@ -181,14 +177,9 @@ public class MockHttpSession implements HttpSession {
 		assertIsValid();
 		Assert.notNull(name, "Attribute name must not be null");
 		if (value != null) {
-			Object oldValue = this.attributes.put(name, value);
-			if (value != oldValue) {
-				if (oldValue instanceof HttpSessionBindingListener) {
-					((HttpSessionBindingListener) oldValue).valueUnbound(new HttpSessionBindingEvent(this, name, oldValue));
-				}
-				if (value instanceof HttpSessionBindingListener) {
-					((HttpSessionBindingListener) value).valueBound(new HttpSessionBindingEvent(this, name, value));
-				}
+			this.attributes.put(name, value);
+			if (value instanceof HttpSessionBindingListener) {
+				((HttpSessionBindingListener) value).valueBound(new HttpSessionBindingEvent(this, name, value));
 			}
 		}
 		else {

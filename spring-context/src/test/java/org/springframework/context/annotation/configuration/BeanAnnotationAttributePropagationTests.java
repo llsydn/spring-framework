@@ -57,16 +57,6 @@ public class BeanAnnotationAttributePropagationTests {
 	}
 
 	@Test
-	public void autowireCandidateMetadataIsPropagated() {
-		@Configuration class Config {
-			@Bean(autowireCandidate=false) Object foo() { return null; }
-		}
-
-		assertFalse("autowire candidate flag was not propagated",
-				beanDef(Config.class).isAutowireCandidate());
-	}
-
-	@Test
 	public void initMethodMetadataIsPropagated() {
 		@Configuration class Config {
 			@Bean(initMethod="start") Object foo() { return null; }

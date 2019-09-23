@@ -25,7 +25,6 @@ import javax.servlet.http.Part;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -41,7 +40,6 @@ public class MockPart implements Part {
 
 	private final String name;
 
-	@Nullable
 	private final String filename;
 
 	private final byte[] content;
@@ -53,7 +51,7 @@ public class MockPart implements Part {
 	 * Constructor for a part with byte[] content only.
 	 * @see #getHeaders()
 	 */
-	public MockPart(String name, @Nullable byte[] content) {
+	public MockPart(String name, byte[] content) {
 		this(name, null, content);
 	}
 
@@ -61,7 +59,7 @@ public class MockPart implements Part {
 	 * Constructor for a part with a filename and byte[] content.
 	 * @see #getHeaders()
 	 */
-	public MockPart(String name, @Nullable String filename, @Nullable byte[] content) {
+	public MockPart(String name, String filename, byte[] content) {
 		Assert.hasLength(name, "'name' must not be empty");
 		this.name = name;
 		this.filename = filename;
@@ -76,13 +74,11 @@ public class MockPart implements Part {
 	}
 
 	@Override
-	@Nullable
 	public String getSubmittedFileName() {
 		return this.filename;
 	}
 
 	@Override
-	@Nullable
 	public String getContentType() {
 		MediaType contentType = this.headers.getContentType();
 		return (contentType != null ? contentType.toString() : null);
@@ -109,7 +105,6 @@ public class MockPart implements Part {
 	}
 
 	@Override
-	@Nullable
 	public String getHeader(String name) {
 		return this.headers.getFirst(name);
 	}

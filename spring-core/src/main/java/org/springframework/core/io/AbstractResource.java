@@ -67,12 +67,11 @@ public abstract class AbstractResource implements Resource {
 	}
 
 	/**
-	 * This implementation always returns {@code true} for a resource
-	 * that {@link #exists() exists} (revised as of 5.1).
+	 * This implementation always returns {@code true}.
 	 */
 	@Override
 	public boolean isReadable() {
-		return exists();
+		return true;
 	}
 
 	/**

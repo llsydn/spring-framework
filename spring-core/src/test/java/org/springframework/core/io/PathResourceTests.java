@@ -50,7 +50,6 @@ import static org.mockito.BDDMockito.*;
  * @author Juergen Hoeller
  * @author Arjen Poutsma
  */
-@Deprecated
 public class PathResourceTests {
 
 	private static final String TEST_DIR =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.web.reactive.result.method.annotation;
 
 import org.junit.Test;
@@ -30,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * {@code @RequestMapping} integration focusing on controller method parameters.
@@ -42,6 +41,7 @@ import static org.junit.Assert.*;
  * @author Rossen Stoyanchev
  */
 public class ControllerInputIntegrationTests extends AbstractRequestMappingIntegrationTests {
+
 
 	@Override
 	protected ApplicationContext initApplicationContext() {
@@ -58,7 +58,7 @@ public class ControllerInputIntegrationTests extends AbstractRequestMappingInteg
 		assertEquals(expected, performGet("/param?name=George", new HttpHeaders(), String.class).getBody());
 	}
 
-	@Test  // SPR-15140
+	@Test // SPR-15140
 	public void handleWithEncodedParam() throws Exception {
 		String expected = "Hello  + \u00e0!";
 		assertEquals(expected, performGet("/param?name=%20%2B+%C3%A0", new HttpHeaders(), String.class).getBody());
@@ -76,7 +76,6 @@ public class ControllerInputIntegrationTests extends AbstractRequestMappingInteg
 	@EnableWebFlux
 	static class WebConfig {
 	}
-
 
 	@RestController
 	@SuppressWarnings("unused")

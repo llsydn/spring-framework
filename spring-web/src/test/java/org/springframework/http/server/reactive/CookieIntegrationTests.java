@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.http.server.reactive;
 
 import java.net.URI;
@@ -28,13 +27,15 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.http.HttpCookie;
 import org.springframework.http.RequestEntity;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.client.RestTemplate;
 
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.equalToIgnoringCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Rossen Stoyanchev
@@ -42,11 +43,11 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class CookieIntegrationTests extends AbstractHttpHandlerIntegrationTests {
 
-	private final CookieHandler cookieHandler = new CookieHandler();
-
+	private CookieHandler cookieHandler;
 
 	@Override
 	protected HttpHandler createHttpHandler() {
+		this.cookieHandler = new CookieHandler();
 		return this.cookieHandler;
 	}
 

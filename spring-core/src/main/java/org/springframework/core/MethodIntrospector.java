@@ -38,11 +38,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Rossen Stoyanchev
  * @since 4.2.3
  */
-public final class MethodIntrospector {
-
-	private MethodIntrospector() {
-	}
-
+public abstract class MethodIntrospector {
 
 	/**
 	 * Select methods on the given target type based on the lookup of associated metadata.

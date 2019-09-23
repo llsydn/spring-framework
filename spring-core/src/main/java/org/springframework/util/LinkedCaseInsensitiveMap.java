@@ -23,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import org.springframework.lang.Nullable;
 
@@ -38,7 +37,6 @@ import org.springframework.lang.Nullable;
  *
  * @author Juergen Hoeller
  * @since 3.0
- * @param <V> the value type
  */
 @SuppressWarnings("serial")
 public class LinkedCaseInsensitiveMap<V> implements Map<String, V>, Serializable, Cloneable {
@@ -168,12 +166,10 @@ public class LinkedCaseInsensitiveMap<V> implements Map<String, V>, Serializable
 	@Nullable
 	public V put(String key, @Nullable V value) {
 		String oldKey = this.caseInsensitiveKeys.put(convertKey(key), key);
-		V oldKeyValue = null;
 		if (oldKey != null && !oldKey.equals(key)) {
-			oldKeyValue = this.targetMap.remove(oldKey);
+			this.targetMap.remove(oldKey);
 		}
-		V oldValue = this.targetMap.put(key, value);
-		return (oldKeyValue != null ? oldKeyValue : oldValue);
+		return this.targetMap.put(key, value);
 	}
 
 	@Override
@@ -182,26 +178,6 @@ public class LinkedCaseInsensitiveMap<V> implements Map<String, V>, Serializable
 			return;
 		}
 		map.forEach(this::put);
-	}
-
-	@Override
-	@Nullable
-	public V putIfAbsent(String key, @Nullable V value) {
-		String oldKey = this.caseInsensitiveKeys.putIfAbsent(convertKey(key), key);
-		if (oldKey != null) {
-			return this.targetMap.get(oldKey);
-		}
-		return this.targetMap.putIfAbsent(key, value);
-	}
-
-	@Override
-	@Nullable
-	public V computeIfAbsent(String key, Function<? super String, ? extends V> mappingFunction) {
-		String oldKey = this.caseInsensitiveKeys.putIfAbsent(convertKey(key), key);
-		if (oldKey != null) {
-			return this.targetMap.get(oldKey);
-		}
-		return this.targetMap.computeIfAbsent(key, mappingFunction);
 	}
 
 	@Override

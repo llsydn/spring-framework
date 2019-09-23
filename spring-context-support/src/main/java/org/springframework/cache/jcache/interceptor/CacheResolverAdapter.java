@@ -53,7 +53,7 @@ class CacheResolverAdapter implements CacheResolver {
 	 * that this instance is using.
 	 */
 	protected javax.cache.annotation.CacheResolver getTarget() {
-		return this.target;
+		return target;
 	}
 
 	@Override

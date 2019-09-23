@@ -87,7 +87,7 @@ public class MarshallingHttpMessageConverterTests {
 		assertEquals("Invalid result", body, result);
 	}
 
-	@Test
+	@Test(expected = TypeMismatchException.class)
 	public void readWithTypeMismatchException() throws Exception {
 		MockHttpInputMessage inputMessage = new MockHttpInputMessage(new byte[0]);
 
@@ -96,13 +96,7 @@ public class MarshallingHttpMessageConverterTests {
 		given(unmarshaller.unmarshal(isA(StreamSource.class))).willReturn(Integer.valueOf(3));
 
 		MarshallingHttpMessageConverter converter = new MarshallingHttpMessageConverter(marshaller, unmarshaller);
-		try {
-			converter.read(String.class, inputMessage);
-			fail("Should have thrown HttpMessageNotReadableException");
-		}
-		catch (HttpMessageNotReadableException ex) {
-			assertTrue(ex.getCause() instanceof TypeMismatchException);
-		}
+		converter.read(String.class, inputMessage);
 	}
 
 	@Test

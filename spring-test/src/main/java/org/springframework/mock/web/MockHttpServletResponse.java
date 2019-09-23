@@ -54,7 +54,6 @@ import org.springframework.web.util.WebUtils;
  * @author Juergen Hoeller
  * @author Rod Johnson
  * @author Brian Clozel
- * @author Vedran Pavic
  * @since 1.0.2
  */
 public class MockHttpServletResponse implements HttpServletResponse {
@@ -354,12 +353,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 		if (cookie.isHttpOnly()) {
 			buf.append("; HttpOnly");
 		}
-		if (cookie instanceof MockCookie) {
-			MockCookie mockCookie = (MockCookie) cookie;
-			if (StringUtils.hasText(mockCookie.getSameSite())) {
-				buf.append("; SameSite=").append(mockCookie.getSameSite());
-			}
-		}
 		return buf.toString();
 	}
 
@@ -603,11 +596,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 			setLocale(language != null ? language : Locale.getDefault());
 			return true;
 		}
-		else if (HttpHeaders.SET_COOKIE.equalsIgnoreCase(name)) {
-			MockCookie cookie = MockCookie.parse(value.toString());
-			addCookie(cookie);
-			return true;
-		}
 		else {
 			return false;
 		}
@@ -752,13 +740,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 		@Override
 		public void flush() {
 			super.flush();
-			setCommitted(true);
-		}
-
-		@Override
-		public void close() {
-			super.flush();
-			super.close();
 			setCommitted(true);
 		}
 	}

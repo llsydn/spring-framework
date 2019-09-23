@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<!--<bean id="index" class="com.llsydnn.service.IndexService" primary="">-->
+
+		<!--<constructor-arg index="0" value="order"></constructor-arg>-->
+	<!--</bean>-->
+
+	<!--<bean id="order" class="com.llsydnn.service.OrderService" fm="indexService">-->
+
+	<!--</bean>-->
+
+	<!--<bean id="orderChil" parent="order">-->
+		<!--<property name="name" value="children"></property>-->
+	<!--</bean>-->
+
+	<!--<bean id="daoFactoryBean" class="com.llsydn.llsydn.DaoFactoryBean">-->
+	<!--	<property name="msg" value="1,2,3"></property>-->
+	<!--</bean>-->
+
+	<bean id="parentBd" class="com.llsydn.merge.PcBd">
+		<property name="name" value="parent"></property>
+	</bean>
+
+	<bean id="childBd" parent="parentBd">
+		<property name="name" value="children"></property>
+	</bean>
+
+	<bean id="famethod" class="com.llsydn.fmethod.FaMethod" factory-method="fm"></bean>
+</beans>

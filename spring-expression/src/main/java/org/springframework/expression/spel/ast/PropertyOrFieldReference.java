@@ -322,19 +322,20 @@ public class PropertyOrFieldReference extends SpelNodeImpl {
 				}
 			}
 		}
-		List<PropertyAccessor> resolvers = new ArrayList<>(specificAccessors);
+		List<PropertyAccessor> resolvers = new ArrayList<>();
+		resolvers.addAll(specificAccessors);
 		generalAccessors.removeAll(specificAccessors);
 		resolvers.addAll(generalAccessors);
 		return resolvers;
 	}
-
+	
 	@Override
 	public boolean isCompilable() {
 		PropertyAccessor accessorToUse = this.cachedReadAccessor;
 		return (accessorToUse instanceof CompilablePropertyAccessor &&
 				((CompilablePropertyAccessor) accessorToUse).isCompilable());
 	}
-
+	
 	@Override
 	public void generateCode(MethodVisitor mv, CodeFlow cf) {
 		PropertyAccessor accessorToUse = this.cachedReadAccessor;

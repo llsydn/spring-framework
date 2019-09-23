@@ -175,8 +175,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 			}
 			if (!bean.isRunning() &&
 					(!autoStartupOnly || !(bean instanceof SmartLifecycle) || ((SmartLifecycle) bean).isAutoStartup())) {
-				if (logger.isTraceEnabled()) {
-					logger.trace("Starting bean '" + beanName + "' of type [" + bean.getClass().getName() + "]");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Starting bean '" + beanName + "' of type [" + bean.getClass().getName() + "]");
 				}
 				try {
 					bean.start();
@@ -230,8 +230,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 			try {
 				if (bean.isRunning()) {
 					if (bean instanceof SmartLifecycle) {
-						if (logger.isTraceEnabled()) {
-							logger.trace("Asking bean '" + beanName + "' of type [" +
+						if (logger.isDebugEnabled()) {
+							logger.debug("Asking bean '" + beanName + "' of type [" +
 									bean.getClass().getName() + "] to stop");
 						}
 						countDownBeanNames.add(beanName);
@@ -244,8 +244,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 						});
 					}
 					else {
-						if (logger.isTraceEnabled()) {
-							logger.trace("Stopping bean '" + beanName + "' of type [" +
+						if (logger.isDebugEnabled()) {
+							logger.debug("Stopping bean '" + beanName + "' of type [" +
 									bean.getClass().getName() + "]");
 						}
 						bean.stop();
@@ -352,8 +352,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 			if (this.members.isEmpty()) {
 				return;
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("Starting beans in phase " + this.phase);
+			if (logger.isInfoEnabled()) {
+				logger.info("Starting beans in phase " + this.phase);
 			}
 			Collections.sort(this.members);
 			for (LifecycleGroupMember member : this.members) {
@@ -365,8 +365,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 			if (this.members.isEmpty()) {
 				return;
 			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("Stopping beans in phase " + this.phase);
+			if (logger.isInfoEnabled()) {
+				logger.info("Stopping beans in phase " + this.phase);
 			}
 			this.members.sort(Collections.reverseOrder());
 			CountDownLatch latch = new CountDownLatch(this.smartMemberCount);
@@ -383,8 +383,8 @@ public class DefaultLifecycleProcessor implements LifecycleProcessor, BeanFactor
 			}
 			try {
 				latch.await(this.timeout, TimeUnit.MILLISECONDS);
-				if (latch.getCount() > 0 && !countDownBeanNames.isEmpty() && logger.isInfoEnabled()) {
-					logger.info("Failed to shut down " + countDownBeanNames.size() + " bean" +
+				if (latch.getCount() > 0 && !countDownBeanNames.isEmpty() && logger.isWarnEnabled()) {
+					logger.warn("Failed to shut down " + countDownBeanNames.size() + " bean" +
 							(countDownBeanNames.size() > 1 ? "s" : "") + " with phase value " +
 							this.phase + " within timeout of " + this.timeout + ": " + countDownBeanNames);
 				}

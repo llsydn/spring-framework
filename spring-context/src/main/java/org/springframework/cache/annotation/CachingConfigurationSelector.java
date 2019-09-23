@@ -50,15 +50,11 @@ public class CachingConfigurationSelector extends AdviceModeImportSelector<Enabl
 			"org.springframework.cache.aspectj.AspectJJCacheConfiguration";
 
 
-	private static final boolean jsr107Present;
+	private static final boolean jsr107Present = ClassUtils.isPresent(
+			"javax.cache.Cache", CachingConfigurationSelector.class.getClassLoader());
 
-	private static final boolean jcacheImplPresent;
-
-	static {
-		ClassLoader classLoader = CachingConfigurationSelector.class.getClassLoader();
-		jsr107Present = ClassUtils.isPresent("javax.cache.Cache", classLoader);
-		jcacheImplPresent = ClassUtils.isPresent(PROXY_JCACHE_CONFIGURATION_CLASS, classLoader);
-	}
+	private static final boolean jcacheImplPresent = ClassUtils.isPresent(
+			PROXY_JCACHE_CONFIGURATION_CLASS, CachingConfigurationSelector.class.getClassLoader());
 
 
 	/**
@@ -80,7 +76,7 @@ public class CachingConfigurationSelector extends AdviceModeImportSelector<Enabl
 
 	/**
 	 * Return the imports to use if the {@link AdviceMode} is set to {@link AdviceMode#PROXY}.
-	 * <p>Take care of adding the necessary JSR-107 import if it is available.
+	 * <p>Take care of adding the necessary JSR-107 imports if it is available.
 	 */
 	private String[] getProxyImports() {
 		List<String> result = new ArrayList<>(3);
@@ -94,7 +90,7 @@ public class CachingConfigurationSelector extends AdviceModeImportSelector<Enabl
 
 	/**
 	 * Return the imports to use if the {@link AdviceMode} is set to {@link AdviceMode#ASPECTJ}.
-	 * <p>Take care of adding the necessary JSR-107 import if it is available.
+	 * <p>Take care of adding the necessary JSR-107 imports if it is available.
 	 */
 	private String[] getAspectJImports() {
 		List<String> result = new ArrayList<>(2);

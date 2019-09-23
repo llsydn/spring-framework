@@ -29,7 +29,6 @@ import org.springframework.aop.support.DelegatingIntroductionInterceptor;
 import org.springframework.asm.Type;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.PropertyValue;
-import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanCurrentlyInCreationException;
@@ -41,6 +40,7 @@ import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessorAdapter;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionValidationException;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
@@ -103,7 +103,7 @@ import org.springframework.util.StringUtils;
  * XML bean definition file uses just the &lt;bean/&gt;-style syntax
  * (in an effort to illustrate using the {@link ScriptFactoryPostProcessor} itself).
  * In reality, you would never create a &lt;bean/&gt; definition for a
- * {@link ScriptFactoryPostProcessor} explicitly; rather you would import the
+ * {@link ScriptFactoryPostProcessor} explicitly; rather you would imports the
  * tags from the {@code 'lang'} namespace and simply create scripted
  * beans using the tags in that namespace... as part of doing so, a
  * {@link ScriptFactoryPostProcessor} will implicitly be created for you.
@@ -147,21 +147,12 @@ public class ScriptFactoryPostProcessor extends InstantiationAwareBeanPostProces
 	 */
 	public static final String INLINE_SCRIPT_PREFIX = "inline:";
 
-	/**
-	 * The {@code refreshCheckDelay} attribute.
-	 */
 	public static final String REFRESH_CHECK_DELAY_ATTRIBUTE = Conventions.getQualifiedAttributeName(
 			ScriptFactoryPostProcessor.class, "refreshCheckDelay");
 
-	/**
-	 * The {@code proxyTargetClass} attribute.
-	 */
 	public static final String PROXY_TARGET_CLASS_ATTRIBUTE = Conventions.getQualifiedAttributeName(
 			ScriptFactoryPostProcessor.class, "proxyTargetClass");
 
-	/**
-	 * The {@code language} attribute.
-	 */
 	public static final String LANGUAGE_ATTRIBUTE = Conventions.getQualifiedAttributeName(
 			ScriptFactoryPostProcessor.class, "language");
 
@@ -170,7 +161,7 @@ public class ScriptFactoryPostProcessor extends InstantiationAwareBeanPostProces
 	private static final String SCRIPTED_OBJECT_NAME_PREFIX = "scriptedObject.";
 
 
-	/** Logger available to subclasses. */
+	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	private long defaultRefreshCheckDelay = -1;
@@ -187,7 +178,7 @@ public class ScriptFactoryPostProcessor extends InstantiationAwareBeanPostProces
 
 	final DefaultListableBeanFactory scriptBeanFactory = new DefaultListableBeanFactory();
 
-	/** Map from bean name String to ScriptSource object. */
+	/** Map from bean name String to ScriptSource object */
 	private final Map<String, ScriptSource> scriptSourceCache = new HashMap<>();
 
 
@@ -296,11 +287,6 @@ public class ScriptFactoryPostProcessor extends InstantiationAwareBeanPostProces
 		}
 
 		return null;
-	}
-
-	@Override
-	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
-		return pvs;
 	}
 
 	@Override
@@ -515,13 +501,16 @@ public class ScriptFactoryPostProcessor extends InstantiationAwareBeanPostProces
 			Signature signature = new Signature(setterName, Type.VOID_TYPE, new Type[] {Type.getType(propertyType)});
 			maker.add(signature, new Type[0]);
 		}
-		if (bd.getInitMethodName() != null) {
-			Signature signature = new Signature(bd.getInitMethodName(), Type.VOID_TYPE, new Type[0]);
-			maker.add(signature, new Type[0]);
-		}
-		if (StringUtils.hasText(bd.getDestroyMethodName())) {
-			Signature signature = new Signature(bd.getDestroyMethodName(), Type.VOID_TYPE, new Type[0]);
-			maker.add(signature, new Type[0]);
+		if (bd instanceof AbstractBeanDefinition) {
+			AbstractBeanDefinition abd = (AbstractBeanDefinition) bd;
+			if (abd.getInitMethodName() != null) {
+				Signature signature = new Signature(abd.getInitMethodName(), Type.VOID_TYPE, new Type[0]);
+				maker.add(signature, new Type[0]);
+			}
+			if (StringUtils.hasText(abd.getDestroyMethodName())) {
+				Signature signature = new Signature(abd.getDestroyMethodName(), Type.VOID_TYPE, new Type[0]);
+				maker.add(signature, new Type[0]);
+			}
 		}
 		return maker.create();
 	}

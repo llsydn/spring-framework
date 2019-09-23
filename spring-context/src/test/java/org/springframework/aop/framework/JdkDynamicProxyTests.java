@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.Serializable;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+
 import org.junit.Test;
 
 import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
@@ -59,7 +60,7 @@ public class JdkDynamicProxyTests extends AbstractAopProxyTests implements Seria
 	}
 
 	@Test
-	public void testProxyIsJustInterface() {
+	public void testProxyIsJustInterface() throws Throwable {
 		TestBean raw = new TestBean();
 		raw.setAge(32);
 		AdvisedSupport pc = new AdvisedSupport(ITestBean.class);
@@ -72,7 +73,7 @@ public class JdkDynamicProxyTests extends AbstractAopProxyTests implements Seria
 	}
 
 	@Test
-	public void testInterceptorIsInvokedWithNoTarget() {
+	public void testInterceptorIsInvokedWithNoTarget() throws Throwable {
 		// Test return value
 		final int age = 25;
 		MethodInterceptor mi = (invocation -> age);
@@ -86,7 +87,7 @@ public class JdkDynamicProxyTests extends AbstractAopProxyTests implements Seria
 	}
 
 	@Test
-	public void testTargetCanGetInvocationWithPrivateClass() {
+	public void testTargetCanGetInvocationWithPrivateClass() throws Throwable {
 		final ExposedInvocationTestBean expectedTarget = new ExposedInvocationTestBean() {
 			@Override
 			protected void assertions(MethodInvocation invocation) {
@@ -127,7 +128,7 @@ public class JdkDynamicProxyTests extends AbstractAopProxyTests implements Seria
 	}
 
 	@Test
-	public void testEqualsAndHashCodeDefined() {
+	public void testEqualsAndHashCodeDefined() throws Exception {
 		AdvisedSupport as = new AdvisedSupport(Named.class);
 		as.setTarget(new Person());
 		JdkDynamicAopProxy aopProxy = new JdkDynamicAopProxy(as);
@@ -138,7 +139,7 @@ public class JdkDynamicProxyTests extends AbstractAopProxyTests implements Seria
 	}
 
 	@Test  // SPR-13328
-	public void testVarargsWithEnumArray() {
+	public void testVarargsWithEnumArray() throws Exception {
 		ProxyFactory proxyFactory = new ProxyFactory(new VarargTestBean());
 		VarargTestInterface proxy = (VarargTestInterface) proxyFactory.getProxy();
 		assertTrue(proxy.doWithVarargs(MyEnum.A, MyOtherEnum.C));

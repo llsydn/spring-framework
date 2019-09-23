@@ -145,7 +145,7 @@ public class ProxyFactoryBeanTests {
 		catch (BeanCreationException ex) {
 			// Root cause of the problem must be an AOP exception
 			AopConfigException aex = (AopConfigException) ex.getCause();
-			assertTrue(aex.getMessage().contains("TargetSource"));
+			assertTrue(aex.getMessage().indexOf("TargetSource") != -1);
 		}
 	}
 

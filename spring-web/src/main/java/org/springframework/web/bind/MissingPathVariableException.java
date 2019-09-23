@@ -27,7 +27,6 @@ import org.springframework.core.MethodParameter;
  *
  * @author Rossen Stoyanchev
  * @since 4.2
- * @see MissingMatrixVariableException
  */
 @SuppressWarnings("serial")
 public class MissingPathVariableException extends ServletRequestBindingException {

@@ -48,7 +48,6 @@ import org.springframework.transaction.TransactionSystemException;
 import org.springframework.transaction.support.AbstractPlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.DelegatingTransactionDefinition;
-import org.springframework.transaction.support.ResourceTransactionDefinition;
 import org.springframework.transaction.support.ResourceTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.Assert;
@@ -399,7 +398,12 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 			// Delegate to JpaDialect for actual transaction begin.
 			final int timeoutToUse = determineTimeout(definition);
 			Object transactionData = getJpaDialect().beginTransaction(em,
-					new JpaTransactionDefinition(definition, timeoutToUse, txObject.isNewEntityManagerHolder()));
+					new DelegatingTransactionDefinition(definition) {
+						@Override
+						public int getTimeout() {
+							return timeoutToUse;
+						}
+					});
 			txObject.setTransactionData(transactionData);
 
 			// Register transaction timeout.
@@ -416,7 +420,7 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 						conHolder.setTimeoutInSeconds(timeoutToUse);
 					}
 					if (logger.isDebugEnabled()) {
-						logger.debug("Exposing JPA transaction as JDBC [" + conHandle + "]");
+						logger.debug("Exposing JPA transaction as JDBC transaction [" + conHandle + "]");
 					}
 					TransactionSynchronizationManager.bindResource(getDataSource(), conHolder);
 					txObject.setConnectionHolder(conHolder);
@@ -533,9 +537,9 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 		}
 		catch (RollbackException ex) {
 			if (ex.getCause() instanceof RuntimeException) {
-				DataAccessException dae = getJpaDialect().translateExceptionIfPossible((RuntimeException) ex.getCause());
-				if (dae != null) {
-					throw dae;
+				DataAccessException dex = getJpaDialect().translateExceptionIfPossible((RuntimeException) ex.getCause());
+				if (dex != null) {
+					throw dex;
 				}
 			}
 			throw new TransactionSystemException("Could not commit JPA transaction", ex);
@@ -738,39 +742,10 @@ public class JpaTransactionManager extends AbstractPlatformTransactionManager
 
 
 	/**
-	 * JPA-specific transaction definition to be passed to {@link JpaDialect#beginTransaction}.
-	 * @since 5.1
-	 */
-	private static class JpaTransactionDefinition extends DelegatingTransactionDefinition
-			implements ResourceTransactionDefinition {
-
-		private final int timeout;
-
-		private final boolean localResource;
-
-		public JpaTransactionDefinition(TransactionDefinition targetDefinition, int timeout, boolean localResource) {
-			super(targetDefinition);
-			this.timeout = timeout;
-			this.localResource = localResource;
-		}
-
-		@Override
-		public int getTimeout() {
-			return this.timeout;
-		}
-
-		@Override
-		public boolean isLocalResource() {
-			return this.localResource;
-		}
-	}
-
-
-	/**
 	 * Holder for suspended resources.
 	 * Used internally by {@code doSuspend} and {@code doResume}.
 	 */
-	private static final class SuspendedResourcesHolder {
+	private static class SuspendedResourcesHolder {
 
 		private final EntityManagerHolder entityManagerHolder;
 

@@ -54,7 +54,7 @@ import static org.mockito.Mockito.*;
 public class DefaultRenderingResponseTests {
 
 	@Test
-	public void create() {
+	public void create() throws Exception {
 		String name = "foo";
 		Mono<RenderingResponse> result = RenderingResponse.create(name).build();
 		StepVerifier.create(result)
@@ -64,7 +64,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void headers() {
+	public void headers() throws Exception {
 		HttpHeaders headers = new HttpHeaders();
 		Mono<RenderingResponse> result = RenderingResponse.create("foo").headers(headers).build();
 		StepVerifier.create(result)
@@ -75,7 +75,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void modelAttribute() {
+	public void modelAttribute() throws Exception {
 		Mono<RenderingResponse> result = RenderingResponse.create("foo")
 				.modelAttribute("foo", "bar").build();
 		StepVerifier.create(result)
@@ -85,7 +85,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void modelAttributeConventions() {
+	public void modelAttributeConventions() throws Exception {
 		Mono<RenderingResponse> result = RenderingResponse.create("foo")
 				.modelAttribute("bar").build();
 		StepVerifier.create(result)
@@ -95,7 +95,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void modelAttributes() {
+	public void modelAttributes() throws Exception {
 		Map<String, String> model = Collections.singletonMap("foo", "bar");
 		Mono<RenderingResponse> result = RenderingResponse.create("foo")
 				.modelAttributes(model).build();
@@ -106,7 +106,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void modelAttributesConventions() {
+	public void modelAttributesConventions() throws Exception {
 		Set<String> model = Collections.singleton("bar");
 		Mono<RenderingResponse> result = RenderingResponse.create("foo")
 				.modelAttributes(model).build();
@@ -117,7 +117,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void cookies() {
+	public void cookies() throws Exception {
 		MultiValueMap<String, ResponseCookie> newCookies = new LinkedMultiValueMap<>();
 		newCookies.add("name", ResponseCookie.from("name", "value").build());
 		Mono<RenderingResponse> result =
@@ -130,7 +130,7 @@ public class DefaultRenderingResponseTests {
 
 
 	@Test
-	public void render() {
+	public void render() throws Exception {
 		Map<String, Object> model = Collections.singletonMap("foo", "bar");
 		Mono<RenderingResponse> result = RenderingResponse.create("view").modelAttributes(model).build();
 
@@ -154,7 +154,7 @@ public class DefaultRenderingResponseTests {
 	}
 
 	@Test
-	public void defaultContentType() {
+	public void defaultContentType() throws Exception {
 		Mono<RenderingResponse> result = RenderingResponse.create("view").build();
 
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("http://localhost"));

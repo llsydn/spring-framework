@@ -30,7 +30,6 @@ import org.springframework.util.StringUtils;
  *
  * @author Stephane Nicoll
  * @since 4.1
- * @param <T> type of the instance to and from which headers will be mapped
  */
 public abstract class AbstractHeaderMapper<T> implements HeaderMapper<T> {
 
@@ -97,8 +96,8 @@ public abstract class AbstractHeaderMapper<T> implements HeaderMapper<T> {
 			return null;
 		}
 		if (!type.isAssignableFrom(value.getClass())) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Skipping header '" + name + "': expected type [" + type + "], but got [" +
+			if (logger.isWarnEnabled()) {
+				logger.warn("Skipping header '" + name + "'expected type [" + type + "], but got [" +
 						value.getClass() + "]");
 			}
 			return null;

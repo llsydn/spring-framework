@@ -179,13 +179,10 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 		int size = 1 << this.shift;
 		this.referenceType = referenceType;
 		int roundedUpSegmentCapacity = (int) ((initialCapacity + size - 1L) / size);
-		int initialSize = 1 << calculateShift(roundedUpSegmentCapacity, MAXIMUM_SEGMENT_SIZE);
-		Segment[] segments = (Segment[]) Array.newInstance(Segment.class, size);
-		int resizeThreshold = (int) (initialSize * getLoadFactor());
-		for (int i = 0; i < segments.length; i++) {
-			segments[i] = new Segment(initialSize, resizeThreshold);
+		this.segments = (Segment[]) Array.newInstance(Segment.class, size);
+		for (int i = 0; i < this.segments.length; i++) {
+			this.segments[i] = new Segment(roundedUpSegmentCapacity);
 		}
-		this.segments = segments;
 	}
 
 
@@ -448,10 +445,10 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 	 */
 	public enum ReferenceType {
 
-		/** Use {@link SoftReference SoftReferences}. */
+		/** Use {@link SoftReference}s */
 		SOFT,
 
-		/** Use {@link WeakReference WeakReferences}. */
+		/** Use {@link WeakReference}s */
 		WEAK
 	}
 
@@ -484,11 +481,11 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 		 */
 		private int resizeThreshold;
 
-		public Segment(int initialSize, int resizeThreshold) {
+		public Segment(int initialCapacity) {
 			this.referenceManager = createReferenceManager();
-			this.initialSize = initialSize;
-			this.references = createReferenceArray(initialSize);
-			this.resizeThreshold = resizeThreshold;
+			this.initialSize = 1 << calculateShift(initialCapacity, MAXIMUM_SEGMENT_SIZE);
+			this.references = createReferenceArray(this.initialSize);
+			this.resizeThreshold = (int) (this.references.length * getLoadFactor());
 		}
 
 		@Nullable
@@ -682,8 +679,6 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 	/**
 	 * A reference to an {@link Entry} contained in the map. Implementations are usually
 	 * wrappers around specific Java reference implementations (e.g., {@link SoftReference}).
-	 * @param <K> the key type
-	 * @param <V> the value type
 	 */
 	protected interface Reference<K, V> {
 
@@ -714,8 +709,6 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 
 	/**
 	 * A single map entry.
-	 * @param <K> the key type
-	 * @param <V> the value type
 	 */
 	protected static final class Entry<K, V> implements Map.Entry<K, V> {
 
@@ -979,7 +972,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 
 
 	/**
-	 * Strategy class used to manage {@link Reference References}. This class can be overridden if
+	 * Strategy class used to manage {@link Reference}s. This class can be overridden if
 	 * alternative reference types need to be supported.
 	 */
 	protected class ReferenceManager {
@@ -1016,7 +1009,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 
 
 	/**
-	 * Internal {@link Reference} implementation for {@link SoftReference SoftReferences}.
+	 * Internal {@link Reference} implementation for {@link SoftReference}s.
 	 */
 	private static final class SoftEntryReference<K, V> extends SoftReference<Entry<K, V>> implements Reference<K, V> {
 
@@ -1053,7 +1046,7 @@ public class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V> implemen
 
 
 	/**
-	 * Internal {@link Reference} implementation for {@link WeakReference WeakReferences}.
+	 * Internal {@link Reference} implementation for {@link WeakReference}s.
 	 */
 	private static final class WeakEntryReference<K, V> extends WeakReference<Entry<K, V>> implements Reference<K, V> {
 

@@ -151,6 +151,7 @@ public class RequestResponseBodyAdviceChainTests {
 			return true;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public String beforeBodyWrite(String body, MethodParameter returnType,
 				MediaType contentType, Class<? extends HttpMessageConverter<?>> converterType,
@@ -169,6 +170,7 @@ public class RequestResponseBodyAdviceChainTests {
 			return true;
 		}
 
+		@SuppressWarnings("unchecked")
 		@Override
 		public String beforeBodyWrite(String body, MethodParameter returnType,
 				MediaType contentType, Class<? extends HttpMessageConverter<?>> converterType,

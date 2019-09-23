@@ -157,7 +157,7 @@ public class ScheduledExecutorFactoryBean extends ExecutorConfigurationSupport
 				((ScheduledThreadPoolExecutor) executor).setRemoveOnCancelPolicy(true);
 			}
 			else {
-				logger.debug("Could not apply remove-on-cancel policy - not a ScheduledThreadPoolExecutor");
+				logger.info("Could not apply remove-on-cancel policy - not a ScheduledThreadPoolExecutor");
 			}
 		}
 

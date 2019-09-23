@@ -151,8 +151,8 @@ public class MBeanRegistrationSupport {
 						registeredBean = this.server.registerMBean(mbean, objectName);
 					}
 					catch (InstanceNotFoundException ex2) {
-						if (logger.isInfoEnabled()) {
-							logger.info("Unable to replace existing MBean at [" + objectName + "]", ex2);
+						if (logger.isErrorEnabled()) {
+							logger.error("Unable to replace existing MBean at [" + objectName + "]", ex2);
 						}
 						throw ex;
 					}
@@ -182,7 +182,7 @@ public class MBeanRegistrationSupport {
 			snapshot = new LinkedHashSet<>(this.registeredBeans);
 		}
 		if (!snapshot.isEmpty()) {
-			logger.debug("Unregistering JMX-exposed beans");
+			logger.info("Unregistering JMX-exposed beans");
 			for (ObjectName objectName : snapshot) {
 				doUnregister(objectName);
 			}
@@ -206,15 +206,15 @@ public class MBeanRegistrationSupport {
 						actuallyUnregistered = true;
 					}
 					else {
-						if (logger.isInfoEnabled()) {
-							logger.info("Could not unregister MBean [" + objectName + "] as said MBean " +
+						if (logger.isWarnEnabled()) {
+							logger.warn("Could not unregister MBean [" + objectName + "] as said MBean " +
 									"is not registered (perhaps already unregistered by an external process)");
 						}
 					}
 				}
 				catch (JMException ex) {
-					if (logger.isInfoEnabled()) {
-						logger.info("Could not unregister MBean [" + objectName + "]", ex);
+					if (logger.isErrorEnabled()) {
+						logger.error("Could not unregister MBean [" + objectName + "]", ex);
 					}
 				}
 			}

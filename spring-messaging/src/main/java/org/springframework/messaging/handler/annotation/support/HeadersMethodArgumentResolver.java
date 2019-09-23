@@ -29,8 +29,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.util.ReflectionUtils;
 
 /**
- * {@link HandlerMethodArgumentResolver} for header method parameters. Resolves the
- * following method parameters:
+ * Resolves the following method parameters:
  * <ul>
  * <li>Parameters assignable to {@link Map} annotated with {@link Headers @Headers}
  * <li>Parameters of type {@link MessageHeaders}

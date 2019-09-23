@@ -18,7 +18,6 @@ package org.springframework.http.codec.json;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -34,17 +33,17 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.codec.DecodingException;
-import org.springframework.core.io.buffer.AbstractLeakCheckingTestCase;
+import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
 import org.springframework.core.io.buffer.DataBuffer;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
+import static java.util.Arrays.*;
+import static java.util.Collections.*;
 
 /**
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
  */
-public class Jackson2TokenizerTests extends AbstractLeakCheckingTestCase {
+public class Jackson2TokenizerTests extends AbstractDataBufferAllocatingTestCase {
 
 	private ObjectMapper objectMapper;
 
@@ -179,27 +178,11 @@ public class Jackson2TokenizerTests extends AbstractLeakCheckingTestCase {
 		testTokenize(asList("[1", ",2,", "3]"), asList("1", "2", "3"), true);
 	}
 
-	@Test
-	public void errorInStream() {
-		DataBuffer buffer = stringBuffer("{\"id\":1,\"name\":");
-		Flux<DataBuffer> source = Flux.just(buffer)
-				.concatWith(Flux.error(new RuntimeException()));
-
-		Flux<TokenBuffer> result = Jackson2Tokenizer.tokenize(source, this.jsonFactory, true);
-
-		StepVerifier.create(result)
-				.expectError(RuntimeException.class)
-				.verify();
-	}
-
-	@Test // SPR-16521
+	@Test(expected = DecodingException.class) // SPR-16521
 	public void jsonEOFExceptionIsWrappedAsDecodingError() {
 		Flux<DataBuffer> source = Flux.just(stringBuffer("{\"status\": \"noClosingQuote}"));
 		Flux<TokenBuffer> tokens = Jackson2Tokenizer.tokenize(source, this.jsonFactory, false);
-
-		StepVerifier.create(tokens)
-				.expectError(DecodingException.class)
-				.verify();
+		tokens.blockLast();
 	}
 
 
@@ -225,14 +208,6 @@ public class Jackson2TokenizerTests extends AbstractLeakCheckingTestCase {
 		expected.forEach(s -> builder.assertNext(new JSONAssertConsumer(s)));
 		builder.verifyComplete();
 	}
-
-	private DataBuffer stringBuffer(String value) {
-		byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-		DataBuffer buffer = this.bufferFactory.allocateBuffer(bytes.length);
-		buffer.write(bytes);
-		return buffer;
-	}
-
 
 
 	private static class JSONAssertConsumer implements Consumer<String> {

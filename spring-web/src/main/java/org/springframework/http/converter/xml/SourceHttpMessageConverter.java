@@ -62,7 +62,6 @@ import org.springframework.util.StreamUtils;
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
  * @since 3.0
- * @param <T> the converted object type
  */
 public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMessageConverter<T> {
 
@@ -147,24 +146,24 @@ public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMe
 
 		InputStream body = inputMessage.getBody();
 		if (DOMSource.class == clazz) {
-			return (T) readDOMSource(body, inputMessage);
+			return (T) readDOMSource(body);
 		}
 		else if (SAXSource.class == clazz) {
-			return (T) readSAXSource(body, inputMessage);
+			return (T) readSAXSource(body);
 		}
 		else if (StAXSource.class == clazz) {
-			return (T) readStAXSource(body, inputMessage);
+			return (T) readStAXSource(body);
 		}
 		else if (StreamSource.class == clazz || Source.class == clazz) {
 			return (T) readStreamSource(body);
 		}
 		else {
 			throw new HttpMessageNotReadableException("Could not read class [" + clazz +
-					"]. Only DOMSource, SAXSource, StAXSource, and StreamSource are supported.", inputMessage);
+					"]. Only DOMSource, SAXSource, StAXSource, and StreamSource are supported.");
 		}
 	}
 
-	private DOMSource readDOMSource(InputStream body, HttpInputMessage inputMessage) throws IOException {
+	private DOMSource readDOMSource(InputStream body) throws IOException {
 		try {
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			documentBuilderFactory.setNamespaceAware(true);
@@ -181,23 +180,21 @@ public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMe
 		}
 		catch (NullPointerException ex) {
 			if (!isSupportDtd()) {
-				throw new HttpMessageNotReadableException("NPE while unmarshalling: This can happen " +
-						"due to the presence of DTD declarations which are disabled.", ex, inputMessage);
+				throw new HttpMessageNotReadableException("NPE while unmarshalling: " +
+						"This can happen due to the presence of DTD declarations which are disabled.", ex);
 			}
 			throw ex;
 		}
 		catch (ParserConfigurationException ex) {
-			throw new HttpMessageNotReadableException(
-					"Could not set feature: " + ex.getMessage(), ex, inputMessage);
+			throw new HttpMessageNotReadableException("Could not set feature: " + ex.getMessage(), ex);
 		}
 		catch (SAXException ex) {
-			throw new HttpMessageNotReadableException(
-					"Could not parse document: " + ex.getMessage(), ex, inputMessage);
+			throw new HttpMessageNotReadableException("Could not parse document: " + ex.getMessage(), ex);
 		}
 	}
 
 	@SuppressWarnings("deprecation")  // on JDK 9
-	private SAXSource readSAXSource(InputStream body, HttpInputMessage inputMessage) throws IOException {
+	private SAXSource readSAXSource(InputStream body) throws IOException {
 		try {
 			XMLReader xmlReader = org.xml.sax.helpers.XMLReaderFactory.createXMLReader();
 			xmlReader.setFeature("http://apache.org/xml/features/disallow-doctype-decl", !isSupportDtd());
@@ -209,12 +206,11 @@ public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMe
 			return new SAXSource(xmlReader, new InputSource(new ByteArrayInputStream(bytes)));
 		}
 		catch (SAXException ex) {
-			throw new HttpMessageNotReadableException(
-					"Could not parse document: " + ex.getMessage(), ex, inputMessage);
+			throw new HttpMessageNotReadableException("Could not parse document: " + ex.getMessage(), ex);
 		}
 	}
 
-	private Source readStAXSource(InputStream body, HttpInputMessage inputMessage) {
+	private Source readStAXSource(InputStream body) {
 		try {
 			XMLInputFactory inputFactory = XMLInputFactory.newInstance();
 			inputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, isSupportDtd());
@@ -226,8 +222,7 @@ public class SourceHttpMessageConverter<T extends Source> extends AbstractHttpMe
 			return new StAXSource(streamReader);
 		}
 		catch (XMLStreamException ex) {
-			throw new HttpMessageNotReadableException(
-					"Could not parse document: " + ex.getMessage(), ex, inputMessage);
+			throw new HttpMessageNotReadableException("Could not parse document: " + ex.getMessage(), ex);
 		}
 	}
 
