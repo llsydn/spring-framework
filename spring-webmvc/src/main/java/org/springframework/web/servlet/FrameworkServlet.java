@@ -496,6 +496,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		long startTime = System.currentTimeMillis();
 
 		try {
+			//初始化web环境
 			this.webApplicationContext = initWebApplicationContext();
 			initFrameworkServlet();
 		}
@@ -538,6 +539,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 						// the root application context (if any; may be null) as the parent
 						cwac.setParent(rootContext);
 					}
+					//配置和刷新spring容器
 					configureAndRefreshWebApplicationContext(cwac);
 				}
 			}
@@ -558,6 +560,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			// Either the context is not a ConfigurableApplicationContext with refresh
 			// support or the context injected at construction time had already been
 			// refreshed -> trigger initial onRefresh manually here.
+
+			//初始化DispatcherServlet的配置initStrategies()
 			onRefresh(wac);
 		}
 
@@ -808,6 +812,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 */
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		this.refreshEventReceived = true;
+		//初始化DispatcherServlet的配置initStrategies()
 		onRefresh(event.getApplicationContext());
 	}
 
@@ -1117,9 +1122,11 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * only, delegating to {@code onApplicationEvent} on the FrameworkServlet instance.
 	 */
 	private class ContextRefreshListener implements ApplicationListener<ContextRefreshedEvent> {
-
+		//定义一个ContextRefreshListener监听器，监听ContextRefreshedEvent事件。
+		//在spring容器启动，当上下文被刷新时产生，执行ContextRefreshedEvent事件。
 		@Override
 		public void onApplicationEvent(ContextRefreshedEvent event) {
+			//初始化DispatcherServlet的配置initStrategies()
 			FrameworkServlet.this.onApplicationEvent(event);
 		}
 	}

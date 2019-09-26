@@ -109,7 +109,7 @@ import org.springframework.util.ReflectionUtils;
  * @see #onStartup(Set, ServletContext)
  * @see WebApplicationInitializer
  */
-@HandlesTypes(WebApplicationInitializer.class)
+@HandlesTypes(WebApplicationInitializer.class) //这里会拿到所有实现该接口的类
 public class SpringServletContainerInitializer implements ServletContainerInitializer {
 
 	/**
@@ -169,6 +169,7 @@ public class SpringServletContainerInitializer implements ServletContainerInitia
 		servletContext.log(initializers.size() + " Spring WebApplicationInitializers detected on classpath");
 		AnnotationAwareOrderComparator.sort(initializers);
 		for (WebApplicationInitializer initializer : initializers) {
+			//执行onStartup方法
 			initializer.onStartup(servletContext);
 		}
 	}

@@ -21,6 +21,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.springframework.lang.Nullable;
 
 /**
+ * 确定handler的类型{
+ *     1.bean
+ *     2.method
+ * }
+ *
  * Interface to be implemented by objects that define a mapping between
  * requests and handler objects.
  *

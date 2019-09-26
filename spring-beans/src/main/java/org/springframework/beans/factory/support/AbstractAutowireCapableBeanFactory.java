@@ -563,6 +563,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		synchronized (mbd.postProcessingLock) {
 			if (!mbd.postProcessed) {
 				try {
+					//第三次应用spring的后置处理器（3）
 					//非常重要
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
@@ -584,6 +585,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			//第四次应用spring的后置处理器（4）
 			//这个时候bean已经被创建出来，但是还没进行属性装配
 			//放入了 earlySingletonObjects（已经被new出来，但是属性没有被填充）
 			//singletonFactories
@@ -1162,6 +1164,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		// 第二次应用spring的后置处理器（2）
 		//1.当有无参构造方法，就默认使用该无参构造方法，实例化对象。
 			//因为spring不知道，你是使用有参构造方法实例化对象，还是使用无参构造方法实例化对象，所以就简单一点，使用无参构造方法实例化对象。
 		//2.当且仅当只有一个有参构造方法，就使用该有参构造方法，实例化对象。
@@ -1344,6 +1347,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		//是否需要属性赋值
 		boolean continueWithPropertyPopulation = true;
 
+		//第五次应用spring的后置处理器（5）
 		//实现InstantiationAwareBeanPostProcessor接口，就可以不进行属性赋值，返回一个寡对象
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
@@ -1392,6 +1396,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (hasInstAwareBpps) {
 				for (BeanPostProcessor bp : getBeanPostProcessors()) {
 					if (bp instanceof InstantiationAwareBeanPostProcessor) {
+						//第六次应用spring的后置处理器（6）
 						InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
 						pvs = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
 						if (pvs == null) {
@@ -1743,6 +1748,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
+			//第七次应用spring的后置处理器（7）
 			//执行后置处理器的before方法
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
@@ -1757,6 +1763,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					beanName, "Invocation of init method failed", ex);
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
+			//第八次应用spring的后置处理器（8）
 			//执行后置处理器的after方法（这里完成aop代理）
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}

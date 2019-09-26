@@ -113,6 +113,8 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	}
 
 	/**
+	 * 对于BeanNameUrlHandlerMapping，indexController1，类的请求路径映射
+	 *
 	 * Look up a handler for the URL path of the given request.
 	 * @param request current HTTP request
 	 * @return the handler instance, or {@code null} if none found
@@ -120,7 +122,9 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	@Override
 	@Nullable
 	protected Object getHandlerInternal(HttpServletRequest request) throws Exception {
+		//获取请求的路径
 		String lookupPath = getUrlPathHelper().getLookupPathForRequest(request);
+		//找到对应的handler（重点）
 		Object handler = lookupHandler(lookupPath, request);
 		if (handler == null) {
 			// We need to care for the default handler directly, since we need to
@@ -166,7 +170,9 @@ public abstract class AbstractUrlHandlerMapping extends AbstractHandlerMapping i
 	 */
 	@Nullable
 	protected Object lookupHandler(String urlPath, HttpServletRequest request) throws Exception {
-		// Direct match?
+		//Direct match?
+		//通过请求的路径，在handlerMap中去匹配。
+		//handlerMap这个值，什么时候填充值？在init初始化的时候，就已经存放在这个handlerMap种
 		Object handler = this.handlerMap.get(urlPath);
 		if (handler != null) {
 			// Bean name or resolved handler?
