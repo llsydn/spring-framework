@@ -168,6 +168,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
+		//重点，一定要记住这里传的是一个true，面试会考
 		return getSingleton(beanName, true);
 	}
 
@@ -183,16 +184,68 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		//从map中获取bean如果不为空直接返回，不再进行初始化工作
 		//讲道理一个程序员提供的对象这里一般都是为空的
+		//先从第一个map获取a这个bean，也就是单例池获取
 		Object singletonObject = this.singletonObjects.get(beanName);
+
+		/**
+		 我们这里的场景是初始化对象A第一次调用这个方法
+		 这段代码非常重要，首先从容器中拿，如果拿不到，再判断这个对象是不是在set集合
+		 这里的set集合前文已经解释过了，就是判断a是不是正在创建
+		 假设现在a不在创建过程，那么直接返回一个空，第一次getSingleton返回
+		 **/
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
+
+				//然后从第三个map当中获取a这个对象
 				singletonObject = this.earlySingletonObjects.get(beanName);
+
+				//如果第三个map获取不到a对象，再看是否允许了循环引用
+				//而这里的allowEarlyReference是true
+				//为什么是true，上文说了这个方法是spring自己调用的，他默认传了true
 				if (singletonObject == null && allowEarlyReference) {
+
+					//然后从第二个map中获取一个表达式
+					//这里要非常注意第二个map当中存的不是一个单纯的对象
+					//前面说了第二个map当中存的是一个表达式，你可以理解为存了一个工厂
+					//或者理解存了一个方法，方法里面有个参数就是这个对象
+					//按照spring的命名来分析应该理解为一个工厂singletonFactory
+					//一个能够生成a对象的工厂
+					//那么他为什么需要这么一个工厂
+					//这里我先大概说一下，是为了通过工厂来改变这个对象
+					//至于为什么要改变对象，下文我会分析
+					//当然大部分情况下是不需要改变这个对象的
+					//读者先可以考虑不需要改变这个对象，
+					//那么这个map里面存的工厂就生产就是这个原对象，那么和第三个map功能一样
+
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 					if (singletonFactory != null) {
+
+						//调用表达式，说白了就是调用工厂的方法，然后改变对象
+						//我们假设对象不需要改变的情况那么返回了原对象就是a
+						//需要改变的情况我们下文再分享
 						singletonObject = singletonFactory.getObject();
+
+						//然后把这个对象放到第三个map当中
 						this.earlySingletonObjects.put(beanName, singletonObject);
+
+						//把这个对象、或者表达式、或者工厂从第二个map中移除
 						this.singletonFactories.remove(beanName);
+
+						//重点:面试会考---为什么要放到第三个？为什么要移除第二个？
+						//首先我们通过分析做一个总结:
+						//spring首先从第一个map中拿a这个bean
+						//拿不到，从第三个map当中拿a这个对象
+						//拿不到，从第二个map拿a这个对象或者工厂
+						//拿到之后放到第三个map，移除第二个map里面的表达式、或者工厂
+						//如果对象需要改变，当改变完成之后就把他放到第三个里面
+						//这里的情况是b需要a而进行的步骤，试想一下以后如果还有C需要依赖a
+						//就不需要重复第二个map的工作了，也就是改变对象的工作了。
+						//因为改变完成之后的a对象已经在第三个map中了。不知道读者能不能懂笔者的意思
+						//如果对象不需要改变道理是一样的，也同样在第三个map取就是了；
+						//至于为什么需要移除第二个map里面的工厂、或者表达式就更好理解了
+						//他已经对a做完了改变，改变之后的对象已经在第三个map了，为了方便gc啊
+						//下面对为什么需要改变对象做分析
+
 					}
 				}
 			}
@@ -200,6 +253,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		return singletonObject;
 	}
 
+	/**
+	 上面说的true对应这里的第二个参数boolean allowEarlyReference
+	 顾名思义 叫做允许循环引用，而spring在内部调用这个方法的时候传的true
+	 这也能说明spring默认是支持循环引用的，这也是需要讲过面试官的
+	 但是你不能只讲这一点，后面我会总结，这里先记着这个true
+	 这个allowEarlyReference也是支持spring默认支持循环引用的其中一个原因
+	 **/
 	/**
 	 * Return the (raw) singleton object registered under the given name,
 	 * creating and registering a new one if none registered yet.
@@ -211,6 +271,10 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
+			//首先也是从第一个map即容器中获取
+			//再次证明如果我们在容器初始化后调用getBean其实就是从map当中获取一个bean
+			//我们这里的场景是初始化对象A第一次调用这个方法
+			//那么肯定为空
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
@@ -221,11 +285,13 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
+
 				/**
 				 * 将beanName添加到singletonsCurrentlyInCreation这样一个set集合中
 				 * 表示beanName对应的bean正在创建中
 				 */
 				beforeSingletonCreation(beanName);
+
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {

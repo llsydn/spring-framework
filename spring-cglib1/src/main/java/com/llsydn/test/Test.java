@@ -16,6 +16,9 @@ public class Test {
 		AnnotationConfigApplicationContext ac = new AnnotationConfigApplicationContext();
 		ac.register(Appconfig.class);
 		//ac.addBeanFactoryPostProcessor(null);
+
+		//ac.setAllowCircularReferences(false); //设置关闭循环依赖
+
 		ac.refresh();
 
 		OrderDao orderDao = ac.getBean(OrderDao.class);

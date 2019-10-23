@@ -537,6 +537,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Instantiate the bean. 包装类
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
+			//如果你bean指定需要通过factoryMethod来创建则会在这里被创建
+			//如果读者不知道上面factoryMethod那你就忽略这行代码
+			//你可以认为你的A是一个普通类，不会再这里创建
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
@@ -576,19 +579,40 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		//将生成的bean暴露出来（非常重要）
+
+		//重点:面试会考
+		//这里就是判断是不是支持循环引用和是否单例以及bean是否在创建过程中
+		//判断循环引用的是&& this.allowCircularReferences 默认是true
+		//并且这个属性上面spring写了一行非常重要的注释：Whether to automatically try to resolve circular references between beans
+		//这是支持spring默认循环引用最核心的证据
+
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
+
+
+		//如果是单例，并且正在创建，并且是没有关闭循环引用则执行
+		//所以spring原形是不支持循环引用的这是证据，但是其实可以解决
+		//怎么解决原形的循环依赖，笔者下次更新吧
 		if (earlySingletonExposure) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
-			//第四次应用spring的后置处理器（4）
+			//第四次应用spring的后置处理器（4）可以完成aop代理（循环依赖的情况下）
 			//这个时候bean已经被创建出来，但是还没进行属性装配
 			//放入了 earlySingletonObjects（已经被new出来，但是属性没有被填充）
 			//singletonFactories
+
+			//这里就是这个创建出来的A 对象a 放到第二个map当中
+			//注意这里addSingletonFactory就是往map当中put
+			//需要说明的是他的value并不是一个a对象
+			//而是一段表达式，但是包含了这个对象的
+			//所以上文说的第二个map和第三个map的有点不同
+			//第三个map是直接放的a对象(下文会讲到第三个map的)，
+			//第二个放的是一个表达式包含了a对象
+			//为什么需要放一个表达式？下文分析吧
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
@@ -596,8 +620,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		Object exposedObject = bean;
 		try {
 			//设置属性，非常重要
+			//里面会完成第5、6次后置处理器的调用
 			populateBean(beanName, mbd, instanceWrapper);
 			//执行后置处理器，aop就是在这里完成的处理
+			//里面会完成第7、8次后置处理器的调用
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -912,6 +938,51 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 这个方法内容比较少，但是很复杂，因为是对后置处理器的调用
+	 * 关于后置处理器笔者其实要说话很多很多
+	 * 现在市面上可见的资料或者书籍对后置处理器的说法笔者一般都不苟同
+	 * 我在B站上传过一个4个小时的视频，其中对spring后置处理器做了详细的分析
+	 * 也提出了一些自己的理解和主流理解不同的地方，有兴趣同学可以去看看
+	 * 其实简单说--这个方法作用主要是为了来处理aop的；
+	 * 当然还有其他功能，但是一般的读者最熟悉的就是aop
+	 * 这里我说明一下，aop的原理或者流程有很多书籍说到过
+	 * 但是笔者今天亲测了，现在市面可见的资料和书籍对aop的说法都不全
+	 * 很多资料提到aop是在spring bean的生命周期里面填充属性之后的代理周期完成的
+	 * 而这个代理周期甚至是在执行生命周期回调方法之后的一个周期
+	 * 那么问题来了？什么叫spring生命周期回调方法周期呢？
+	 *
+	 *  首先spring bean生命周期和spring生命周期回调方法周期是两个概念
+	 * spring生命周期回调方法是spring bean生命周期的一部分、或者说一个周期
+	 * 简单理解就是spring bean的生命的某个过程会去执行spring的生命周期的回调方法
+	 * 比如你在某个bean的方法上面写一个加@PostConstruct的方法（一般称bean初始化方法）
+	 * 那么这个方法会在spring实例化一个对象之后，填充属性之后执行这个加注解的方法
+	 * 我这里叫做spring 生命周期回调方法的生命周期，不是我胡说，有官方文档可以参考的
+	 * 在执行完spring生命周期回调方法的生命周期之后才会执行代理生命周期
+	 *
+	 * 在代理这个生命周期当中如果有需要会完成aop的功能
+	 * 以上是现在主流的说法，也是一般书籍或者“某些大师”的说法
+	 * 但是在循环引用的时候就不一样了，循环引用的情况下这个周期这里就完成了aop的代理
+	 * 这个周期严格意义上是在填充属性之前（填充属性也是一个生命周期阶段）
+	 * 填充属性的周期甚至在生命周期回调方法之前，更在代理这个周期之前了
+	 * 简单来说主流说法代理的生命周期比如在第8个周期或者第八步吧
+	 * 但是笔者这里得出的结论，如果一个bean是循环引用的则代理的周期可能在第3步就完成了
+	 *
+	 * 那么为什么需要在第三步就完成呢？
+	 * 试想一下A、B两个类，现在对A类做aop处理，也就是需要对A代理
+	 * 不考虑循环引用 spring 先实例化A，然后走生命周期确实在第8个周期完成的代理
+	 * 关于这个结论可以去看b站我讲的spring aop源码分析
+	 * 但是如果是循环依赖就会有问题
+	 * 比如spring 实例化A 然后发现需要注入B这个时候A还没有走到8步
+	 * 还没有完成代理，发觉需要注入B，便去创建B，创建B的时候
+	 * 发觉需要注入A，于是创建A，创建的过程中通过getSingleton
+	 * 得到了a对象，注意是对象，一个没有完成代理的对象
+	 * 然后把这个a注入给B？这样做合适吗？注入的a根本没有aop功能；显然不合适
+	 * 因为b中注入的a需要是一个代理对象
+	 * 而这个时候a存在第二个map中；不是一个代理对象；
+	 * 于是我在第二个map中就不能单纯的存一个对象，需要存一个工厂
+	 * 这个工厂在特殊的时候需要对a对象做改变，比如这里说的代理（需要aop功能的情况）
+	 * 这也是三个map存在的必要性，不知道读者能不能get到点
+	 *
 	 * Obtain a reference for early access to the specified bean,
 	 * typically for the purpose of resolving a circular reference.
 	 * @param beanName the name of the bean (for error handling purposes)

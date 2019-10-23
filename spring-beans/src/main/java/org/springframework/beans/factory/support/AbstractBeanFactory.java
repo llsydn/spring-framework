@@ -251,10 +251,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		 * 2、还是别名的问题，转换需要
 		 */
 		final String beanName = transformedBeanName(name);
+
+		//定义一个对象，用来存将来返回出来的bean
 		Object bean;
 
 		/**
-		 * 这个方法在初始化的时候会调用，在getBean的时候也会调用
+		 * 这个方法在初始化的时候会调用，在getBean的时候也会调用一次
 		 * 为什么需要这么做呢？
 		 * 也就是说spring在初始化的时候先获取这个对象
 		 * 判断这个对象是否被实例化好了(普通情况下绝对为空====有一种情况可能不为空lazy=true,第二次调用)
@@ -352,8 +354,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// 创建单例的bean
 				if (mbd.isSingleton()) {
+					/**
+					 * 第二次会把当前正在创建的类记录到set集合
+					 * 然后反射创建这个实例，并且走完生命周期
+					 */
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
+							//完成了目标对象的创建
+							//如果需要代理，还完成了代理
 							return createBean(beanName, mbd, args);
 						}
 						catch (BeansException ex) {

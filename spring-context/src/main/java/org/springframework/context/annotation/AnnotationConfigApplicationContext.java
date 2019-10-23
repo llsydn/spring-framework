@@ -130,6 +130,14 @@ public class AnnotationConfigApplicationContext extends GenericApplicationContex
 		//这里由于他有父类，故而会先调用父类的构造方法，然后才会调用自己的构造方法
 		//在自己构造方法中初始一个读取器和扫描器
 		this();
+
+		//设置关闭spring的循环依赖功能
+		//当然你也可以再外部直接调用
+		//只不过调用这个方法需要分开来初始化spring容器
+		//对于不精通spring的程序员来说，甚至比修改源码还困难
+
+		//setAllowCircularReferences(false);
+
 		register(annotatedClasses);
 		refresh();
 	}
